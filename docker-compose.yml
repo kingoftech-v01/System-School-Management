@@ -1,0 +1,179 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: school_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME:-school_db}
+      - POSTGRES_USER=${DATABASE_USER:-school_user}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD:-school_pass_2024}
+      - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-school_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - school_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: school_redis
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-redis_secure_2024}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - school_network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school_web
+    command: >
+      sh -c "
+        python manage.py migrate_schemas --shared &&
+        python manage.py migrate_schemas &&
+        python manage.py collectstatic --noinput &&
+        gunicorn School_System.wsgi:application
+        --bind 0.0.0.0:8000
+        --workers 4
+        --threads 2
+        --worker-class gthread
+        --worker-tmp-dir /dev/shm
+        --timeout 120
+        --access-logfile -
+        --error-logfile -
+        --log-level info
+      "
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - school_network
+    restart: unless-stopped
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school_celery
+    command: >
+      celery -A School_System worker
+      --loglevel=info
+      --concurrency=4
+      --max-tasks-per-child=1000
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+      - web
+    networks:
+      - school_network
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school_celery_beat
+    command: >
+      celery -A School_System beat
+      --loglevel=info
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+      - web
+    networks:
+      - school_network
+    restart: unless-stopped
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school_flower
+    command: celery -A School_System flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - celery
+    networks:
+      - school_network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: school_nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+    networks:
+      - school_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+
+networks:
+  school_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

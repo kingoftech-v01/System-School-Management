@@ -1,0 +1,247 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block page_title %}{% trans "Professor Dashboard" %}{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-book me-2"></i>
+        {% trans "My Courses" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-calendar-check me-2"></i>
+        {% trans "Take Attendance" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-file-earmark-text me-2"></i>
+        {% trans "Enter Grades" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-sticky me-2"></i>
+        {% trans "Student Notes" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-calendar3 me-2"></i>
+        {% trans "Schedule" %}
+    </a>
+</li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-primary text-white border-0 shadow">
+            <div class="card-body">
+                <h4 class="mb-1">{% trans "Welcome, Professor" %} {{ user.last_name }}</h4>
+                <p class="mb-0">{% trans "Manage your courses and students effectively" %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Total Courses" %}</h6>
+                        <h3 class="mb-0">{{ total_courses }}</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-book text-primary fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Total Students" %}</h6>
+                        <h3 class="mb-0">{{ total_students }}</h3>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-people text-success fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Classes Today" %}</h6>
+                        <h3 class="mb-0">{{ classes_today }}</h3>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-calendar3 text-warning fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Pending Grades" %}</h6>
+                        <h3 class="mb-0">{{ pending_grades }}</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-clipboard-check text-danger fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    {% trans "Today's Schedule" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if todays_classes %}
+                <div class="list-group list-group-flush">
+                    {% for class in todays_classes %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ class.course.name }}</h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-people me-1"></i>{{ class.class_name }}
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-geo-alt me-1"></i>{{ class.room }}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary">{{ class.start_time }} - {{ class.end_time }}</span>
+                                <div class="btn-group btn-group-sm mt-1">
+                                    <a href="#" class="btn btn-outline-primary">{% trans "Attendance" %}</a>
+                                    <a href="#" class="btn btn-outline-secondary">{% trans "Details" %}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fs-1"></i>
+                    <p class="mt-2">{% trans "No classes scheduled for today" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-people me-2"></i>
+                    {% trans "My Courses" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for course in my_courses %}
+                    <div class="col-md-6">
+                        <div class="card border">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ course.name }}</h6>
+                                <p class="card-text small text-muted">{{ course.class_name }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">{{ course.students_count }} {% trans "students" %}</small>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-sm btn-outline-primary">{% trans "View" %}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {% trans "Recent Absences" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_absences %}
+                <div class="list-group list-group-flush">
+                    {% for absence in recent_absences %}
+                    <div class="list-group-item px-0">
+                        <h6 class="mb-1">{{ absence.student.get_full_name }}</h6>
+                        <p class="small text-muted mb-1">{{ absence.course.name }}</p>
+                        <small class="text-danger">{{ absence.date|date:"M d, Y" }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle fs-1"></i>
+                    <p class="mt-2">{% trans "No recent absences" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>
+                    {% trans "Quick Actions" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-primary">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        {% trans "Take Attendance" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        {% trans "Enter Grades" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-sticky me-2"></i>
+                        {% trans "Add Student Note" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-download me-2"></i>
+                        {% trans "Download Reports" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

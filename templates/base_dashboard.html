@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block main_class %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>{% trans "Navigation" %}</span>
+                    </h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% block dashboard_active %}{% endblock %}" href="{% url 'dashboard' %}">
+                                <i class="bi bi-speedometer2 me-2"></i>
+                                {% trans "Dashboard" %}
+                            </a>
+                        </li>
+
+                        {% block sidebar_links %}
+                        <!-- Role-specific sidebar links -->
+                        {% endblock %}
+
+                    </ul>
+
+                    {% if user.role == 'direction' or user.role == 'admin' %}
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>{% trans "Management" %}</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-people me-2"></i>
+                                {% trans "Students" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person-badge me-2"></i>
+                                {% trans "Professors" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-book me-2"></i>
+                                {% trans "Courses" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-cash-coin me-2"></i>
+                                {% trans "Payments" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-clipboard-data me-2"></i>
+                                {% trans "Reports" %}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>{% trans "System" %}</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-bar-chart me-2"></i>
+                                {% trans "Monitoring" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear me-2"></i>
+                                {% trans "Settings" %}
+                            </a>
+                        </li>
+                    </ul>
+                    {% endif %}
+
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">{% block page_title %}{% trans "Dashboard" %}{% endblock %}</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        {% block page_actions %}{% endblock %}
+                    </div>
+                </div>
+
+                <!-- Breadcrumb -->
+                {% block breadcrumb %}
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">{% trans "Home" %}</a></li>
+                        {% block breadcrumb_items %}{% endblock %}
+                    </ol>
+                </nav>
+                {% endblock %}
+
+                <!-- Dashboard Content -->
+                {% block dashboard_content %}
+                <!-- Dashboard specific content goes here -->
+                {% endblock %}
+
+            </main>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block footer %}
+<!-- Footer is hidden in dashboard view -->
+{% endblock %}

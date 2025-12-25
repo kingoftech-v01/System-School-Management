@@ -1,48 +1,131 @@
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Docker Compose reference guide at
-# https://docs.docker.com/go/compose-spec-reference/
-
-# Here the instructions define your application as a service called "server".
-# This service is built from the Dockerfile in the current directory.
-# You can add other services your application may depend on here, such as a
-# database or a cache. For examples, see the Awesome Compose repository:
-# https://github.com/docker/awesome-compose
 services:
+  db:
+    image: postgres:17
+    restart: always
+    user: postgres
+    ports:
+      - 5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    expose:
+      - "5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      # test: ["CMD-SHELL", "pg_isready -U postgres -d example"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/var/lib/redis/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+    expose:
+      - "6379"
   server:
     build:
       context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn jhpfsite.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2 --timeout 120 --log-level info"
     ports:
-      - 8600:8000
+      - 8000:8000
+    restart: unless-stopped
+    environment:
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=587
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - EMAIL_USE_TLS=True
+      - EMAIL_USE_SSL=False
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - STATIC_ROOT=/app/staticfiles
+      - MEDIA_ROOT=/app/media
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - 8080:80
+      - 8443:443
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_data:/static
+      - media_data:/media
+      - letsencrypt:/etc/letsencrypt:ro
+    expose:
+      - "8080"
+      - "8443"
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    environment:
+      - DOMAINS=${ALLOWED_HOSTS}
+      - EMAIL=${EMAIL_HOST_USER}
+    command: >
+      sh -c "
+        echo 'Generating certs for: $$DOMAINS' &&
+        certbot certonly --webroot -w /var/www/certbot 
+          --email $$EMAIL 
+          --agree-tos --non-interactive --keep-until-expiring
+          --rsa-key-size 4096
+          $$(echo $$DOMAINS | sed 's/,/ -d /g' | sed 's/^/-d /') &&
+        echo 'Certs generated. Starting renewal loop...' &&
+        exec /bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet && docker-compose exec nginx nginx -s reload; sleep 12h & wait $${!}; done;'
+      "
+    depends_on:
+      - nginx
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost/.well-known/acme-challenge/" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
 
-# The commented out section below is an example of how to define a PostgreSQL
-# database that your application can use. `depends_on` tells Docker Compose to
-# start the database before your application. The `db-data` volume persists the
-# database data between container restarts. The `db-password` secret is used
-# to set the database password. You must create `db/password.txt` and add
-# a password of your choosing to it before running `docker compose up`.
-#     depends_on:
-#       db:
-#         condition: service_healthy
-#   db:
-#     image: postgres
-#     restart: always
-#     user: postgres
-#     secrets:
-#       - db-password
-#     volumes:
-#       - db-data:/var/lib/postgresql/data
-#     environment:
-#       - POSTGRES_DB=example
-#       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-#     expose:
-#       - 5432
-#     healthcheck:
-#       test: [ "CMD", "pg_isready" ]
-#       interval: 10s
-#       timeout: 5s
-#       retries: 5
-# volumes:
-#   db-data:
-# secrets:
-#   db-password:
-#     file: db/password.txt
+volumes:
+  db-data:
+  redis_data:
+  static_data:
+  media_data:
+  letsencrypt:
+  certbot_www:

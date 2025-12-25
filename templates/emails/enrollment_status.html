@@ -1,0 +1,103 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Enrollment {{ status }} - {{ tenant.name }}{% endblock %}
+
+{% block email_header %}
+<h1>{{ tenant.name }}</h1>
+<p>Enrollment Status Update</p>
+{% endblock %}
+
+{% block email_content %}
+<h2>Dear {{ parent_name }},</h2>
+
+{% if status == 'approved' %}
+<div class="success-box">
+    <strong>Congratulations!</strong>
+    <p>
+        We are pleased to inform you that {{ student.get_full_name }}'s enrollment application has been approved.
+    </p>
+</div>
+{% elif status == 'pending' %}
+<div class="warning-box">
+    <strong>Application Under Review</strong>
+    <p>
+        {{ student.get_full_name }}'s enrollment application is currently under review. We will notify you once a decision has been made.
+    </p>
+</div>
+{% else %}
+<div class="info-box">
+    <strong>Enrollment Status Update</strong>
+    <p>
+        This email concerns {{ student.get_full_name }}'s enrollment application.
+    </p>
+</div>
+{% endif %}
+
+<div class="info-box">
+    <strong>Enrollment Details</strong>
+    <table>
+        <tr>
+            <th>Student Name:</th>
+            <td>{{ student.get_full_name }}</td>
+        </tr>
+        <tr>
+            <th>Application ID:</th>
+            <td>{{ enrollment.application_id }}</td>
+        </tr>
+        <tr>
+            <th>Academic Year:</th>
+            <td>{{ academic_year }}</td>
+        </tr>
+        <tr>
+            <th>Class:</th>
+            <td>{{ enrollment.class_name }}</td>
+        </tr>
+        <tr>
+            <th>Filiere:</th>
+            <td>{{ enrollment.filiere.name }}</td>
+        </tr>
+        <tr>
+            <th>Status:</th>
+            <td><strong>{{ enrollment.get_status_display }}</strong></td>
+        </tr>
+        <tr>
+            <th>Submission Date:</th>
+            <td>{{ enrollment.created_at|date:"F d, Y" }}</td>
+        </tr>
+    </table>
+</div>
+
+{% if status == 'approved' %}
+<div class="info-box">
+    <strong>Next Steps</strong>
+    <ol>
+        <li>Complete the payment of tuition fees</li>
+        <li>Submit required documents (if any remaining)</li>
+        <li>Attend orientation session on {{ orientation_date|date:"F d, Y" }}</li>
+        <li>Collect student ID card from the office</li>
+    </ol>
+</div>
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ complete_enrollment_url }}" class="btn">Complete Enrollment</a>
+</div>
+{% endif %}
+
+{% if next_steps %}
+<div class="divider"></div>
+
+<p>
+    <strong>Additional Information:</strong><br>
+    {{ next_steps }}
+</p>
+{% endif %}
+
+<p>
+    Should you have any questions, please feel free to contact our admissions office.
+</p>
+
+<p>
+    Best regards,<br>
+    <strong>{{ tenant.name }} Admissions Office</strong>
+</p>
+{% endblock %}

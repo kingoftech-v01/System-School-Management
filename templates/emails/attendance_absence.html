@@ -1,0 +1,74 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Absence Notification - {{ tenant.name }}{% endblock %}
+
+{% block email_header %}
+<h1>{{ tenant.name }}</h1>
+<p>Student Absence Notification</p>
+{% endblock %}
+
+{% block email_content %}
+<h2>Dear {{ parent_name }},</h2>
+
+<p>
+    This is to inform you that your child was marked absent from class today.
+</p>
+
+<div class="warning-box">
+    <strong>Absence Details</strong>
+    <table>
+        <tr>
+            <th>Student Name:</th>
+            <td>{{ student.get_full_name }}</td>
+        </tr>
+        <tr>
+            <th>Class:</th>
+            <td>{{ student.student_profile.class_name }}</td>
+        </tr>
+        <tr>
+            <th>Date:</th>
+            <td>{{ absence_date|date:"F d, Y" }}</td>
+        </tr>
+        <tr>
+            <th>Course:</th>
+            <td>{{ course.name }}</td>
+        </tr>
+        <tr>
+            <th>Professor:</th>
+            <td>{{ professor.get_full_name }}</td>
+        </tr>
+        <tr>
+            <th>Time:</th>
+            <td>{{ class_time }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box">
+    <strong>Action Required</strong>
+    <p>
+        If this absence was planned or due to illness, please provide a valid justification by clicking the button below.
+        Unjustified absences may affect your child's academic standing.
+    </p>
+</div>
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ justification_url }}" class="btn">Provide Justification</a>
+</div>
+
+<div class="divider"></div>
+
+<p>
+    <strong>Attendance Summary (This Month):</strong><br>
+    Present: {{ present_count }} days | Absent: {{ absent_count }} days | Attendance Rate: {{ attendance_rate }}%
+</p>
+
+<p>
+    If you have any questions or concerns, please don't hesitate to contact us.
+</p>
+
+<p>
+    Best regards,<br>
+    <strong>{{ tenant.name }} Administration</strong>
+</p>
+{% endblock %}

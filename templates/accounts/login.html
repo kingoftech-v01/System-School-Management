@@ -1,0 +1,128 @@
+{% extends "base_auth.html" %}
+{% load static i18n crispy_forms_tags %}
+
+{% block title %}{% trans "Login" %}{% endblock %}
+
+{% block auth_title %}{% trans "Welcome Back" %}{% endblock %}
+{% block auth_subtitle %}{% trans "Sign in to your account" %}{% endblock %}
+
+{% block content %}
+<h3 class="text-center mb-4">{% trans "Sign In" %}</h3>
+
+<form method="post" action="{% url 'account_login' %}" class="needs-validation" novalidate>
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label for="id_login" class="form-label">
+            <i class="bi bi-envelope me-1"></i>
+            {% trans "Email Address" %}
+        </label>
+        <input type="email"
+               class="form-control form-control-lg"
+               id="id_login"
+               name="login"
+               placeholder="{% trans 'your.email@example.com' %}"
+               required
+               autocomplete="email"
+               autofocus>
+        <div class="invalid-feedback">
+            {% trans "Please enter a valid email address." %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="id_password" class="form-label">
+            <i class="bi bi-key me-1"></i>
+            {% trans "Password" %}
+        </label>
+        <div class="input-group">
+            <input type="password"
+                   class="form-control form-control-lg"
+                   id="id_password"
+                   name="password"
+                   placeholder="{% trans 'Enter your password' %}"
+                   required
+                   autocomplete="current-password">
+            <button class="btn btn-outline-secondary"
+                    type="button"
+                    id="togglePassword"
+                    aria-label="{% trans 'Toggle password visibility' %}">
+                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+            </button>
+        </div>
+        <div class="invalid-feedback">
+            {% trans "Please enter your password." %}
+        </div>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="id_remember" name="remember">
+        <label class="form-check-label" for="id_remember">
+            {% trans "Remember me for 30 days" %}
+        </label>
+    </div>
+
+    {% if redirect_field_value %}
+    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+    {% endif %}
+
+    <div class="d-grid gap-2 mb-3">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            {% trans "Sign In" %}
+        </button>
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'account_reset_password' %}" class="text-decoration-none">
+            {% trans "Forgot your password?" %}
+        </a>
+    </div>
+
+</form>
+
+<!-- Security Notice -->
+<div class="alert alert-info mt-4" role="alert">
+    <i class="bi bi-shield-check me-2"></i>
+    <small>
+        {% trans "This is a secure area. Staff members must enable two-factor authentication (2FA) for enhanced security." %}
+    </small>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Password visibility toggle
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordInput = document.getElementById('id_password');
+    const icon = document.getElementById('togglePasswordIcon');
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+});
+
+// Form validation
+(function() {
+    'use strict';
+    const forms = document.querySelectorAll('.needs-validation');
+
+    Array.from(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %}

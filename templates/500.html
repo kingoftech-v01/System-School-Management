@@ -1,9 +1,55 @@
-{% extends 'error_handler_base.html' %}
-{% load i18n %}
+{% extends 'base_auth.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "500 - Server Error" %}{% endblock %}
+
+{% block auth_title %}{% trans "Server Error" %}{% endblock %}
+{% block auth_subtitle %}{% trans "Something went wrong on our end" %}{% endblock %}
+
 {% block content %}
-<div class="text-center mt-5">
-    <h1>{% trans 'Server error' %}</h1>
-    <p>{% trans 'Please try again later.' %}</p>
-    <a href="/" class="link">&LeftArrow; {% trans 'Return to the app' %}</a>
+<div class="text-center">
+    <div class="mb-4">
+        <i class="bi bi-exclamation-octagon text-danger" style="font-size: 5rem;"></i>
+    </div>
+
+    <h1 class="display-4 fw-bold mb-3">500</h1>
+    <h3 class="mb-3">{% trans "Internal Server Error" %}</h3>
+
+    <p class="text-muted mb-4">
+        {% trans "We're sorry, but something went wrong on our end. Our team has been notified and is working to fix the issue." %}
+    </p>
+
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        {% trans "Please try again in a few moments. If the problem persists, contact support." %}
+    </div>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+        <a href="javascript:location.reload()" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            {% trans "Retry" %}
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+            <i class="bi bi-house me-2"></i>
+            {% trans "Return to Dashboard" %}
+        </a>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="text-start">
+        <h6 class="fw-bold">{% trans "What happened?" %}</h6>
+        <p class="text-muted small">
+            {% trans "The server encountered an unexpected condition that prevented it from fulfilling your request. Our development team has been automatically notified and will investigate the issue." %}
+        </p>
+
+        <h6 class="fw-bold mt-3">{% trans "What can you do?" %}</h6>
+        <ul class="text-muted small">
+            <li>{% trans "Wait a few moments and try again" %}</li>
+            <li>{% trans "Clear your browser cache and cookies" %}</li>
+            <li>{% trans "Try a different browser or device" %}</li>
+            <li>{% trans "Contact support if the issue persists" %}</li>
+        </ul>
+    </div>
 </div>
 {% endblock %}

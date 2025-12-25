@@ -1,0 +1,105 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Overdue Library Books - {{ tenant.name }}{% endblock %}
+
+{% block email_header %}
+<h1>{{ tenant.name }}</h1>
+<p>Library Overdue Notice</p>
+{% endblock %}
+
+{% block email_content %}
+<h2>Dear {{ student.get_full_name }},</h2>
+
+<p>
+    This is a reminder that you have overdue library books that need to be returned.
+</p>
+
+<div class="danger-box">
+    <strong>Overdue Books</strong>
+    <table>
+        <thead>
+            <tr>
+                <th>Book Title</th>
+                <th>Author</th>
+                <th>Due Date</th>
+                <th>Days Overdue</th>
+                <th>Fine</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in overdue_books %}
+            <tr>
+                <td><strong>{{ book.book.title }}</strong></td>
+                <td>{{ book.book.author }}</td>
+                <td>{{ book.due_date|date:"M d, Y" }}</td>
+                <td style="color: #dc3545;">{{ book.days_overdue }} days</td>
+                <td style="color: #dc3545;"><strong>{{ book.fine_amount }} {{ currency }}</strong></td>
+            </tr>
+            {% endfor %}
+            <tr style="border-top: 2px solid #dc3545;">
+                <td colspan="4" style="text-align: right;"><strong>Total Fine:</strong></td>
+                <td style="color: #dc3545;"><strong>{{ total_fine }} {{ currency }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="warning-box">
+    <strong>Important Notice</strong>
+    <p>
+        Please return the overdue books to the library as soon as possible. Failure to return library materials on time may result in:
+    </p>
+    <ul>
+        <li>Accumulating fines</li>
+        <li>Suspension of library borrowing privileges</li>
+        <li>Impact on academic records</li>
+    </ul>
+</div>
+
+<div class="info-box">
+    <strong>Library Information</strong>
+    <table>
+        <tr>
+            <th>Opening Hours:</th>
+            <td>{{ library_hours }}</td>
+        </tr>
+        <tr>
+            <th>Location:</th>
+            <td>{{ library_location }}</td>
+        </tr>
+        <tr>
+            <th>Librarian:</th>
+            <td>{{ librarian_name }}</td>
+        </tr>
+        <tr>
+            <th>Contact:</th>
+            <td>{{ library_contact }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="divider"></div>
+
+<p>
+    <strong>How to Return Books:</strong>
+</p>
+<ol>
+    <li>Visit the library during opening hours</li>
+    <li>Return books at the circulation desk</li>
+    <li>Pay any accumulated fines</li>
+    <li>Get your receipt as confirmation</li>
+</ol>
+
+<p>
+    If you have lost a book or it is damaged, please contact the librarian immediately to discuss replacement options.
+</p>
+
+<p>
+    Thank you for your cooperation in maintaining our library system.
+</p>
+
+<p>
+    Best regards,<br>
+    <strong>{{ tenant.name }} Library</strong>
+</p>
+{% endblock %}

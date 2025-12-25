@@ -1,0 +1,285 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block page_title %}{% trans "Parent Dashboard" %}{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-people me-2"></i>
+        {% trans "My Children" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-calendar-check me-2"></i>
+        {% trans "Attendance" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-file-earmark-text me-2"></i>
+        {% trans "Grades & Reports" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-cash-coin me-2"></i>
+        {% trans "Payments" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-chat-dots me-2"></i>
+        {% trans "Messages" %}
+    </a>
+</li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- Welcome Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient-primary text-white border-0 shadow">
+            <div class="card-body">
+                <h4 class="card-title mb-1">{% trans "Welcome," %} {{ user.get_full_name }}</h4>
+                <p class="card-text mb-0">{% trans "Monitor your children's academic progress" %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Children Overview Cards -->
+<div class="row g-3 mb-4">
+    {% for child in children %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm hover-shadow">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    {% if child.avatar %}
+                    <img src="{{ child.avatar.url }}" class="rounded-circle me-3" width="60" height="60" alt="{{ child.get_full_name }}">
+                    {% else %}
+                    <div class="avatar-placeholder-lg me-3">
+                        <span>{{ child.first_name.0 }}{{ child.last_name.0 }}</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-0">{{ child.get_full_name }}</h5>
+                        <p class="text-muted small mb-0">{{ child.student_profile.class_name }}</p>
+                    </div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="small text-muted">{% trans "Attendance" %}</div>
+                            <div class="fw-bold text-success">{{ child.attendance_rate }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="small text-muted">{% trans "Average" %}</div>
+                            <div class="fw-bold text-primary">{{ child.average_grade|floatformat:1 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="btn btn-sm btn-outline-primary w-100">{% trans "View Details" %}</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Main Content Grid -->
+<div class="row g-4">
+
+    <!-- Left Column -->
+    <div class="col-lg-8">
+
+        <!-- Recent Notifications -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-bell me-2"></i>
+                    {% trans "Recent Notifications" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if notifications %}
+                <div class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                    <div class="list-group-item px-0 {% if not notification.read %}bg-light{% endif %}">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle p-2 {% if notification.type == 'absence' %}bg-warning bg-opacity-10 text-warning{% elif notification.type == 'payment' %}bg-danger bg-opacity-10 text-danger{% else %}bg-info bg-opacity-10 text-info{% endif %}">
+                                    <i class="bi bi-{% if notification.type == 'absence' %}calendar-x{% elif notification.type == 'payment' %}cash-coin{% else %}info-circle{% endif %}"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">{{ notification.title }}</h6>
+                                    <small class="text-muted">{{ notification.created_at|timesince }}</small>
+                                </div>
+                                <p class="mb-0 text-muted small">{{ notification.message }}</p>
+                                {% if notification.student %}
+                                <small class="text-muted">{% trans "Student:" %} {{ notification.student.get_full_name }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-bell-slash fs-1"></i>
+                    <p class="mt-2">{% trans "No notifications" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-cash-coin me-2"></i>
+                    {% trans "Payment History" %}
+                </h5>
+                <a href="#" class="btn btn-sm btn-outline-primary">{% trans "View All" %}</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Date" %}</th>
+                                <th>{% trans "Student" %}</th>
+                                <th>{% trans "Description" %}</th>
+                                <th>{% trans "Amount" %}</th>
+                                <th>{% trans "Status" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.date|date:"M d, Y" }}</td>
+                                <td>{{ payment.student.get_full_name }}</td>
+                                <td>{{ payment.description }}</td>
+                                <td>{{ payment.amount|floatformat:2 }} {{ payment.currency }}</td>
+                                <td>
+                                    <span class="badge {% if payment.status == 'paid' %}bg-success{% elif payment.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+
+        <!-- Payment Summary -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-wallet2 me-2"></i>
+                    {% trans "Payment Summary" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{% trans "Total Due" %}</span>
+                        <span class="fw-bold text-danger">{{ total_due|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">{% trans "Paid This Year" %}</span>
+                        <span class="fw-bold text-success">{{ total_paid|floatformat:2 }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">{% trans "Total Balance" %}</span>
+                        <span class="fw-bold">{{ total_balance|floatformat:2 }}</span>
+                    </div>
+                </div>
+                <a href="#" class="btn btn-primary w-100">
+                    <i class="bi bi-credit-card me-2"></i>
+                    {% trans "Make Payment" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    {% trans "Upcoming Events" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_events %}
+                <div class="list-group list-group-flush">
+                    {% for event in upcoming_events %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex align-items-start">
+                            <div class="text-center me-3">
+                                <div class="bg-primary text-white rounded p-2" style="min-width: 50px;">
+                                    <div class="fw-bold">{{ event.date|date:"d" }}</div>
+                                    <div class="small">{{ event.date|date:"M" }}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <p class="text-muted small mb-0">{{ event.description|truncatewords:8 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fs-1"></i>
+                    <p class="mt-2">{% trans "No upcoming events" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>
+                    {% trans "Quick Actions" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-download me-2"></i>
+                        {% trans "Download Report Cards" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-envelope me-2"></i>
+                        {% trans "Contact School" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        {% trans "View Full Calendar" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

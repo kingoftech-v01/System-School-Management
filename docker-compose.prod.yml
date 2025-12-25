@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: school_db_prod
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./backups:/backups
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+    networks:
+      - school_network_prod
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  redis:
+    image: redis:7-alpine
+    container_name: school_redis_prod
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data_prod:/data
+    networks:
+      - school_network_prod
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: school_web_prod
+    command: >
+      sh -c "
+        python manage.py migrate_schemas --shared &&
+        python manage.py migrate_schemas &&
+        python manage.py collectstatic --noinput &&
+        gunicorn School_System.wsgi:application
+        --bind 0.0.0.0:8000
+        --workers 8
+        --threads 4
+        --worker-class gthread
+        --worker-tmp-dir /dev/shm
+        --timeout 300
+        --max-requests 1000
+        --max-requests-jitter 50
+        --access-logfile -
+        --error-logfile -
+        --log-level warning
+      "
+    volumes:
+      - static_volume_prod:/app/staticfiles
+      - media_volume_prod:/app/media
+    env_file:
+      - .env.production
+    depends_on:
+      - db
+      - redis
+    networks:
+      - school_network_prod
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: school_celery_prod
+    command: >
+      celery -A School_System worker
+      --loglevel=warning
+      --concurrency=8
+      --max-tasks-per-child=1000
+      --time-limit=600
+      --soft-time-limit=540
+    volumes:
+      - media_volume_prod:/app/media
+    env_file:
+      - .env.production
+    depends_on:
+      - db
+      - redis
+      - web
+    networks:
+      - school_network_prod
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: school_celery_beat_prod
+    command: >
+      celery -A School_System beat
+      --loglevel=warning
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file:
+      - .env.production
+    depends_on:
+      - db
+      - redis
+      - web
+    networks:
+      - school_network_prod
+    restart: always
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: school_nginx_prod
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - static_volume_prod:/app/staticfiles:ro
+      - media_volume_prod:/app/media:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+    networks:
+      - school_network_prod
+    restart: always
+
+  certbot:
+    image: certbot/certbot
+    container_name: school_certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  postgres_data_prod:
+  redis_data_prod:
+  static_volume_prod:
+  media_volume_prod:
+
+networks:
+  school_network_prod:
+    driver: bridge

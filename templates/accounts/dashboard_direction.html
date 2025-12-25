@@ -1,0 +1,318 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block page_title %}{% trans "Direction Dashboard" %}{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-bar-chart me-2"></i>
+        {% trans "Analytics" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-people me-2"></i>
+        {% trans "Students" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-person-badge me-2"></i>
+        {% trans "Staff" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-cash-coin me-2"></i>
+        {% trans "Payments" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-calendar-event me-2"></i>
+        {% trans "Events" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-search me-2"></i>
+        {% trans "Search" %}
+    </a>
+</li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient-primary text-white border-0 shadow">
+            <div class="card-body">
+                <h4 class="mb-1">{% trans "Direction Dashboard" %}</h4>
+                <p class="mb-0">{{ tenant.name }} - {{ current_academic_year }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Total Students" %}</h6>
+                        <h3 class="mb-0">{{ total_students }}</h3>
+                        <small class="text-success"><i class="bi bi-arrow-up"></i> {{ students_growth }}%</small>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-people text-primary fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Active Professors" %}</h6>
+                        <h3 class="mb-0">{{ total_professors }}</h3>
+                        <small class="text-muted">{{ professor_student_ratio }} ratio</small>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-person-badge text-success fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Revenue This Month" %}</h6>
+                        <h3 class="mb-0">{{ monthly_revenue|floatformat:0 }}</h3>
+                        <small class="text-success"><i class="bi bi-arrow-up"></i> {{ revenue_growth }}%</small>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-cash-coin text-warning fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Attendance Rate" %}</h6>
+                        <h3 class="mb-0">{{ overall_attendance }}%</h3>
+                        <small class="{% if overall_attendance >= 90 %}text-success{% else %}text-warning{% endif %}">
+                            {{ attendance_trend }}
+                        </small>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-calendar-check text-info fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up me-2"></i>
+                    {% trans "Enrollment by Filiere" %}
+                </h5>
+                <select class="form-select form-select-sm w-auto">
+                    <option>{% trans "This Year" %}</option>
+                    <option>{% trans "Last Year" %}</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Filiere" %}</th>
+                                <th>{% trans "Total Students" %}</th>
+                                <th>{% trans "Male" %}</th>
+                                <th>{% trans "Female" %}</th>
+                                <th>{% trans "Avg Grade" %}</th>
+                                <th>{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for filiere in filieres_stats %}
+                            <tr>
+                                <td><strong>{{ filiere.name }}</strong></td>
+                                <td>{{ filiere.total_students }}</td>
+                                <td>{{ filiere.male_count }}</td>
+                                <td>{{ filiere.female_count }}</td>
+                                <td>
+                                    <span class="badge {% if filiere.avg_grade >= 15 %}bg-success{% elif filiere.avg_grade >= 10 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ filiere.avg_grade|floatformat:1 }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">{% trans "View" %}</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    {% trans "Recent Alerts" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_alerts %}
+                <div class="list-group list-group-flush">
+                    {% for alert in recent_alerts %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="rounded-circle p-2 {% if alert.severity == 'high' %}bg-danger bg-opacity-10 text-danger{% elif alert.severity == 'medium' %}bg-warning bg-opacity-10 text-warning{% else %}bg-info bg-opacity-10 text-info{% endif %}">
+                                    <i class="bi bi-{% if alert.type == 'payment' %}cash-coin{% elif alert.type == 'attendance' %}calendar-x{% else %}exclamation-triangle{% endif %}"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">{{ alert.title }}</h6>
+                                    <small class="text-muted">{{ alert.created_at|timesince }}</small>
+                                </div>
+                                <p class="mb-0 text-muted small">{{ alert.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle fs-1"></i>
+                    <p class="mt-2">{% trans "No alerts" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>
+                    {% trans "Payment Status" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "Collected" %}</span>
+                        <span class="fw-bold text-success">{{ payment_collected }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ payment_collected }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "Pending" %}</span>
+                        <span class="fw-bold text-warning">{{ payment_pending }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ payment_pending }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "Overdue" %}</span>
+                        <span class="fw-bold text-danger">{{ payment_overdue }}%</span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ payment_overdue }}%"></div>
+                    </div>
+                </div>
+                <a href="#" class="btn btn-outline-primary w-100">{% trans "View Payment Reports" %}</a>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    {% trans "Upcoming Events" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_events %}
+                <div class="list-group list-group-flush">
+                    {% for event in upcoming_events|slice:":5" %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex align-items-start">
+                            <div class="text-center me-3">
+                                <div class="bg-primary text-white rounded p-2" style="min-width: 50px;">
+                                    <div class="fw-bold">{{ event.date|date:"d" }}</div>
+                                    <div class="small">{{ event.date|date:"M" }}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <p class="text-muted small mb-0">{{ event.time }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fs-1"></i>
+                    <p class="mt-2">{% trans "No upcoming events" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>
+                    {% trans "Quick Actions" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-2"></i>
+                        {% trans "Add Student" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar-plus me-2"></i>
+                        {% trans "Create Event" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        {% trans "Generate Reports" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-search me-2"></i>
+                        {% trans "Search Students" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

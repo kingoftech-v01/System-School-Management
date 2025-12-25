@@ -1,7 +1,88 @@
+"""
+Core models for multi-tenant School Management System.
+Includes tenant (School) and domain models for django-tenants.
+"""
+
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django_tenants.models import TenantMixin, DomainMixin
 
+
+# ==============================================================================
+# TENANT MODELS (django-tenants)
+# ==============================================================================
+
+class School(TenantMixin):
+    """
+    Tenant model representing an individual school.
+    Each school gets its own PostgreSQL schema.
+    """
+    name = models.CharField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True)
+    description = models.TextField(blank=True)
+
+    # Contact Information
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    address = models.TextField()
+    city = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, default='USA')
+    postal_code = models.CharField(max_length=20)
+
+    # Branding
+    logo = models.ImageField(upload_to='school_logos/', null=True, blank=True)
+    primary_color = models.CharField(max_length=7, default='#007bff')  # Hex color
+
+    # License and Subscription
+    license_key = models.CharField(max_length=100, unique=True)
+    subscription_type = models.CharField(
+        max_length=20,
+        choices=(
+            ('monthly', 'Monthly'),
+            ('yearly', 'Yearly'),
+        ),
+        default='monthly'
+    )
+    subscription_start = models.DateField()
+    subscription_end = models.DateField()
+    is_active = models.BooleanField(default=True)
+    max_students = models.IntegerField(default=500)
+    max_staff = models.IntegerField(default=50)
+
+    # Audit fields
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    # auto_create_schema and auto_drop_schema are inherited from TenantMixin
+    auto_create_schema = True
+    auto_drop_schema = False  # Safety: don't auto-delete schemas
+
+    class Meta:
+        verbose_name = 'School (Tenant)'
+        verbose_name_plural = 'Schools (Tenants)'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def is_subscription_valid(self):
+        """Check if school subscription is still valid."""
+        from django.utils import timezone
+        return self.is_active and self.subscription_end >= timezone.now().date()
+
+
+class Domain(DomainMixin):
+    """
+    Domain model for routing tenants.
+    Each school can have multiple domains/subdomains.
+    """
+    pass
+
+
+# ==============================================================================
+# SHARED MODELS (available to all tenants)
+# ==============================================================================
 
 NEWS = _("News")
 EVENTS = _("Event")

@@ -1,0 +1,105 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Payment Reminder - {{ tenant.name }}{% endblock %}
+
+{% block email_header %}
+<h1>{{ tenant.name }}</h1>
+<p>Payment Reminder</p>
+{% endblock %}
+
+{% block email_content %}
+<h2>Dear {{ parent_name }},</h2>
+
+<p>
+    This is a friendly reminder regarding pending payment for your child's tuition fees.
+</p>
+
+<div class="{% if is_overdue %}danger-box{% else %}warning-box{% endif %}">
+    <strong>Payment Information</strong>
+    <table>
+        <tr>
+            <th>Student Name:</th>
+            <td>{{ student.get_full_name }}</td>
+        </tr>
+        <tr>
+            <th>Class:</th>
+            <td>{{ student.student_profile.class_name }}</td>
+        </tr>
+        <tr>
+            <th>Academic Year:</th>
+            <td>{{ academic_year }}</td>
+        </tr>
+        <tr>
+            <th>Amount Due:</th>
+            <td><strong style="font-size: 18px; color: #dc3545;">{{ amount_due }} {{ currency }}</strong></td>
+        </tr>
+        <tr>
+            <th>Due Date:</th>
+            <td>{{ due_date|date:"F d, Y" }}{% if is_overdue %} <span style="color: #dc3545; font-weight: bold;">OVERDUE</span>{% endif %}</td>
+        </tr>
+    </table>
+</div>
+
+{% if is_overdue %}
+<div class="danger-box">
+    <strong>Overdue Notice</strong>
+    <p>
+        This payment is now overdue by {{ days_overdue }} days. Please make the payment as soon as possible to avoid
+        any disruption to your child's education.
+    </p>
+</div>
+{% endif %}
+
+<div class="info-box">
+    <strong>Payment Breakdown</strong>
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th style="text-align: right;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in payment_items %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td style="text-align: right;">{{ item.amount }} {{ currency }}</td>
+            </tr>
+            {% endfor %}
+            <tr style="border-top: 2px solid #0d6efd;">
+                <td><strong>Total Due:</strong></td>
+                <td style="text-align: right;"><strong>{{ amount_due }} {{ currency }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ payment_url }}" class="btn">Make Payment Now</a>
+</div>
+
+<div class="divider"></div>
+
+<p>
+    <strong>Payment Methods Available:</strong>
+</p>
+<ul>
+    <li>Online payment (Credit/Debit Card)</li>
+    <li>Bank transfer</li>
+    <li>Cash at school office</li>
+    <li>Mobile money</li>
+</ul>
+
+<p>
+    For any payment-related queries, please contact our finance department at {{ tenant.email }} or {{ tenant.phone }}.
+</p>
+
+<p>
+    Thank you for your prompt attention to this matter.
+</p>
+
+<p>
+    Best regards,<br>
+    <strong>{{ tenant.name }} Finance Department</strong>
+</p>
+{% endblock %}

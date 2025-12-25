@@ -411,3 +411,438 @@ class ParentAdd(CreateView):
     def form_valid(self, form):
         messages.success(self.request, "Parent added successfully.")
         return super().form_valid(form)
+
+
+# ########################################################
+# NEW: Role-Based Dashboard Views for Multi-Tenant System
+# ########################################################
+
+from .decorators import student_only, parent_only, professor_only, direction_only
+from django.db.models import Count, Avg, Q
+from datetime import datetime, timedelta
+from django.utils import timezone
+
+
+@login_required
+@student_only
+def dashboard_student(request):
+    """Student dashboard with personal academic information."""
+    student = get_object_or_404(Student, student=request.user)
+    current_session = Session.objects.filter(is_current_session=True).first()
+    current_semester = Semester.objects.filter(
+        is_current_semester=True, session=current_session
+    ).first()
+
+    # Get student's courses
+    courses = TakenCourse.objects.filter(
+        student=student,
+        course__semester=current_semester
+    ).select_related('course', 'course__allocated_course')
+
+    # Get recent grades (last 5)
+    recent_grades = TakenCourse.objects.filter(
+        student=student,
+        total__isnull=False
+    ).order_by('-id')[:5]
+
+    # Calculate GPA
+    gpa = TakenCourse.objects.filter(
+        student=student,
+        total__isnull=False
+    ).aggregate(Avg('total'))['total__avg'] or 0.0
+
+    # Get borrowed books (if library app exists)
+    borrowed_books = []
+    try:
+        from library.models import BorrowRecord
+        borrowed_books = BorrowRecord.objects.filter(
+            student=request.user,
+            status='borrowed'
+        ).select_related('book')[:5]
+    except:
+        pass
+
+    # Get upcoming events
+    upcoming_events = []
+    try:
+        from events.models import Event
+        upcoming_events = Event.objects.filter(
+            tenant=request.tenant,
+            start_date__gte=timezone.now(),
+            target_audience__in=['all', 'students']
+        ).order_by('start_date')[:5]
+    except:
+        pass
+
+    # Get attendance summary
+    attendance_summary = {}
+    try:
+        from attendance.models import AttendanceRecord
+        total_classes = AttendanceRecord.objects.filter(
+            student=request.user,
+            session=current_session
+        ).count()
+        present_classes = AttendanceRecord.objects.filter(
+            student=request.user,
+            session=current_session,
+            status='present'
+        ).count()
+        if total_classes > 0:
+            attendance_percentage = (present_classes / total_classes) * 100
+        else:
+            attendance_percentage = 0
+        attendance_summary = {
+            'total': total_classes,
+            'present': present_classes,
+            'percentage': round(attendance_percentage, 2)
+        }
+    except:
+        pass
+
+    context = {
+        'title': 'Student Dashboard',
+        'student': student,
+        'courses': courses,
+        'recent_grades': recent_grades,
+        'gpa': round(gpa, 2),
+        'borrowed_books': borrowed_books,
+        'upcoming_events': upcoming_events,
+        'attendance_summary': attendance_summary,
+        'current_session': current_session,
+        'current_semester': current_semester,
+    }
+
+    return render(request, 'accounts/dashboard_student.html', context)
+
+
+@login_required
+@parent_only
+def dashboard_parent(request):
+    """Parent dashboard with children's academic information."""
+    parent = get_object_or_404(Parent, user=request.user)
+    student = parent.student
+    current_session = Session.objects.filter(is_current_session=True).first()
+    current_semester = Semester.objects.filter(
+        is_current_semester=True, session=current_session
+    ).first()
+
+    # Get student's recent grades
+    recent_grades = TakenCourse.objects.filter(
+        student=student,
+        total__isnull=False
+    ).order_by('-id')[:10]
+
+    # Calculate GPA
+    gpa = TakenCourse.objects.filter(
+        student=student,
+        total__isnull=False
+    ).aggregate(Avg('total'))['total__avg'] or 0.0
+
+    # Get attendance summary
+    attendance_summary = {}
+    try:
+        from attendance.models import AttendanceRecord
+        total_classes = AttendanceRecord.objects.filter(
+            student=student.student,
+            session=current_session
+        ).count()
+        present_classes = AttendanceRecord.objects.filter(
+            student=student.student,
+            session=current_session,
+            status='present'
+        ).count()
+        if total_classes > 0:
+            attendance_percentage = (present_classes / total_classes) * 100
+        else:
+            attendance_percentage = 0
+        attendance_summary = {
+            'total': total_classes,
+            'present': present_classes,
+            'percentage': round(attendance_percentage, 2)
+        }
+    except:
+        pass
+
+    # Get payment status
+    payment_status = {}
+    try:
+        from payments.models import PaymentRecord
+        total_fees = PaymentRecord.objects.filter(
+            student=student.student,
+            session=current_session
+        ).aggregate(
+            total=models.Sum('amount'),
+            paid=models.Sum('amount', filter=Q(status='paid'))
+        )
+        payment_status = {
+            'total': total_fees['total'] or 0,
+            'paid': total_fees['paid'] or 0,
+            'balance': (total_fees['total'] or 0) - (total_fees['paid'] or 0)
+        }
+    except:
+        pass
+
+    # Get upcoming events
+    upcoming_events = []
+    try:
+        from events.models import Event
+        upcoming_events = Event.objects.filter(
+            tenant=request.tenant,
+            start_date__gte=timezone.now(),
+            target_audience__in=['all', 'parents']
+        ).order_by('start_date')[:5]
+    except:
+        pass
+
+    # Get disciplinary actions (if any)
+    disciplinary_actions = []
+    try:
+        from discipline.models import DisciplinaryAction
+        disciplinary_actions = DisciplinaryAction.objects.filter(
+            tenant=request.tenant,
+            student=student.student
+        ).order_by('-incident_date')[:5]
+    except:
+        pass
+
+    context = {
+        'title': 'Parent Dashboard',
+        'parent': parent,
+        'student': student,
+        'recent_grades': recent_grades,
+        'gpa': round(gpa, 2),
+        'attendance_summary': attendance_summary,
+        'payment_status': payment_status,
+        'upcoming_events': upcoming_events,
+        'disciplinary_actions': disciplinary_actions,
+        'current_session': current_session,
+        'current_semester': current_semester,
+    }
+
+    return render(request, 'accounts/dashboard_parent.html', context)
+
+
+@login_required
+@professor_only
+def dashboard_professor(request):
+    """Professor dashboard with teaching information."""
+    current_session = Session.objects.filter(is_current_session=True).first()
+    current_semester = Semester.objects.filter(
+        is_current_semester=True, session=current_session
+    ).first()
+
+    # Get professor's courses
+    my_courses = Course.objects.filter(
+        allocated_course__lecturer=request.user,
+        semester=current_semester
+    ).distinct()
+
+    # Get pending grade entries
+    pending_grades = TakenCourse.objects.filter(
+        course__allocated_course__lecturer=request.user,
+        total__isnull=True
+    ).count()
+
+    # Get pending notes approval
+    pending_notes = 0
+    try:
+        from notes.models import ProfessorNote
+        pending_notes = ProfessorNote.objects.filter(
+            professor=request.user,
+            status='pending'
+        ).count()
+    except:
+        pass
+
+    # Get today's classes
+    today_classes = []
+    try:
+        from course.models import Timetable
+        today = timezone.now().strftime('%A')
+        today_classes = Timetable.objects.filter(
+            course__in=my_courses,
+            day=today
+        ).select_related('course')
+    except:
+        pass
+
+    # Get attendance summary for today
+    today_attendance = {}
+    try:
+        from attendance.models import AttendanceRecord
+        today_date = timezone.now().date()
+        total_students = Student.objects.filter(
+            takencourse__course__in=my_courses
+        ).distinct().count()
+        marked_attendance = AttendanceRecord.objects.filter(
+            course__in=my_courses,
+            date=today_date
+        ).count()
+        today_attendance = {
+            'total': total_students,
+            'marked': marked_attendance,
+            'pending': total_students - marked_attendance
+        }
+    except:
+        pass
+
+    # Get student count
+    student_count = Student.objects.filter(
+        takencourse__course__in=my_courses
+    ).distinct().count()
+
+    context = {
+        'title': 'Professor Dashboard',
+        'my_courses': my_courses,
+        'student_count': student_count,
+        'pending_grades': pending_grades,
+        'pending_notes': pending_notes,
+        'today_classes': today_classes,
+        'today_attendance': today_attendance,
+        'current_session': current_session,
+        'current_semester': current_semester,
+    }
+
+    return render(request, 'accounts/dashboard_professor.html', context)
+
+
+@login_required
+@direction_only
+def dashboard_direction(request):
+    """Direction dashboard with school-wide statistics and management."""
+    current_session = Session.objects.filter(is_current_session=True).first()
+    current_semester = Semester.objects.filter(
+        is_current_semester=True, session=current_session
+    ).first()
+
+    # Student statistics
+    total_students = Student.objects.filter(student__tenant=request.tenant).count()
+    total_professors = User.objects.filter(
+        tenant=request.tenant,
+        is_lecturer=True
+    ).count()
+    total_staff = User.objects.filter(
+        tenant=request.tenant,
+        is_staff=True
+    ).count()
+
+    # Gender distribution
+    gender_stats = Student.objects.filter(
+        student__tenant=request.tenant
+    ).values('student__gender').annotate(count=Count('id'))
+
+    # Enrollment by level
+    level_stats = Student.objects.filter(
+        student__tenant=request.tenant
+    ).values('level').annotate(count=Count('id'))
+
+    # Pending enrollments
+    pending_enrollments = 0
+    try:
+        from enrollment.models import RegistrationForm
+        pending_enrollments = RegistrationForm.objects.filter(
+            tenant=request.tenant,
+            status='pending'
+        ).count()
+    except:
+        pass
+
+    # Pending note approvals
+    pending_notes = 0
+    try:
+        from notes.models import ProfessorNote
+        pending_notes = ProfessorNote.objects.filter(
+            tenant=request.tenant,
+            status='pending'
+        ).count()
+    except:
+        pass
+
+    # Recent disciplinary actions
+    recent_disciplinary = []
+    try:
+        from discipline.models import DisciplinaryAction
+        recent_disciplinary = DisciplinaryAction.objects.filter(
+            tenant=request.tenant
+        ).order_by('-created_at')[:5]
+    except:
+        pass
+
+    # Payment collection status
+    payment_stats = {}
+    try:
+        from payments.models import PaymentRecord
+        payment_summary = PaymentRecord.objects.filter(
+            tenant=request.tenant,
+            session=current_session
+        ).aggregate(
+            total=models.Sum('amount'),
+            collected=models.Sum('amount', filter=Q(status='paid')),
+            pending=models.Sum('amount', filter=Q(status='pending'))
+        )
+        payment_stats = {
+            'total': payment_summary['total'] or 0,
+            'collected': payment_summary['collected'] or 0,
+            'pending': payment_summary['pending'] or 0,
+            'percentage': round((payment_summary['collected'] or 0) / (payment_summary['total'] or 1) * 100, 2)
+        }
+    except:
+        pass
+
+    # Library statistics
+    library_stats = {}
+    try:
+        from library.models import BorrowRecord
+        library_stats = {
+            'borrowed': BorrowRecord.objects.filter(
+                tenant=request.tenant,
+                status='borrowed'
+            ).count(),
+            'overdue': BorrowRecord.objects.filter(
+                tenant=request.tenant,
+                status='overdue'
+            ).count()
+        }
+    except:
+        pass
+
+    # Upcoming events
+    upcoming_events = []
+    try:
+        from events.models import Event
+        upcoming_events = Event.objects.filter(
+            tenant=request.tenant,
+            start_date__gte=timezone.now()
+        ).order_by('start_date')[:5]
+    except:
+        pass
+
+    # Recent activity logs
+    recent_activities = []
+    try:
+        from core.models import ActivityLog
+        recent_activities = ActivityLog.objects.filter(
+            tenant=request.tenant
+        ).order_by('-timestamp')[:10]
+    except:
+        pass
+
+    context = {
+        'title': 'Direction Dashboard',
+        'total_students': total_students,
+        'total_professors': total_professors,
+        'total_staff': total_staff,
+        'gender_stats': gender_stats,
+        'level_stats': level_stats,
+        'pending_enrollments': pending_enrollments,
+        'pending_notes': pending_notes,
+        'recent_disciplinary': recent_disciplinary,
+        'payment_stats': payment_stats,
+        'library_stats': library_stats,
+        'upcoming_events': upcoming_events,
+        'recent_activities': recent_activities,
+        'current_session': current_session,
+        'current_semester': current_semester,
+    }
+
+    return render(request, 'accounts/dashboard_direction.html', context)

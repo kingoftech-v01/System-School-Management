@@ -1,9 +1,38 @@
-{% extends 'error_handler_base.html' %}
-{% load i18n %}
+{% extends 'base_auth.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "403 - Access Forbidden" %}{% endblock %}
+
+{% block auth_title %}{% trans "Access Denied" %}{% endblock %}
+{% block auth_subtitle %}{% trans "You don't have permission to access this resource" %}{% endblock %}
+
 {% block content %}
-<div class="text-center mt-5">
-    <h1>403, {% trans 'forbidden' %}</h1>
-    <p>{% trans 'You need the proper permission to make that request.' %}</p>
-    <a href="/" class="link">&LeftArrow; {% trans 'Return to the app' %}</a>
+<div class="text-center">
+    <div class="mb-4">
+        <i class="bi bi-shield-x text-danger" style="font-size: 5rem;"></i>
+    </div>
+
+    <h1 class="display-4 fw-bold mb-3">403</h1>
+    <h3 class="mb-3">{% trans "Access Forbidden" %}</h3>
+
+    <p class="text-muted mb-4">
+        {% trans "You don't have the necessary permissions to access this resource. This incident has been logged." %}
+    </p>
+
+    <div class="alert alert-warning" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {% trans "If you believe this is an error, please contact your system administrator." %}
+    </div>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+        <a href="javascript:history.back()" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>
+            {% trans "Go Back" %}
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+            <i class="bi bi-house me-2"></i>
+            {% trans "Return to Dashboard" %}
+        </a>
+    </div>
 </div>
 {% endblock %}

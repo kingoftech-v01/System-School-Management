@@ -1,0 +1,95 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Event Reminder: {{ event.title }} - {{ tenant.name }}{% endblock %}
+
+{% block email_header %}
+<h1>{{ tenant.name }}</h1>
+<p>Event Reminder</p>
+{% endblock %}
+
+{% block email_content %}
+<h2>Dear {{ recipient_name }},</h2>
+
+<p>
+    This is a reminder about an upcoming event at {{ tenant.name }}.
+</p>
+
+<div class="info-box" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+    <h3 style="color: #0d6efd; margin-top: 0;">{{ event.title }}</h3>
+
+    <table>
+        <tr>
+            <th style="width: 30%;">Date:</th>
+            <td><strong>{{ event.date|date:"l, F d, Y" }}</strong></td>
+        </tr>
+        <tr>
+            <th>Time:</th>
+            <td><strong>{{ event.start_time }} - {{ event.end_time }}</strong></td>
+        </tr>
+        <tr>
+            <th>Location:</th>
+            <td>{{ event.location }}</td>
+        </tr>
+        {% if event.participants_limit %}
+        <tr>
+            <th>Capacity:</th>
+            <td>{{ event.registered_count }}/{{ event.participants_limit }} registered</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<div style="margin: 20px 0;">
+    <strong>Description:</strong>
+    <p>{{ event.description }}</p>
+</div>
+
+{% if event.requirements %}
+<div class="warning-box">
+    <strong>Important Information</strong>
+    <p>{{ event.requirements }}</p>
+</div>
+{% endif %}
+
+{% if event.is_mandatory %}
+<div class="danger-box">
+    <strong>Mandatory Attendance</strong>
+    <p>
+        This event requires mandatory attendance. Please make sure to mark your calendar and plan accordingly.
+    </p>
+</div>
+{% endif %}
+
+{% if not is_registered and event.requires_registration %}
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ registration_url }}" class="btn">Register for Event</a>
+</div>
+{% elif is_registered %}
+<div class="success-box">
+    <strong>You're Registered!</strong>
+    <p>
+        Your registration for this event has been confirmed. We look forward to seeing you there!
+    </p>
+</div>
+{% endif %}
+
+<div class="divider"></div>
+
+{% if event.agenda %}
+<p>
+    <strong>Event Agenda:</strong>
+</p>
+<div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px;">
+    {{ event.agenda|linebreaks }}
+</div>
+{% endif %}
+
+<p>
+    For any questions regarding this event, please contact the event coordinator or school administration.
+</p>
+
+<p>
+    Best regards,<br>
+    <strong>{{ tenant.name }} Events Team</strong>
+</p>
+{% endblock %}

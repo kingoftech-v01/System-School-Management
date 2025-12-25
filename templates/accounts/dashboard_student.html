@@ -1,0 +1,330 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block page_title %}{% trans "Student Dashboard" %}{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-book me-2"></i>
+        {% trans "My Courses" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-calendar-check me-2"></i>
+        {% trans "Attendance" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-file-earmark-text me-2"></i>
+        {% trans "Grades" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-cash-coin me-2"></i>
+        {% trans "Payments" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-book-half me-2"></i>
+        {% trans "Library" %}
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#">
+        <i class="bi bi-calendar-event me-2"></i>
+        {% trans "Events" %}
+    </a>
+</li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- Welcome Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-1">{% trans "Welcome back," %} {{ user.first_name }}!</h4>
+                        <p class="card-text mb-0">{{ user.student_profile.class_name }} - {{ user.student_profile.filiere.name }}</p>
+                    </div>
+                    <div class="text-end">
+                        <i class="bi bi-mortarboard-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Enrolled Courses" %}</h6>
+                        <h3 class="mb-0">{{ enrolled_courses_count }}</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-book text-primary fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Attendance Rate" %}</h6>
+                        <h3 class="mb-0">{{ attendance_rate }}%</h3>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-calendar-check text-success fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Average Grade" %}</h6>
+                        <h3 class="mb-0">{{ average_grade|floatformat:1 }}</h3>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-trophy text-warning fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">{% trans "Pending Payments" %}</h6>
+                        <h3 class="mb-0">{{ pending_payment_amount|floatformat:0 }}</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-cash-coin text-danger fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="row g-4">
+
+    <!-- Left Column -->
+    <div class="col-lg-8">
+
+        <!-- Schedule / Timetable -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    {% trans "Today's Schedule" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if todays_schedule %}
+                <div class="list-group list-group-flush">
+                    {% for class in todays_schedule %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ class.course.name }}</h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-person me-1"></i>{{ class.professor.get_full_name }}
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-geo-alt me-1"></i>{{ class.room }}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary">{{ class.start_time }} - {{ class.end_time }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fs-1"></i>
+                    <p class="mt-2">{% trans "No classes scheduled for today" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Grades -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    {% trans "Recent Grades" %}
+                </h5>
+                <a href="#" class="btn btn-sm btn-outline-primary">{% trans "View All" %}</a>
+            </div>
+            <div class="card-body">
+                {% if recent_grades %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Course" %}</th>
+                                <th>{% trans "Assessment" %}</th>
+                                <th>{% trans "Grade" %}</th>
+                                <th>{% trans "Date" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in recent_grades %}
+                            <tr>
+                                <td>{{ grade.course.name }}</td>
+                                <td>{{ grade.assessment.name }}</td>
+                                <td>
+                                    <span class="badge {% if grade.score >= 15 %}bg-success{% elif grade.score >= 10 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ grade.score }}/20
+                                    </span>
+                                </td>
+                                <td>{{ grade.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-file-earmark-x fs-1"></i>
+                    <p class="mt-2">{% trans "No grades available yet" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+
+        <!-- Upcoming Events -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    {% trans "Upcoming Events" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_events %}
+                <div class="list-group list-group-flush">
+                    {% for event in upcoming_events %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex align-items-start">
+                            <div class="text-center me-3">
+                                <div class="bg-primary text-white rounded p-2" style="min-width: 50px;">
+                                    <div class="fw-bold">{{ event.date|date:"d" }}</div>
+                                    <div class="small">{{ event.date|date:"M" }}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <p class="text-muted small mb-0">{{ event.description|truncatewords:10 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fs-1"></i>
+                    <p class="mt-2">{% trans "No upcoming events" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Library Books -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-book-half me-2"></i>
+                    {% trans "My Library Books" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if borrowed_books %}
+                <div class="list-group list-group-flush">
+                    {% for book in borrowed_books %}
+                    <div class="list-group-item px-0">
+                        <h6 class="mb-1">{{ book.book.title }}</h6>
+                        <p class="text-muted small mb-1">{{ book.book.author }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="{% if book.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                                {% trans "Due:" %} {{ book.due_date|date:"M d, Y" }}
+                            </small>
+                            {% if book.is_overdue %}
+                            <span class="badge bg-danger">{% trans "Overdue" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-book fs-1"></i>
+                    <p class="mt-2">{% trans "No books borrowed" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>
+                    {% trans "Quick Actions" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-download me-2"></i>
+                        {% trans "Download Report Card" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-cash-coin me-2"></i>
+                        {% trans "Make Payment" %}
+                    </a>
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        {% trans "View Full Schedule" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -38,6 +38,15 @@ RELATION_SHIP = (
     (OTHER, _("Other")),
 )
 
+# Role choices for multi-tenant RBAC
+ROLE_CHOICES = (
+    ('parent', _('Parent')),
+    ('student', _('Student')),
+    ('professor', _('Professor')),
+    ('direction', _('Direction')),
+    ('admin', _('Administrator')),
+)
+
 
 class CustomUserManager(UserManager):
     def search(self, query=None):
@@ -68,10 +77,29 @@ GENDERS = ((_("M"), _("Male")), (_("F"), _("Female")))
 
 
 class User(AbstractUser):
+    # Legacy boolean fields (kept for backward compatibility)
     is_student = models.BooleanField(default=False)
     is_lecturer = models.BooleanField(default=False)
     is_parent = models.BooleanField(default=False)
     is_dep_head = models.BooleanField(default=False)
+
+    # NEW: Multi-tenant RBAC fields
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='student',
+        help_text=_('User role within the tenant')
+    )
+    tenant = models.ForeignKey(
+        'core.School',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='users',
+        help_text=_('School/tenant this user belongs to')
+    )
+
+    # Profile fields
     gender = models.CharField(max_length=1, choices=GENDERS, blank=True, null=True)
     phone = models.CharField(max_length=60, blank=True, null=True)
     address = models.CharField(max_length=60, blank=True, null=True)
@@ -79,6 +107,10 @@ class User(AbstractUser):
         upload_to="profile_pictures/%y/%m/%d/", default="default.png", null=True
     )
     email = models.EmailField(blank=True, null=True)
+
+    # Additional contact info
+    emergency_contact = models.CharField(max_length=60, blank=True, null=True)
+    emergency_phone = models.CharField(max_length=60, blank=True, null=True)
 
     username_validator = ASCIIUsernameValidator()
 

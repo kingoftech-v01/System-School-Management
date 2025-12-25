@@ -1,0 +1,139 @@
+{% extends "base_auth.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Setup Two-Factor Authentication" %}{% endblock %}
+
+{% block auth_title %}{% trans "Enable 2FA" %}{% endblock %}
+{% block auth_subtitle %}{% trans "Protect your account with two-factor authentication" %}{% endblock %}
+
+{% block content %}
+<h3 class="text-center mb-4">
+    <i class="bi bi-shield-check text-primary"></i>
+    {% trans "Setup Two-Factor Authentication" %}
+</h3>
+
+<div class="alert alert-warning" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {% trans "Two-factor authentication is mandatory for your role. This adds an extra layer of security to your account." %}
+</div>
+
+<div class="setup-steps">
+    <!-- Step 1: Install Authenticator App -->
+    <div class="step mb-4">
+        <h5 class="fw-bold">
+            <span class="badge bg-primary rounded-circle me-2">1</span>
+            {% trans "Install an Authenticator App" %}
+        </h5>
+        <p class="text-muted ms-5">
+            {% trans "Download and install an authenticator app on your mobile device:" %}
+        </p>
+        <ul class="ms-5">
+            <li>Google Authenticator (iOS, Android)</li>
+            <li>Microsoft Authenticator (iOS, Android)</li>
+            <li>Authy (iOS, Android)</li>
+        </ul>
+    </div>
+
+    <!-- Step 2: Scan QR Code -->
+    <div class="step mb-4">
+        <h5 class="fw-bold">
+            <span class="badge bg-primary rounded-circle me-2">2</span>
+            {% trans "Scan this QR Code" %}
+        </h5>
+        <div class="text-center my-3">
+            <div class="qr-code-container bg-white p-3 d-inline-block border rounded">
+                {{ qr_code_svg|safe }}
+            </div>
+        </div>
+        <p class="text-center text-muted">
+            {% trans "Or manually enter this secret key:" %}
+        </p>
+        <div class="text-center mb-3">
+            <code class="bg-light p-2 rounded d-inline-block">{{ secret_key }}</code>
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="copySecret()">
+                <i class="bi bi-clipboard"></i>
+                {% trans "Copy" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 3: Verify Code -->
+    <div class="step mb-4">
+        <h5 class="fw-bold">
+            <span class="badge bg-primary rounded-circle me-2">3</span>
+            {% trans "Verify the Code" %}
+        </h5>
+        <form method="post" action="{% url 'mfa_activate_totp' %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="id_code" class="form-label">
+                    {% trans "Enter the 6-digit code from your authenticator app:" %}
+                </label>
+                <input type="text"
+                       class="form-control form-control-lg text-center"
+                       id="id_code"
+                       name="code"
+                       pattern="[0-9]{6}"
+                       maxlength="6"
+                       placeholder="000000"
+                       required
+                       autocomplete="off"
+                       autofocus>
+                <div class="form-text">
+                    {% trans "The code changes every 30 seconds" %}
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {% trans "Verify and Enable 2FA" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Backup Codes Section -->
+<div class="alert alert-info mt-4" role="alert">
+    <h6 class="alert-heading">
+        <i class="bi bi-info-circle me-2"></i>
+        {% trans "Important: Backup Codes" %}
+    </h6>
+    <p class="mb-0">
+        {% trans "After enabling 2FA, you will receive backup codes. Save them in a secure place. You can use them to access your account if you lose your device." %}
+    </p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copySecret() {
+    const secretKey = "{{ secret_key }}";
+    navigator.clipboard.writeText(secretKey).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> {% trans "Copied!" %}';
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-success');
+
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+// Auto-focus and format the verification code input
+const codeInput = document.getElementById('id_code');
+codeInput.addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+</script>
+{% endblock %}
