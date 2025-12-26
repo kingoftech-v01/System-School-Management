@@ -78,6 +78,7 @@ django-anymail==13.1
 
 # Excel Export
 openpyxl==3.1.5
+django-import-export==4.2.1
 
 # Payment Integration
 stripe==14.0.1
