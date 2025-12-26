@@ -53,6 +53,7 @@ django-csp==3.8
 # Utilities
 python-dateutil==2.9.0.post0
 pytz==2025.2
+django-extensions==3.2.3
 
 # Translation & i18n
 django-modeltranslation==0.19.17
