@@ -27,7 +27,7 @@ flower==2.0.1
 # API & Forms
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
-django-filter==25.2
+django-filter==24.3
 django-crispy-forms==2.5
 crispy-bootstrap5==2025.6
 django-cors-headers==4.9.0
