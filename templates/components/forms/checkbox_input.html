@@ -1,0 +1,45 @@
+{% comment %}
+Reusable Checkbox Component
+Usage:
+    {% include "components/forms/checkbox_input.html" with
+        name="agree_terms"
+        label="I agree to the terms and conditions"
+        required=True
+        checked=True
+    %}
+
+Parameters:
+    - name: Checkbox name (required)
+    - label: Checkbox label (required)
+    - checked: Checked state (default: False)
+    - required: Required field (default: False)
+    - disabled: Disabled field (default: False)
+    - help_text: Help text (optional)
+    - error: Error message (optional)
+    - switch: Use switch style (default: False)
+{% endcomment %}
+
+<div class="mb-3">
+    <div class="form-check {% if switch %}form-switch{% endif %}">
+        <input class="form-check-input {% if error %}is-invalid{% endif %}"
+               type="checkbox"
+               id="{{ name }}"
+               name="{{ name }}"
+               {% if checked %}checked{% endif %}
+               {% if required %}required{% endif %}
+               {% if disabled %}disabled{% endif %}>
+
+        <label class="form-check-label" for="{{ name }}">
+            {{ label }}
+            {% if required %}<span class="text-danger">*</span>{% endif %}
+        </label>
+
+        {% if error %}
+        <div class="invalid-feedback">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    {% if help_text %}
+    <div class="form-text ms-4">{{ help_text }}</div>
+    {% endif %}
+</div>

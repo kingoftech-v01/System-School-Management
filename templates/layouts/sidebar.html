@@ -1,0 +1,74 @@
+{% load static i18n %}
+
+<aside class="sidebar" id="sidebar">
+    <!-- Logo & Brand -->
+    <div class="sidebar-header">
+        <a href="{% url 'dashboard' %}" class="sidebar-logo">
+            {% if tenant.logo %}
+            <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}" class="logo-img">
+            {% else %}
+            <i class="ri-graduation-cap-fill logo-icon"></i>
+            {% endif %}
+            <span class="sidebar-brand-text">{{ tenant.name }}</span>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+            <i class="ri-menu-fold-line"></i>
+        </button>
+    </div>
+
+    <!-- User Profile Section -->
+    <div class="sidebar-profile">
+        <div class="profile-avatar">
+            {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}">
+            {% else %}
+            <div class="avatar-placeholder">
+                {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="profile-info">
+            <h6 class="profile-name">{{ user.get_full_name }}</h6>
+            <small class="profile-role">{{ user.get_role_display }}</small>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+        <ul class="sidebar-menu">
+            <!-- Dashboard (All Roles) -->
+            <li class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <a href="{% url 'dashboard' %}" class="menu-link">
+                    <i class="ri-dashboard-line menu-icon"></i>
+                    <span class="menu-text">{% trans "Dashboard" %}</span>
+                </a>
+            </li>
+
+            <!-- Role-Specific Menu Items -->
+            {% if user_role == 'student' %}
+                {% include "layouts/sidebar_student.html" %}
+            {% elif user_role == 'parent' %}
+                {% include "layouts/sidebar_parent.html" %}
+            {% elif user_role == 'professor' %}
+                {% include "layouts/sidebar_professor.html" %}
+            {% elif user_role == 'direction' or user_role == 'admin' %}
+                {% include "layouts/sidebar_direction.html" %}
+            {% endif %}
+        </ul>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <a href="{% url 'profile' %}" class="sidebar-footer-link">
+            <i class="ri-settings-3-line"></i>
+            <span>{% trans "Settings" %}</span>
+        </a>
+        <form method="post" action="{% url 'account_logout' %}" class="sidebar-logout-form">
+            {% csrf_token %}
+            <button type="submit" class="sidebar-footer-link btn-logout">
+                <i class="ri-logout-box-line"></i>
+                <span>{% trans "Logout" %}</span>
+            </button>
+        </form>
+    </div>
+</aside>

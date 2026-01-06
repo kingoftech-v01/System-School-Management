@@ -1,0 +1,35 @@
+{% comment %}
+Reusable Badge Component
+Usage:
+    {% include "components/widgets/badge.html" with
+        text="Active"
+        color="success"
+        icon="ri-checkbox-circle-line"
+    %}
+
+Parameters:
+    - text: Badge text (required)
+    - color: primary|secondary|success|danger|warning|info|light|dark (default: primary)
+    - icon: RemixIcon class (optional)
+    - pill: Rounded pill style (default: False)
+    - size: sm|lg (optional)
+{% endcomment %}
+
+<span class="badge bg-{{ color|default:'primary' }}
+             {% if pill %}rounded-pill{% endif %}
+             {% if size %}badge-{{ size }}{% endif %}">
+    {% if icon %}<i class="{{ icon }} me-1"></i>{% endif %}
+    {{ text }}
+</span>
+
+<style>
+.badge-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.badge-lg {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+</style>

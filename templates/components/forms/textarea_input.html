@@ -1,0 +1,80 @@
+{% comment %}
+Reusable Textarea Component
+Usage:
+    {% include "components/forms/textarea_input.html" with
+        name="description"
+        label="Description"
+        rows=5
+        required=True
+        value=course.description
+    %}
+
+Parameters:
+    - name: Textarea name (required)
+    - label: Textarea label (required)
+    - rows: Number of rows (default: 3)
+    - placeholder: Placeholder text (optional)
+    - value: Textarea value (optional)
+    - required: Required field (default: False)
+    - disabled: Disabled field (default: False)
+    - readonly: Readonly field (default: False)
+    - help_text: Help text below textarea (optional)
+    - error: Error message (optional)
+    - max_length: Maximum character length (optional)
+    - show_counter: Show character counter (default: False)
+{% endcomment %}
+
+<div class="mb-3">
+    <label for="{{ name }}" class="form-label">
+        {{ label }}
+        {% if required %}<span class="text-danger">*</span>{% endif %}
+    </label>
+
+    <textarea class="form-control {% if error %}is-invalid{% endif %}"
+              id="{{ name }}"
+              name="{{ name }}"
+              rows="{{ rows|default:3 }}"
+              {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+              {% if required %}required{% endif %}
+              {% if disabled %}disabled{% endif %}
+              {% if readonly %}readonly{% endif %}
+              {% if max_length %}maxlength="{{ max_length }}"{% endif %}
+              {% if show_counter %}oninput="updateCounter{{ name }}()"{% endif %}>{{ value|default:'' }}</textarea>
+
+    {% if error %}
+    <div class="invalid-feedback">{{ error }}</div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between">
+        {% if help_text %}
+        <div class="form-text">{{ help_text }}</div>
+        {% endif %}
+
+        {% if show_counter and max_length %}
+        <small class="text-muted" id="counter{{ name }}">0 / {{ max_length }}</small>
+        {% endif %}
+    </div>
+</div>
+
+{% if show_counter and max_length %}
+<script>
+function updateCounter{{ name }}() {
+    const textarea = document.getElementById('{{ name }}');
+    const counter = document.getElementById('counter{{ name }}');
+    const currentLength = textarea.value.length;
+    counter.textContent = currentLength + ' / {{ max_length }}';
+
+    if (currentLength >= {{ max_length }}) {
+        counter.classList.add('text-danger');
+        counter.classList.remove('text-muted');
+    } else {
+        counter.classList.add('text-muted');
+        counter.classList.remove('text-danger');
+    }
+}
+// Initialize counter
+document.addEventListener('DOMContentLoaded', function() {
+    updateCounter{{ name }}();
+});
+</script>
+{% endif %}

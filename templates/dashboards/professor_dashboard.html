@@ -1,0 +1,69 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Professor Dashboard" %}{% endblock %}
+{% block page_title %}{% trans "Professor Dashboard" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+    <div class="dashboard-welcome mb-4">
+        <h2 class="welcome-title">{% trans "Welcome" %}, Dr. {{ user.last_name }}!</h2>
+        <p class="text-muted">{% trans "Manage your classes and students" %}</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            {% include "components/widgets/stat_card.html" with label="My Classes" value=courses_count|default:"0" icon="ri-presentation-line" color="primary" %}
+        </div>
+        <div class="col-md-4">
+            {% include "components/widgets/stat_card.html" with label="Total Students" value=total_students|default:"0" icon="ri-user-line" color="success" %}
+        </div>
+        <div class="col-md-4">
+            {% include "components/widgets/stat_card.html" with label="Pending Grades" value="0" icon="ri-file-list-line" color="warning" %}
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "My Courses" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Course" %}</th>
+                                    <th>{% trans "Code" %}</th>
+                                    <th>{% trans "Students" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in my_courses %}
+                                <tr>
+                                    <td>{{ course.title }}</td>
+                                    <td><code>{{ course.code }}</code></td>
+                                    <td>{{ course.students.count }}</td>
+                                    <td>
+                                        <a href="{% url 'add_score' %}" class="btn btn-sm btn-primary">{% trans "Mark Attendance" %}</a>
+                                        <a href="{% url 'add_score' %}" class="btn btn-sm btn-success">{% trans "Enter Grades" %}</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4">
+                                        {% include "components/widgets/empty_state.html" with icon="ri-presentation-line" title="No Courses" message="No courses assigned yet" %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

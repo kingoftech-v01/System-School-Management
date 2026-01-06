@@ -1,0 +1,17 @@
+{% load static i18n %}
+
+<nav aria-label="breadcrumb" class="dashboard-breadcrumb">
+    <div class="container-fluid px-4 py-2">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard' %}">
+                    <i class="ri-home-4-line me-1"></i>
+                    {% trans "Home" %}
+                </a>
+            </li>
+            {% block breadcrumb_items %}
+            <!-- Additional breadcrumb items -->
+            {% endblock %}
+        </ol>
+    </div>
+</nav>

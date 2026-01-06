@@ -1,0 +1,84 @@
+{% extends "emails/base_email.html" %}
+{% load i18n %}
+
+{% block email_title %}{% trans "Welcome" %} - {{ tenant.name }}{% endblock %}
+
+{% block email_header %}
+<h1>{% trans "Welcome to" %} {{ tenant.name }}! 🎉</h1>
+<p>{% trans "Your account is now active" %}</p>
+{% endblock %}
+
+{% block email_content %}
+<h2>{% trans "Hi" %} {{ user_name }},</h2>
+
+<p>
+    {% trans "Welcome to" %} <strong>{{ tenant_name }}</strong>!
+    {% trans "We're excited to have you as part of our learning community. Your email has been verified and your account is now fully activated" %}.
+</p>
+
+<div class="success-box">
+    <strong>{% trans "Account Status:" %}</strong> ✓ {% trans "Active and Verified" %}<br>
+    <strong>{% trans "Email:" %}</strong> {{ recipient_email }}<br>
+    <strong>{% trans "Role:" %}</strong> {{ user.get_role_display|default:"Student" }}
+</div>
+
+<h3>{% trans "Get Started" %}</h3>
+
+<p>{% trans "Here are some quick links to help you get started" %}:</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ dashboard_url }}" class="btn">{% trans "Go to Dashboard" %}</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>{% trans "Feature" %}</th>
+            <th>{% trans "Description" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>{% trans "Dashboard" %}</strong></td>
+            <td>{% trans "View your personalized dashboard with courses, grades, and attendance" %}</td>
+        </tr>
+        <tr>
+            <td><strong>{% trans "Profile" %}</strong></td>
+            <td>{% trans "Complete your profile and upload a photo" %}</td>
+        </tr>
+        <tr>
+            <td><strong>{% trans "Courses" %}</strong></td>
+            <td>{% trans "Browse and enroll in available courses" %}</td>
+        </tr>
+        <tr>
+            <td><strong>{% trans "Library" %}</strong></td>
+            <td>{% trans "Access digital resources and materials" %}</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>{% trans "Next Steps" %}</h3>
+
+<ol>
+    <li><a href="{{ profile_url }}">{% trans "Complete your profile" %}</a> {% trans "with your personal information" %}</li>
+    <li>{% trans "Review your enrolled courses and class schedule" %}</li>
+    <li>{% trans "Enable Two-Factor Authentication (2FA) for added security" %}</li>
+    <li>{% trans "Download the mobile app to stay connected on the go" %}</li>
+</ol>
+
+<div class="info-box">
+    <strong>{% trans "Need Help?" %}</strong><br>
+    {% trans "If you have any questions or need assistance getting started, our support team is here to help. Visit our" %}
+    <a href="{{ help_url }}">{% trans "Help Center" %}</a> {% trans "or contact us at" %}
+    <a href="mailto:{{ support_email }}">{{ support_email }}</a>.
+</div>
+
+<p>
+    {% trans "We look forward to supporting you on your academic journey" %}!
+</p>
+
+<p>
+    {% trans "Best regards" %},<br>
+    <strong>{{ tenant_name }} {% trans "Team" %}</strong>
+</p>
+{% endblock %}

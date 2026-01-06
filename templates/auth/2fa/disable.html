@@ -1,0 +1,119 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Disable Two-Factor Authentication" %}{% endblock %}
+{% block page_title %}{% trans "Disable Two-Factor Authentication" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-shield-cross-line me-2"></i>
+                        {% trans "Disable Two-Factor Authentication" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">
+                            <i class="ri-error-warning-line me-2"></i>
+                            {% trans "Security Warning" %}
+                        </h6>
+                        <p class="mb-0">
+                            {% trans "Disabling Two-Factor Authentication will reduce the security of your account. Anyone with your password will be able to access your account." %}
+                        </p>
+                    </div>
+
+                    <p>
+                        {% trans "If you're experiencing issues with your authenticator app, please contact support for assistance instead of disabling 2FA." %}
+                    </p>
+
+                    <h6 class="mb-3 mt-4">{% trans "Why keep 2FA enabled?" %}</h6>
+                    <ul class="mb-4">
+                        <li>{% trans "Protects your account even if your password is compromised" %}</li>
+                        <li>{% trans "Prevents unauthorized access to your academic records" %}</li>
+                        <li>{% trans "Secures your personal and financial information" %}</li>
+                        <li>{% trans "Adds an extra layer of protection for sensitive operations" %}</li>
+                    </ul>
+
+                    <div class="divider my-4"></div>
+
+                    <h6 class="mb-3">{% trans "Confirm Your Identity" %}</h6>
+                    <p>{% trans "To disable Two-Factor Authentication, please enter your password:" %}</p>
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label">{% trans "Password" %}</label>
+                            <input type="password"
+                                   class="form-control form-control-lg"
+                                   id="password"
+                                   name="password"
+                                   placeholder="{% trans 'Enter your password' %}"
+                                   required>
+                            <div class="invalid-feedback">
+                                {% trans "Please enter your password" %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="ri-shield-cross-line me-2"></i>
+                                {% trans "Disable Two-Factor Authentication" %}
+                            </button>
+                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                                <i class="ri-arrow-left-line me-2"></i>
+                                {% trans "Keep 2FA Enabled" %}
+                            </a>
+                        </div>
+                    </form>
+
+                    <div class="alert alert-info mt-4">
+                        <strong><i class="ri-information-line me-2"></i>{% trans "Need Help?" %}</strong><br>
+                        {% trans "If you've lost access to your authenticator app, please contact our support team for assistance." %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .divider {
+        height: 1px;
+        background-color: #dee2e6;
+    }
+</style>
+
+<script>
+    // Form validation and confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.needs-validation');
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                // Additional confirmation
+                if (!confirm('{% trans "Are you sure you want to disable Two-Factor Authentication? This will reduce the security of your account." %}')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                form.classList.add('was-validated');
+            });
+        }
+
+        // Auto-focus password field
+        document.getElementById('password').focus();
+    });
+</script>
+{% endblock %}

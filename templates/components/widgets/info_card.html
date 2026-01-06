@@ -1,0 +1,51 @@
+{% comment %}
+Reusable Info Card Component
+Usage:
+    {% include "components/widgets/info_card.html" with
+        title="Course Information"
+        icon="ri-book-line"
+        color="primary"
+    %}
+        <p>Card content goes here</p>
+    {% endinclude %}
+
+Parameters:
+    - title: Card title (required)
+    - icon: RemixIcon class (optional)
+    - color: primary|success|info|warning|danger|dark (default: primary)
+    - has_header: Show header section (default: true)
+    - has_footer: Show footer section (default: false)
+    - collapsible: Make card collapsible (default: false)
+{% endcomment %}
+
+<div class="card mb-3 border-{{ color|default:'primary' }}">
+    {% if has_header|default:True %}
+    <div class="card-header bg-{{ color|default:'primary' }} bg-opacity-10 border-bottom border-{{ color|default:'primary' }}">
+        <div class="d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0 text-{{ color|default:'primary' }}">
+                {% if icon %}<i class="{{ icon }} me-2"></i>{% endif %}
+                {{ title }}
+            </h5>
+            {% if collapsible %}
+            <button class="btn btn-sm btn-link text-{{ color|default:'primary' }}" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#collapse{{ title|slugify }}"
+                    aria-expanded="true">
+                <i class="ri-arrow-down-s-line"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="{% if collapsible %}collapse show{% endif %}" id="{% if collapsible %}collapse{{ title|slugify }}{% endif %}">
+        <div class="card-body">
+            {{ slot|default:"" }}
+        </div>
+
+        {% if has_footer %}
+        <div class="card-footer bg-light border-top">
+            {{ footer|default:"" }}
+        </div>
+        {% endif %}
+    </div>
+</div>

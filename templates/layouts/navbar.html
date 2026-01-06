@@ -1,0 +1,105 @@
+{% load static i18n %}
+
+<header class="dashboard-navbar">
+    <div class="navbar-left">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+            <i class="ri-menu-line"></i>
+        </button>
+        <h1 class="page-title">{% block page_title %}{% trans "Dashboard" %}{% endblock %}</h1>
+    </div>
+
+    <div class="navbar-right">
+        <!-- Search (Optional) -->
+        <div class="navbar-search d-none d-md-block">
+            <form action="/search/" method="get" class="search-form">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="{% trans 'Search...' %}">
+                <button type="submit" class="search-btn">
+                    <i class="ri-search-line"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Notifications -->
+        <div class="navbar-item dropdown">
+            <a href="#" class="navbar-icon" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="ri-notification-3-line"></i>
+                {% if unread_notifications_count > 0 %}
+                <span class="badge">{{ unread_notifications_count }}</span>
+                {% endif %}
+            </a>
+            <div class="dropdown-menu dropdown-menu-end notifications-dropdown">
+                <h6 class="dropdown-header">{% trans "Notifications" %}</h6>
+                <div class="dropdown-divider"></div>
+                {% if notifications %}
+                    {% for notification in notifications|slice:":5" %}
+                    <a href="{{ notification.url }}" class="dropdown-item">
+                        <small class="text-muted">{{ notification.created_at|timesince }}</small><br>
+                        {{ notification.message|truncatewords:10 }}
+                    </a>
+                    {% endfor %}
+                    <div class="dropdown-divider"></div>
+                {% endif %}
+                <a href="#" class="dropdown-item text-center text-primary">
+                    {% trans "View all" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Language Selector -->
+        <div class="navbar-item dropdown">
+            <a href="#" class="navbar-icon" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="ri-global-line"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+                {% get_available_languages as languages %}
+                {% for lang_code, lang_name in languages %}
+                <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="language" value="{{ lang_code }}">
+                    <button type="submit" class="dropdown-item {% if lang_code == LANGUAGE_CODE %}active{% endif %}">
+                        {{ lang_name }}
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- User Profile -->
+        <div class="navbar-item dropdown">
+            <a href="#" class="navbar-profile" data-bs-toggle="dropdown" aria-expanded="false">
+                {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" class="avatar-sm">
+                {% else %}
+                <div class="avatar-placeholder-sm">
+                    {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                </div>
+                {% endif %}
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+                <div class="dropdown-header">
+                    {{ user.get_full_name }}<br>
+                    <small class="text-muted">{{ user.get_role_display }}</small>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'profile' %}" class="dropdown-item">
+                    <i class="ri-user-line me-2"></i>{% trans "Profile" %}
+                </a>
+                <a href="{% url 'account_change_password' %}" class="dropdown-item">
+                    <i class="ri-lock-password-line me-2"></i>{% trans "Change Password" %}
+                </a>
+                {% if user.role in roles_requiring_2fa %}
+                <a href="{% url 'mfa_index' %}" class="dropdown-item">
+                    <i class="ri-shield-check-line me-2"></i>{% trans "2FA Settings" %}
+                </a>
+                {% endif %}
+                <div class="dropdown-divider"></div>
+                <form method="post" action="{% url 'account_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger">
+                        <i class="ri-logout-box-line me-2"></i>{% trans "Logout" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</header>

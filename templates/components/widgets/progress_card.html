@@ -1,0 +1,58 @@
+{% comment %}
+Progress Card Component
+Usage:
+    {% include "components/widgets/progress_card.html" with
+        title="Course Completion"
+        current=75
+        total=100
+        unit="%"
+        color="success"
+        show_percentage=True
+    %}
+
+Parameters:
+    - title: Progress title (required)
+    - current: Current value (required)
+    - total: Total/maximum value (required)
+    - unit: Unit symbol (optional, e.g., "%", "hours", "students")
+    - color: primary|success|info|warning|danger (default: primary)
+    - show_percentage: Show percentage text (default: True)
+    - striped: Use striped progress bar (default: False)
+    - animated: Animate progress bar (default: False)
+{% endcomment %}
+
+{% load mathfilters %}
+
+{% if total > 0 %}
+    {% widthratio current total 100 as percentage %}
+{% else %}
+    {% with percentage=0 %}{% endwith %}
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">{{ title }}</h6>
+            {% if show_percentage|default:True %}
+            <span class="badge bg-{{ color|default:'primary' }}">{{ percentage }}%</span>
+            {% endif %}
+        </div>
+
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-{{ color|default:'primary' }}
+                        {% if striped %}progress-bar-striped{% endif %}
+                        {% if animated %}progress-bar-animated{% endif %}"
+                 role="progressbar"
+                 style="width: {{ percentage }}%"
+                 aria-valuenow="{{ current }}"
+                 aria-valuemin="0"
+                 aria-valuemax="{{ total }}">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-2">
+            <small class="text-muted">{{ current }}{{ unit|default:'' }}</small>
+            <small class="text-muted">{{ total }}{{ unit|default:'' }}</small>
+        </div>
+    </div>
+</div>

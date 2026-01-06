@@ -1,0 +1,68 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Admin Dashboard" %}{% endblock %}
+{% block page_title %}{% trans "System Administration" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+    <div class="dashboard-welcome mb-4">
+        <h2 class="welcome-title">{% trans "System Administration" %}</h2>
+        <p class="text-muted">{% trans "Manage system-wide settings and tenants" %}</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            {% include "components/widgets/stat_card.html" with label="Total Tenants" value=total_tenants|default:"0" icon="ri-building-line" color="primary" %}
+        </div>
+        <div class="col-md-4">
+            {% include "components/widgets/stat_card.html" with label="System Status" value="Active" icon="ri-server-line" color="success" %}
+        </div>
+        <div class="col-md-4">
+            {% include "components/widgets/stat_card.html" with label="Security" value="OK" icon="ri-shield-check-line" color="info" %}
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Recent Activity" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for log in logs %}
+                        <div class="list-group-item px-0">
+                            <small class="text-muted">{{ log.created_at|timesince }} {% trans "ago" %}</small><br>
+                            {{ log.action }}
+                        </div>
+                        {% empty %}
+                        {% include "components/widgets/empty_state.html" with icon="ri-history-line" title="No Activity" message="No recent system activity" %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Quick Actions" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'admin:index' %}" class="btn btn-primary">
+                            <i class="ri-settings-line me-2"></i>{% trans "Django Admin" %}
+                        </a>
+                        <a href="{% url 'admin:index' %}" class="btn btn-success">
+                            <i class="ri-building-line me-2"></i>{% trans "Manage Tenants" %}
+                        </a>
+                        <a href="{% url 'monitoring:dashboard' %}" class="btn btn-info">
+                            <i class="ri-line-chart-line me-2"></i>{% trans "System Monitoring" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

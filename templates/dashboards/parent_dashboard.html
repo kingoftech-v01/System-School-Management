@@ -1,0 +1,33 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Parent Dashboard" %}{% endblock %}
+{% block page_title %}{% trans "Parent Dashboard" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+    <div class="dashboard-welcome mb-4">
+        <h2 class="welcome-title">{% trans "Welcome" %}, {{ user.first_name }}!</h2>
+        <p class="text-muted">{% trans "Monitor your child's academic progress" %}</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-warning">{{ error }}</div>
+    {% else %}
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Child Information" %}</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>{% trans "Name" %}:</strong> {{ student.student.get_full_name }}</p>
+                    <p><strong>{% trans "ID Number" %}:</strong> {{ student.id_number }}</p>
+                    <p><strong>{% trans "Level" %}:</strong> {{ student.level }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

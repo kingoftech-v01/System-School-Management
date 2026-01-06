@@ -1,0 +1,225 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - {% trans "Server Error" %}</title>
+    <link rel="stylesheet" href="{% static 'css/vendor/bootstrap/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/remixicon/remixicon.css' %}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .error-page-container {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .error-content {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .error-icon i {
+            font-size: 8rem;
+            color: #dc3545;
+            opacity: 0.8;
+        }
+
+        .error-code {
+            font-size: 6rem;
+            font-weight: 700;
+            color: #dc3545;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .error-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 1rem 0;
+        }
+
+        .error-message {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin: 1.5rem 0;
+        }
+
+        .error-details {
+            background: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            text-align: left;
+            border-radius: 4px;
+        }
+
+        .error-details h6 {
+            color: #dc3545;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-details ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: #64748b;
+        }
+
+        .error-details li {
+            margin-bottom: 0.5rem;
+        }
+
+        .error-actions {
+            margin-top: 2rem;
+        }
+
+        .error-actions .btn {
+            min-width: 150px;
+            margin: 0.5rem;
+        }
+
+        .error-help {
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0a58ca;
+        }
+
+        .btn-outline-secondary {
+            background-color: transparent;
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: #ffffff;
+        }
+
+        .btn-lg {
+            padding: 0.875rem 1.75rem;
+            font-size: 1.125rem;
+        }
+
+        @media (max-width: 768px) {
+            .error-icon i {
+                font-size: 5rem;
+            }
+
+            .error-code {
+                font-size: 4rem;
+            }
+
+            .error-title {
+                font-size: 1.5rem;
+            }
+
+            .error-message {
+                font-size: 1rem;
+            }
+
+            .error-actions .btn {
+                display: block;
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-page-container">
+        <div class="error-content">
+            <!-- Error Icon -->
+            <div class="error-icon mb-4">
+                <i class="ri-error-warning-line"></i>
+            </div>
+
+            <!-- Error Code -->
+            <h1 class="error-code">500</h1>
+
+            <!-- Error Title -->
+            <h2 class="error-title">{% trans "Internal Server Error" %}</h2>
+
+            <!-- Error Message -->
+            <p class="error-message">
+                {{ error_message|default:_("Oops! Something went wrong on our end. We're working to fix it.") }}
+            </p>
+
+            <!-- Error Details -->
+            <div class="error-details">
+                <h6><i class="ri-information-line me-2"></i>{% trans "What happened?" %}</h6>
+                <p style="color: #64748b; margin-bottom: 0.5rem;">
+                    {% trans "Our server encountered an unexpected error while processing your request. Our technical team has been automatically notified and is working on a solution." %}
+                </p>
+            </div>
+
+            <div class="error-details">
+                <h6><i class="ri-question-line me-2"></i>{% trans "What can you do?" %}</h6>
+                <ul>
+                    <li>{% trans "Try refreshing the page" %}</li>
+                    <li>{% trans "Go back to the previous page" %}</li>
+                    <li>{% trans "Return to the dashboard and try again" %}</li>
+                    <li>{% trans "If the problem persists, please contact support" %}</li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary btn-lg">
+                    <i class="ri-home-line me-2"></i>
+                    {% trans "Go to Homepage" %}
+                </a>
+                <a href="javascript:location.reload()" class="btn btn-outline-secondary btn-lg">
+                    <i class="ri-refresh-line me-2"></i>
+                    {% trans "Try Again" %}
+                </a>
+            </div>
+
+            <!-- Help Text -->
+            <div class="error-help">
+                <p style="color: #6c757d; margin: 0; font-size: 0.9rem;">
+                    {% trans "If this problem continues, please contact our support team" %}.
+                    <br>
+                    {% trans "Error reference" %}: <code>{{ request.path }}</code>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

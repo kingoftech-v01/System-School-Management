@@ -1,0 +1,138 @@
+{% extends "base_dashboard.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Setup Two-Factor Authentication" %}{% endblock %}
+{% block page_title %}{% trans "Setup Two-Factor Authentication" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-shield-check-line me-2"></i>
+                        {% trans "Enable Two-Factor Authentication" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="ri-information-line me-2"></i>
+                        {% trans "Two-Factor Authentication adds an extra layer of security to your account by requiring both your password and a verification code from your phone when logging in." %}
+                    </div>
+
+                    <h6 class="mb-3">{% trans "Step 1: Install an Authenticator App" %}</h6>
+                    <p>
+                        {% trans "Download and install an authenticator app on your phone. We recommend:" %}
+                    </p>
+                    <ul class="mb-4">
+                        <li><strong>Google Authenticator</strong> - {% trans "Android, iOS" %}</li>
+                        <li><strong>Microsoft Authenticator</strong> - {% trans "Android, iOS" %}</li>
+                        <li><strong>Authy</strong> - {% trans "Android, iOS, Desktop" %}</li>
+                    </ul>
+
+                    <div class="divider my-4"></div>
+
+                    <h6 class="mb-3">{% trans "Step 2: Scan QR Code" %}</h6>
+                    <p>{% trans "Open your authenticator app and scan this QR code:" %}</p>
+
+                    <div class="text-center my-4">
+                        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="img-fluid" style="max-width: 250px; border: 2px solid #dee2e6; padding: 10px; border-radius: 8px;">
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong>{% trans "Can't scan the QR code?" %}</strong><br>
+                        {% trans "You can manually enter this secret key in your authenticator app:" %}<br>
+                        <code class="d-block mt-2 p-2 bg-light" style="word-break: break-all;">{{ secret_key }}</code>
+                    </div>
+
+                    <div class="divider my-4"></div>
+
+                    <h6 class="mb-3">{% trans "Step 3: Verify Setup" %}</h6>
+                    <p>{% trans "Enter the 6-digit code from your authenticator app to verify the setup:" %}</p>
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="token" class="form-label">{% trans "Verification Code" %}</label>
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   id="token"
+                                   name="token"
+                                   placeholder="000000"
+                                   maxlength="6"
+                                   pattern="\d{6}"
+                                   autocomplete="off"
+                                   required
+                                   style="letter-spacing: 0.5em; font-size: 1.5rem;">
+                            <div class="form-text">
+                                {% trans "Enter the 6-digit code displayed in your authenticator app" %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="ri-shield-check-line me-2"></i>
+                                {% trans "Enable Two-Factor Authentication" %}
+                            </button>
+                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                                <i class="ri-arrow-left-line me-2"></i>
+                                {% trans "Cancel" %}
+                            </a>
+                        </div>
+                    </form>
+
+                    <div class="alert alert-success mt-4">
+                        <strong><i class="ri-lightbulb-line me-2"></i>{% trans "Pro Tip:" %}</strong>
+                        {% trans "After enabling 2FA, make sure to save your backup codes in a safe place. You'll need them if you lose access to your phone." %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .divider {
+        height: 1px;
+        background-color: #dee2e6;
+    }
+</style>
+
+<script>
+    // Auto-focus and format the verification code input
+    document.addEventListener('DOMContentLoaded', function() {
+        const tokenInput = document.getElementById('token');
+
+        if (tokenInput) {
+            tokenInput.focus();
+
+            // Only allow numbers
+            tokenInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            // Auto-submit when 6 digits are entered
+            tokenInput.addEventListener('input', function(e) {
+                if (this.value.length === 6) {
+                    // Optional: auto-submit the form
+                    // this.form.submit();
+                }
+            });
+        }
+
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+    });
+</script>
+{% endblock %}

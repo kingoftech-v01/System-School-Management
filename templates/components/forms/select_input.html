@@ -1,0 +1,66 @@
+{% comment %}
+Reusable Select Input Component
+Usage:
+    {% include "components/forms/select_input.html" with
+        name="level"
+        label="Student Level"
+        options=levels
+        selected=student.level
+        required=True
+    %}
+
+Parameters:
+    - name: Select name (required)
+    - label: Select label (required)
+    - options: List of options (required) - can be list of tuples [(value, display)] or list of objects
+    - selected: Selected value (optional)
+    - required: Required field (default: False)
+    - disabled: Disabled field (default: False)
+    - help_text: Help text below select (optional)
+    - error: Error message (optional)
+    - multiple: Allow multiple selections (default: False)
+    - placeholder: Placeholder option text (default: "Select an option")
+{% endcomment %}
+
+<div class="mb-3">
+    <label for="{{ name }}" class="form-label">
+        {{ label }}
+        {% if required %}<span class="text-danger">*</span>{% endif %}
+    </label>
+
+    <select class="form-select {% if error %}is-invalid{% endif %}"
+            id="{{ name }}"
+            name="{{ name }}{% if multiple %}[]{% endif %}"
+            {% if required %}required{% endif %}
+            {% if disabled %}disabled{% endif %}
+            {% if multiple %}multiple{% endif %}>
+
+        {% if not required and not multiple %}
+        <option value="">{{ placeholder|default:"Select an option" }}</option>
+        {% endif %}
+
+        {% for option in options %}
+            {% if option.0 %}
+                {# Tuple format: (value, display) #}
+                <option value="{{ option.0 }}"
+                        {% if selected and option.0 == selected %}selected{% endif %}>
+                    {{ option.1 }}
+                </option>
+            {% else %}
+                {# Simple list or objects #}
+                <option value="{{ option }}"
+                        {% if selected and option == selected %}selected{% endif %}>
+                    {{ option }}
+                </option>
+            {% endif %}
+        {% endfor %}
+    </select>
+
+    {% if error %}
+    <div class="invalid-feedback">{{ error }}</div>
+    {% endif %}
+
+    {% if help_text %}
+    <div class="form-text">{{ help_text }}</div>
+    {% endif %}
+</div>

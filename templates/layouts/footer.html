@@ -1,0 +1,20 @@
+{% load static i18n %}
+
+<footer class="dashboard-footer">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="mb-0 text-muted">
+                    &copy; {% now "Y" %} {{ tenant.name }}. {% trans "All rights reserved." %}
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-0">
+                    <a href="{% url 'privacy' %}" class="text-muted text-decoration-none me-3">{% trans "Privacy" %}</a>
+                    <a href="{% url 'terms' %}" class="text-muted text-decoration-none me-3">{% trans "Terms" %}</a>
+                    <small class="text-muted">{% trans "Powered by School Management System" %}</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
