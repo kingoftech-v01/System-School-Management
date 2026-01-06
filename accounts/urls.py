@@ -28,6 +28,9 @@ from .views import (
     register,
     render_lecturer_pdf_list,  # new
     render_student_pdf_list,  # new
+    setup_2fa,  # new
+    disable_2fa,  # new
+    manage_2fa,  # new
 )
 
 # from .forms import EmailValidationOnForgotPassword
@@ -63,6 +66,10 @@ urlpatterns = [
     path(
         "create_students_pdf_list/", render_student_pdf_list, name="student_list_pdf"
     ),  # new
+    # Two-Factor Authentication URLs
+    path("2fa/setup/", setup_2fa, name="setup_2fa"),
+    path("2fa/disable/", disable_2fa, name="disable_2fa"),
+    path("2fa/manage/", manage_2fa, name="manage_2fa"),
     # path('add-student/', StudentAddView.as_view(), name='add_student'),
     # path('programs/course/delete/<int:pk>/', course_delete, name='delete_course'),
     # Setting urls

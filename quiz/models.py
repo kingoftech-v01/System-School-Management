@@ -93,6 +93,15 @@ class Quiz(models.Model):
             "If yes, the quiz is not displayed in the quiz list and can only be taken by users who can edit quizzes."
         ),
     )
+
+    # NEW: Time limit for quiz
+    time_limit = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Time Limit (minutes)"),
+        help_text=_("Time limit for completing the quiz in minutes. Leave blank for no time limit.")
+    )
+
     timestamp = models.DateTimeField(auto_now=True)
 
     objects = QuizManager()
@@ -264,6 +273,14 @@ class Sitting(models.Model):
     start = models.DateTimeField(auto_now_add=True, verbose_name=_("Start"))
     end = models.DateTimeField(null=True, blank=True, verbose_name=_("End"))
 
+    # NEW: Track time spent on quiz
+    time_spent = models.DurationField(
+        null=True,
+        blank=True,
+        verbose_name=_("Time Spent"),
+        help_text=_("Total time spent on the quiz")
+    )
+
     objects = SittingManager()
 
     class Meta:
@@ -304,7 +321,30 @@ class Sitting(models.Model):
     def mark_quiz_complete(self):
         self.complete = True
         self.end = now()
+        # Calculate time spent
+        if self.start and self.end:
+            self.time_spent = self.end - self.start
         self.save()
+
+    def get_time_remaining(self):
+        """Get remaining time in seconds if quiz has time limit."""
+        if not self.quiz.time_limit:
+            return None
+
+        if self.complete or not self.start:
+            return 0
+
+        elapsed = (now() - self.start).total_seconds()
+        time_limit_seconds = self.quiz.time_limit * 60
+        remaining = max(0, time_limit_seconds - elapsed)
+        return int(remaining)
+
+    def is_time_expired(self):
+        """Check if quiz time has expired."""
+        if not self.quiz.time_limit:
+            return False
+        remaining = self.get_time_remaining()
+        return remaining is not None and remaining <= 0
 
     def add_incorrect_question(self, question):
         incorrect_ids = self.get_incorrect_questions
@@ -481,3 +521,43 @@ class EssayQuestion(Question):
 
     def answer_choice_to_string(self, guess):
         return str(guess)
+
+
+class TrueFalseQuestion(Question):
+    """True or False question type."""
+    correct_answer = models.BooleanField(
+        default=True,
+        verbose_name=_("Correct Answer"),
+        help_text=_("Select True or False as the correct answer")
+    )
+
+    class Meta:
+        verbose_name = _("True/False Question")
+        verbose_name_plural = _("True/False Questions")
+
+    def check_if_correct(self, guess):
+        """Check if the answer is correct."""
+        try:
+            # Convert string guess to boolean
+            if isinstance(guess, str):
+                guess = guess.lower() == 'true'
+            return bool(guess) == self.correct_answer
+        except (ValueError, TypeError):
+            return False
+
+    def get_answers(self):
+        """Return the correct answer."""
+        return self.correct_answer
+
+    def get_answers_list(self):
+        """Return a list of True/False choices."""
+        return [(True, _('True')), (False, _('False'))]
+
+    def answer_choice_to_string(self, guess):
+        """Convert guess to readable string."""
+        try:
+            if isinstance(guess, str):
+                guess = guess.lower() == 'true'
+            return _('True') if bool(guess) else _('False')
+        except (ValueError, TypeError):
+            return str(guess)

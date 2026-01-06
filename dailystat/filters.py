@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from apps.dailystat.models import DailyAttendanceStat
+from dailystat.models import DailyAttendanceStat
 from django.db.models import Q
 
 

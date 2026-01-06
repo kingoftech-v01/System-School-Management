@@ -71,4 +71,5 @@ class ActivityLogAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
+# Note: News And Events model will be migrated to articles app
 admin.site.register(NewsAndEvents, NewsAndEventsAdmin)

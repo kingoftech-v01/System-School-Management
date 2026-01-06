@@ -35,6 +35,10 @@ SHARED_APPS = [
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Translation - CRITICAL: Must be BEFORE django.contrib.admin
+    'modeltranslation',
+
     'django.contrib.admin',
     'django.contrib.humanize',
 
@@ -64,8 +68,7 @@ SHARED_APPS = [
     'django_celery_beat',
     'django_celery_results',
 
-    # Translation
-    'modeltranslation',
+    # Translation tools
     'rosetta',
 
     # File Storage
@@ -73,6 +76,15 @@ SHARED_APPS = [
 
     # Admin enhancements
     'import_export',
+
+    # New third-party packages
+    'mptt',
+    'taggit',
+    'ckeditor',
+    'ckeditor_uploader',
+    'rolepermissions',
+    'django_countries',
+    'drf_spectacular',
 
     # Shared tenant model
     'core',
@@ -98,6 +110,18 @@ TENANT_APPS = [
     'discipline',
     'monitoring',
     'quiz',
+
+    # New apps - backend integration (Phase 1)
+    'articles',
+    'notices',
+    'admissions',
+    'alumni',
+
+    # Phase 2 apps - edX-inspired features
+    'forums',
+    'certificates',
+    'grading',
+    'analytics',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -159,6 +183,12 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'templates',
+            BASE_DIR / 'templates' / 'dashboards',
+            BASE_DIR / 'templates' / 'layouts',
+            BASE_DIR / 'templates' / 'components',
+            BASE_DIR / 'templates' / 'emails',
+            BASE_DIR / 'templates' / 'auth',
+            BASE_DIR / 'templates' / 'errors',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -173,6 +203,9 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'accounts.context_processors.tenant_context',
                 'accounts.context_processors.user_role_context',
+                'accounts.context_processors.app_settings_context',
+                'accounts.context_processors.navigation_context',
+                'accounts.context_processors.permissions_context',
             ],
         },
     },
@@ -272,6 +305,8 @@ LOCALE_PATHS = [BASE_DIR / 'locale']
 # Model Translation
 MODELTRANSLATION_DEFAULT_LANGUAGE = 'en'
 MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'fr')
+# Auto-discover translation.py files in all apps
+# MODELTRANSLATION_TRANSLATION_FILES not needed - autodiscovery works with django-tenants
 
 # ==============================================================================
 # STATIC FILES (CSS, JavaScript, Images)
@@ -335,6 +370,18 @@ MFA_FORMS = {
 }
 
 # ==============================================================================
+# DJANGO-OTP CONFIGURATION (Additional 2FA support)
+# ==============================================================================
+
+OTP_TOTP_ISSUER = config('OTP_TOTP_ISSUER', default='School Management System')
+OTP_LOGIN_URL = '/accounts/2fa/verify/'
+
+# Optional: Customize OTP settings
+# OTP_TOTP_THROTTLE_FACTOR = 1  # Delay between attempts in seconds
+# OTP_TOTP_DIGITS = 6  # Number of digits in code (default: 6)
+# OTP_TOTP_PERIOD = 30  # Code validity period in seconds (default: 30)
+
+# ==============================================================================
 # SESSION CONFIGURATION
 # ==============================================================================
 
@@ -387,11 +434,12 @@ AXES_IP_WHITELIST = []
 # CONTENT SECURITY POLICY
 # ==============================================================================
 
+# All assets served locally - no CDN dependencies
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")  # Removed CDN
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")   # Removed CDN
 CSP_IMG_SRC = ("'self'", "data:", "https:")
-CSP_FONT_SRC = ("'self'", "https://cdn.jsdelivr.net")
+CSP_FONT_SRC = ("'self'",)                      # Removed CDN
 CSP_CONNECT_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
 
@@ -474,18 +522,33 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 50,
     'MAX_PAGE_SIZE': 100,
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+        'School_System.throttles.BurstRateThrottle',
+        'School_System.throttles.SustainedRateThrottle',
+        'School_System.throttles.AnonymousBurstRateThrottle',
+        'School_System.throttles.AnonymousSustainedRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
+        # Standard throttles
         'anon': '100/hour',
         'user': '1000/hour',
+
+        # Custom throttles
+        'burst': '60/minute',
+        'sustained': '1000/hour',
+        'anon_burst': '20/minute',
+        'anon_sustained': '100/hour',
+
+        # Specific endpoint throttles
         'search': '50/hour',
         'pdf_generation': '20/hour',
+        'verification': '200/hour',  # Certificate verification
+        'uploads': '30/hour',
+        'exports': '10/hour',
     },
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # JWT Settings
@@ -640,3 +703,88 @@ RATE_LIMITS = {
     'direction': '1000/hour',
     'admin': '2000/hour',
 }
+
+# ==============================================================================
+# CKEDITOR CONFIGURATION
+# ==============================================================================
+
+CKEDITOR_UPLOAD_PATH = "uploads/ckeditor/"
+CKEDITOR_IMAGE_BACKEND = "pillow"
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': ','.join([
+            'uploadimage',
+            'uploadwidget',
+            'image2',
+        ]),
+        'removePlugins': 'stylesheetparser',
+        'allowedContent': True,
+        'forcePasteAsPlainText': False,
+    },
+}
+
+# ==============================================================================
+# MPTT CONFIGURATION
+# ==============================================================================
+
+MPTT_ADMIN_LEVEL_INDENT = 20
+
+# ==============================================================================
+# TAGGIT CONFIGURATION
+# ==============================================================================
+
+TAGGIT_CASE_INSENSITIVE = True
+
+# ==============================================================================
+# ROLE PERMISSIONS CONFIGURATION
+# ==============================================================================
+
+ROLEPERMISSIONS_MODULE = 'School_System.roles'
+
+# ==============================================================================
+# BRAINTREE PAYMENT GATEWAY
+# ==============================================================================
+
+BRAINTREE_MERCHANT_ID = config('BRAINTREE_MERCHANT_ID', default='')
+BRAINTREE_PUBLIC_KEY = config('BRAINTREE_PUBLIC_KEY', default='')
+BRAINTREE_PRIVATE_KEY = config('BRAINTREE_PRIVATE_KEY', default='')
+BRAINTREE_ENVIRONMENT = config('BRAINTREE_ENVIRONMENT', default='Sandbox')  # 'Sandbox' or 'Production'
+
+# ==============================================================================
+# API DOCUMENTATION (drf-spectacular)
+# ==============================================================================
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'School Management System API',
+    'DESCRIPTION': 'Multi-tenant School Management Platform - RESTful API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/v[0-9]',
+}
+
+# ==============================================================================
+# ACADEMIC SETTINGS
+# ==============================================================================
+
+# Level choices for academic programs
+LEVEL_CHOICES = (
+    ('bachelor', 'Bachelor Degree'),
+    ('master', 'Master Degree'),
+    ('phd', 'PhD/Doctoral'),
+    ('diploma', 'Diploma'),
+    ('certificate', 'Certificate'),
+)
+
+# Semester choices
+SEMESTER_CHOICES = (
+    ('fall', 'Fall Semester'),
+    ('spring', 'Spring Semester'),
+    ('summer', 'Summer Semester'),
+)
+
+# Academic years (typically 1-5 for most programs)
+YEARS = tuple((i, f'Year {i}') for i in range(1, 6))

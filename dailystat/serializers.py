@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.dailystat.models import DailyAttendanceStat
+from dailystat.models import DailyAttendanceStat
 
 
 class DailyAttendanceStatSerializer(serializers.ModelSerializer):

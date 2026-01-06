@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.attendance.models import *
+from .models import Attendance, AttendanceReport, Group, Student, Subject, DailyAttendanceStat
 
 
 admin.site.register(Attendance)
@@ -21,3 +21,4 @@ class SubjectAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 admin.site.register(Subject, SubjectAdmin)
+admin.site.register(DailyAttendanceStat)

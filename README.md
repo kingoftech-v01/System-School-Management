@@ -1,6 +1,12 @@
-# School Management System
+# Aurelius - School Management System
+
+> **"Shaping Tomorrow's Leaders Today"**
+> *Fingere Duces Crastini Hodie*
 
 A comprehensive, multi-tenant school management system built with Django, PostgreSQL, Redis, and Docker. This system enables multiple schools to manage students, staff, courses, attendance, payments, results, and more under a single platform with complete data isolation.
+
+**Base Domain:** `aurelius.rhematek-solutions.com`
+**Demo Tenant:** `demo.aurelius.rhematek-solutions.com`
 
 [![Django](https://img.shields.io/badge/Django-5.1.4-green.svg)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Latest-blue.svg)](https://www.postgresql.org/)
@@ -1001,7 +1007,7 @@ tar -xzf media_backup.tar.gz
 
 ## License
 
-This is proprietary software. Each school requires a valid license to use this system.
+This is proprietary software. Each school requires a valid license to use the Aurelius platform.
 
 **License Types:**
 - Monthly Subscription
@@ -1011,17 +1017,18 @@ Contact: support@rhematek-solutions.com
 
 ## Credits
 
+**Project Name:** Aurelius
+**Slogan:** "Shaping Tomorrow's Leaders Today"
 **Developed by:** Rhematek Solutions
 **Project Lead:** Stephane Arthur Victor
 **Framework:** Django 5.1.4
-**Design:** Based on W3 CRM
 
 ## Support
 
 For technical support or license inquiries:
 - Email: support@rhematek-solutions.com
-- Documentation: [GitHub Wiki](wiki-url)
-- Issue Tracker: [GitHub Issues](issues-url)
+- Platform: https://aurelius.rhematek-solutions.com
+- Demo: https://demo.aurelius.rhematek-solutions.com
 
 ## Contributing
 

@@ -846,3 +846,174 @@ def dashboard_direction(request):
     }
 
     return render(request, 'accounts/dashboard_direction.html', context)
+
+
+# ########################################################
+# Two-Factor Authentication (2FA) Views
+# ########################################################
+
+
+@login_required
+def setup_2fa(request):
+    """
+    Setup TOTP-based Two-Factor Authentication for users.
+    Generates QR code for authenticator app scanning.
+    """
+    from django_otp import user_has_device
+    from django_otp.plugins.otp_totp.models import TOTPDevice
+    import qrcode
+    import io
+    import base64
+
+    user = request.user
+
+    # Check if user already has 2FA enabled
+    if user_has_device(user):
+        messages.info(request, "Two-Factor Authentication is already enabled for your account.")
+        return redirect('profile')
+
+    if request.method == 'POST':
+        token = request.POST.get('token')
+        device = TOTPDevice.objects.filter(user=user, confirmed=False).first()
+
+        if device and device.verify_token(token):
+            device.confirmed = True
+            device.save()
+            messages.success(request, "Two-Factor Authentication has been enabled successfully!")
+
+            # Send email notification
+            try:
+                from accounts.email_utils import send_2fa_enabled_email
+                send_2fa_enabled_email(user, request.tenant)
+            except Exception as e:
+                logger.error(f"Failed to send 2FA enabled email: {str(e)}")
+
+            return redirect('profile')
+        else:
+            messages.error(request, "Invalid verification code. Please try again.")
+
+    # Create or get unconfirmed device
+    device, created = TOTPDevice.objects.get_or_create(
+        user=user,
+        confirmed=False,
+        defaults={'name': 'default'}
+    )
+
+    # Generate QR code
+    otpauth_url = device.config_url
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(otpauth_url)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    qr_code_data = base64.b64encode(buffer.getvalue()).decode()
+
+    context = {
+        'title': 'Setup Two-Factor Authentication',
+        'device': device,
+        'qr_code': qr_code_data,
+        'secret_key': device.key,
+    }
+
+    return render(request, 'auth/2fa/setup.html', context)
+
+
+@login_required
+def disable_2fa(request):
+    """
+    Disable Two-Factor Authentication for the user.
+    Requires confirmation before disabling.
+    """
+    from django_otp.plugins.otp_totp.models import TOTPDevice
+    from django_otp import user_has_device
+
+    if not user_has_device(request.user):
+        messages.info(request, "Two-Factor Authentication is not enabled for your account.")
+        return redirect('profile')
+
+    if request.method == 'POST':
+        # Require password confirmation
+        password = request.POST.get('password')
+
+        if request.user.check_password(password):
+            TOTPDevice.objects.filter(user=request.user).delete()
+            messages.success(request, "Two-Factor Authentication has been disabled successfully.")
+
+            # Send email notification
+            try:
+                from accounts.email_utils import send_2fa_disabled_email
+                send_2fa_disabled_email(request.user, request.tenant)
+            except Exception as e:
+                logger.error(f"Failed to send 2FA disabled email: {str(e)}")
+
+            return redirect('profile')
+        else:
+            messages.error(request, "Incorrect password. Please try again.")
+
+    return render(request, 'auth/2fa/disable.html', {'title': 'Disable Two-Factor Authentication'})
+
+
+@login_required
+def manage_2fa(request):
+    """
+    Main 2FA management page showing status and options.
+    """
+    from django_otp import user_has_device
+    from django_otp.plugins.otp_totp.models import TOTPDevice
+
+    has_2fa = user_has_device(request.user)
+    devices = TOTPDevice.objects.filter(user=request.user, confirmed=True)
+
+    context = {
+        'title': 'Two-Factor Authentication',
+        'has_2fa': has_2fa,
+        'devices': devices,
+    }
+
+    return render(request, 'auth/2fa/manage.html', context)
+
+
+# ########################################################
+# Custom Error Handlers
+# ########################################################
+
+
+def custom_403_view(request, exception=None):
+    """
+    Custom 403 Forbidden error page.
+    """
+    context = {
+        'title': '403 - Access Forbidden',
+        'error_code': '403',
+        'error_title': 'Access Forbidden',
+        'error_message': 'You do not have permission to access this resource.',
+    }
+    return render(request, 'errors/403.html', context, status=403)
+
+
+def custom_404_view(request, exception=None):
+    """
+    Custom 404 Not Found error page.
+    """
+    context = {
+        'title': '404 - Page Not Found',
+        'error_code': '404',
+        'error_title': 'Page Not Found',
+        'error_message': 'The page you are looking for does not exist or has been moved.',
+    }
+    return render(request, 'errors/404.html', context, status=404)
+
+
+def custom_500_view(request):
+    """
+    Custom 500 Internal Server Error page.
+    """
+    context = {
+        'title': '500 - Server Error',
+        'error_code': '500',
+        'error_title': 'Internal Server Error',
+        'error_message': 'Something went wrong on our end. Our team has been notified and is working on a fix.',
+    }
+    return render(request, 'errors/500.html', context, status=500)

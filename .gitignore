@@ -128,11 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Custome 
+# Custom
 staticfiles/
 datadump.json
 local_note.txt
-docs/
 
 !media/
 media/*

@@ -1,9 +1,9 @@
 from typing import List
 from rest_framework import viewsets, status, response
 from rest_framework.decorators import action
-from apps.attendance.serializers import StudentSerializer, GroupSerializer, SubjectSerializer, AttendanceSerializer, AttendanceReportSerializer, AttendanceReportViewSerializer
-from apps.attendance.models import Student, Group, Subject, Attendance, AttendanceReport
-from apps.attendance.permissions import IsTeacher
+from attendance.serializers import StudentSerializer, GroupSerializer, SubjectSerializer, AttendanceSerializer, AttendanceReportSerializer, AttendanceReportViewSerializer
+from attendance.models import Student, Group, Subject, Attendance, AttendanceReport
+from attendance.permissions import IsTeacher
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, IsAdminUser
 
 

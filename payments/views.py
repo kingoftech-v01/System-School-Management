@@ -10,8 +10,13 @@ from django.views.generic.base import TemplateView
 
 from django.http import JsonResponse
 
-import gopay
-from gopay.enums import Recurrence, PaymentInstrument, BankSwiftCode, Currency, Language
+try:
+    import gopay
+    from gopay.enums import Recurrence, PaymentInstrument, BankSwiftCode, Currency, Language
+    GOPAY_AVAILABLE = True
+except ImportError:
+    GOPAY_AVAILABLE = False
+
 from .models import Invoice
 
 
@@ -68,6 +73,9 @@ def stripe_charge(request):
 
 
 def gopay_charge(request):
+    if not GOPAY_AVAILABLE:
+        return JsonResponse({"error": "GoPay payment gateway is not configured"}, status=501)
+
     if request.method == "POST":
         user = request.user
 

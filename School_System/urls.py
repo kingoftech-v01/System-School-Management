@@ -69,7 +69,37 @@ urlpatterns = [
     # Quiz (if applicable)
     path('quiz/', include('quiz.urls')),
 
-    # API endpoints
+    # Forums (discussion boards)
+    path('forums/', include('forums.urls')),
+
+    # Certificates (student certificates)
+    path('certificates/', include('certificates.urls')),
+
+    # Grading (rubrics and peer review)
+    path('grading/', include('grading.urls')),
+
+    # Analytics (student performance analytics)
+    path('analytics/', include('analytics.urls')),
+
+    # Articles (news and blog)
+    path('articles/', include('articles.urls')),
+
+    # Notices (announcements)
+    path('notices/', include('notices.urls')),
+
+    # Admissions (student applications)
+    path('admissions/', include('admissions.urls')),
+
+    # Alumni (alumni management)
+    path('alumni/', include('alumni.urls')),
+
+    # API v1 endpoints (Phase 2-4 apps)
+    path('api/v1/forums/', include('forums.urls')),
+    path('api/v1/certificates/', include('certificates.urls')),
+    path('api/v1/grading/', include('grading.urls')),
+    path('api/v1/analytics/', include('analytics.urls')),
+
+    # JWT Authentication
     path('api/token/', TokenVerifyView.as_view(), name='token_verify'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
@@ -97,3 +127,8 @@ if settings.DEBUG:
         path('404/', default_views.page_not_found, kwargs={'exception': Exception('Page not Found')}),
         path('500/', default_views.server_error),
     ]
+
+# Custom error handlers
+handler403 = 'accounts.views.custom_403_view'
+handler404 = 'accounts.views.custom_404_view'
+handler500 = 'accounts.views.custom_500_view'

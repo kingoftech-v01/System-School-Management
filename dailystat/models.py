@@ -1,6 +1,6 @@
 from django.db import models
-from apps.attendance.models import Subject, Student
-from apps.attendance.models import AttendanceReport, Satus, Subject
+from attendance.models import Subject, Student
+from attendance.models import AttendanceReport, Satus, Subject
 
 
 class DailyAttendanceStat(models.Model):

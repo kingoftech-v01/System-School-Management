@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.attendance.models import Group, Subject, Student, Attendance, AttendanceReport, Satus
+from attendance.models import Group, Subject, Student, Attendance, AttendanceReport, Satus
 
 
 class GroupSerializer(serializers.ModelSerializer):

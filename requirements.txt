@@ -83,3 +83,20 @@ django-import-export==4.2.1
 
 # Payment Integration
 stripe==14.0.1
+braintree==4.29.0
+
+# Rich Text Editor
+django-ckeditor==6.7.0
+
+# Hierarchical Data & Tagging
+django-mptt==0.16.0
+django-taggit==5.0.1
+
+# Model Utilities & Permissions
+django-model-utils==4.5.1
+django-role-permissions==3.2.0
+
+# Geographic & API Documentation
+django-countries==7.6.1
+django-autoslug==1.9.9
+drf-spectacular==0.27.2

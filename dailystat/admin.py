@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.dailystat.models import DailyAttendanceStat
+from dailystat.models import DailyAttendanceStat
 
 
 @admin.register(DailyAttendanceStat)
