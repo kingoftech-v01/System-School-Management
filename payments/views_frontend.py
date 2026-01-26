@@ -67,7 +67,7 @@ def stripe_charge(request):
         invoice = Invoice.objects.get(invoice_code=invoice_code)
         invoice.payment_complete = True
         invoice.save()
-        return redirect("completed")
+        return redirect("frontend:payments:completed")
         # return JsonResponse({"invoice_code": invoice.invoice_code}, status=201)
         # return render(request, 'payments/charge.html')
 
@@ -174,7 +174,7 @@ def create_invoice(request):
             invoice_code=str(uuid.uuid4()),
         )
         request.session["invoice_session"] = invoice.invoice_code
-        return redirect("payment_gateways")
+        return redirect("frontend:payments:payment_gateways")
     # if request.is_ajax():
     #     invoice = Invoice.objects.create(
     #         user = request.user,
