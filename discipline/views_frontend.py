@@ -39,7 +39,7 @@ def disciplinary_action_create(request):
             action.reported_by = request.user
             action.save()
             messages.success(request, _('Disciplinary action created successfully.'))
-            return redirect('discipline:action_list')
+            return redirect('frontend:discipline:action_list')
     else:
         form = DisciplinaryActionForm()
 
