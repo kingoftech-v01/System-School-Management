@@ -1,14 +1,58 @@
-from django.urls import path
-from . import views
+"""
+Notes URLs - Frontend and API routing.
+
+URL Namespaces:
+- Frontend: frontend:notes:view_name
+- API: api:v1:notes:resource-name
+"""
+
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
+from . import views_frontend
+from . import views_api
+
+
+# ============================================================================
+# API ROUTER (DRF ViewSets)
+# ============================================================================
+
+api_router = DefaultRouter()
+api_router.register(r'notes', views_api.ProfessorNoteViewSet, basename='note')
+api_router.register(r'history', views_api.NoteHistoryViewSet, basename='history')
+
+
+# ============================================================================
+# API URLPATTERNS
+# ============================================================================
+
+api_urlpatterns = [
+    path('', include(api_router.urls)),
+]
+
+
+# ============================================================================
+# FRONTEND URLPATTERNS
+# ============================================================================
+
+frontend_urlpatterns = [
+    path('', views_frontend.note_list, name='note_list'),
+    path('create/', views_frontend.note_create, name='note_create'),
+    path('<int:pk>/', views_frontend.note_detail, name='note_detail'),
+    path('<int:pk>/edit/', views_frontend.note_edit, name='note_edit'),
+    path('<int:pk>/delete/', views_frontend.note_delete, name='note_delete'),
+    path('pending/', views_frontend.notes_pending_approval, name='notes_pending'),
+    path('<int:pk>/approve/', views_frontend.note_approve, name='note_approve'),
+]
+
+
+# ============================================================================
+# APP URL CONFIGURATION
+# ============================================================================
 
 app_name = 'notes'
 
 urlpatterns = [
-    path('', views.note_list, name='note_list'),
-    path('create/', views.note_create, name='note_create'),
-    path('<int:pk>/', views.note_detail, name='note_detail'),
-    path('<int:pk>/edit/', views.note_edit, name='note_edit'),
-    path('<int:pk>/delete/', views.note_delete, name='note_delete'),
-    path('pending/', views.notes_pending_approval, name='notes_pending'),
-    path('<int:pk>/approve/', views.note_approve, name='note_approve'),
+    path('api/', include((api_urlpatterns, 'api'))),
+    path('', include((frontend_urlpatterns, 'frontend'))),
 ]

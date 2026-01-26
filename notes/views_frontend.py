@@ -50,7 +50,7 @@ def note_create(request):
             )
 
             messages.success(request, _('Note created successfully.'))
-            return redirect('notes:note_list')
+            return redirect('frontend:notes:note_list')
     else:
         form = ProfessorNoteForm()
 
@@ -99,7 +99,7 @@ def note_edit(request, pk):
     # Cannot edit approved notes
     if note.status == 'approved':
         messages.error(request, _('Cannot edit an approved note.'))
-        return redirect('notes:note_detail', pk=pk)
+        return redirect('frontend:notes:note_detail', pk=pk)
 
     if request.method == 'POST':
         old_score = note.score
@@ -121,7 +121,7 @@ def note_edit(request, pk):
                 )
 
             messages.success(request, _('Note updated successfully.'))
-            return redirect('notes:note_detail', pk=pk)
+            return redirect('frontend:notes:note_detail', pk=pk)
     else:
         form = ProfessorNoteForm(instance=note)
 
@@ -149,7 +149,7 @@ def note_delete(request, pk):
     # Cannot delete approved notes
     if note.status == 'approved':
         messages.error(request, _('Cannot delete an approved note.'))
-        return redirect('notes:note_detail', pk=pk)
+        return redirect('frontend:notes:note_detail', pk=pk)
 
     if request.method == 'POST':
         note.is_deleted = True
@@ -163,7 +163,7 @@ def note_delete(request, pk):
         )
 
         messages.success(request, _('Note deleted successfully.'))
-        return redirect('notes:note_list')
+        return redirect('frontend:notes:note_list')
 
     return render(request, 'notes/note_confirm_delete.html', {
         'note': note,
@@ -227,7 +227,7 @@ def note_approve(request, pk):
             notify_note_status_change.delay(note.id, note.status)
 
             messages.success(request, _('Note status updated successfully.'))
-            return redirect('notes:notes_pending')
+            return redirect('frontend:notes:notes_pending')
     else:
         form = NoteApprovalForm(instance=note)
 

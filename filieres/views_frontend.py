@@ -90,7 +90,7 @@ def filiere_create(request):
             filiere.tenant = request.tenant
             filiere.save()
             messages.success(request, _('Filiere created successfully.'))
-            return redirect('filieres:filiere_detail', pk=filiere.pk)
+            return redirect('frontend:filieres:filiere_detail', pk=filiere.pk)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -115,7 +115,7 @@ def filiere_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, _('Filiere updated successfully.'))
-            return redirect('filieres:filiere_detail', pk=filiere.pk)
+            return redirect('frontend:filieres:filiere_detail', pk=filiere.pk)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -139,12 +139,12 @@ def filiere_delete(request, pk):
     # Check if filiere has enrolled students
     if filiere.get_enrolled_students_count() > 0:
         messages.error(request, _('Cannot delete filiere with enrolled students. Mark as inactive instead.'))
-        return redirect('filieres:filiere_detail', pk=filiere.pk)
+        return redirect('frontend:filieres:filiere_detail', pk=filiere.pk)
 
     if request.method == 'POST':
         filiere.delete()
         messages.success(request, _('Filiere deleted successfully.'))
-        return redirect('filieres:filiere_list')
+        return redirect('frontend:filieres:filiere_list')
 
     return render(request, 'filieres/filiere_confirm_delete.html', {
         'filiere': filiere,
@@ -167,7 +167,7 @@ def add_subject(request, filiere_pk):
             subject.filiere = filiere
             subject.save()
             messages.success(request, _('Subject added to filiere successfully.'))
-            return redirect('filieres:filiere_detail', pk=filiere.pk)
+            return redirect('frontend:filieres:filiere_detail', pk=filiere.pk)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -196,7 +196,7 @@ def remove_subject(request, filiere_pk, subject_pk):
     if request.method == 'POST':
         filiere_subject.delete()
         messages.success(request, _('Subject removed from filiere.'))
-        return redirect('filieres:filiere_detail', pk=filiere_pk)
+        return redirect('frontend:filieres:filiere_detail', pk=filiere_pk)
 
     return render(request, 'filieres/subject_confirm_delete.html', {
         'filiere_subject': filiere_subject,
@@ -219,7 +219,7 @@ def add_requirement(request, filiere_pk):
             requirement.filiere = filiere
             requirement.save()
             messages.success(request, _('Requirement added successfully.'))
-            return redirect('filieres:filiere_detail', pk=filiere.pk)
+            return redirect('frontend:filieres:filiere_detail', pk=filiere.pk)
     else:
         form = FiliereRequirementForm()
 
