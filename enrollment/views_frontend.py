@@ -42,7 +42,7 @@ def register_step1(request):
             # Store registration ID in session
             request.session['registration_id'] = registration.id
             messages.success(request, _('Step 1 completed. Please provide parent information.'))
-            return redirect('enrollment:register_step2')
+            return redirect('frontend:enrollment:register_step2')
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -61,7 +61,7 @@ def register_step2(request):
     registration_id = request.session.get('registration_id')
     if not registration_id:
         messages.error(request, _('Please start from step 1.'))
-        return redirect('enrollment:register_step1')
+        return redirect('frontend:enrollment:register_step1')
 
     registration = get_object_or_404(RegistrationForm, id=registration_id)
 
@@ -70,7 +70,7 @@ def register_step2(request):
         if form.is_valid():
             form.save()
             messages.success(request, _('Step 2 completed. Please provide academic information.'))
-            return redirect('enrollment:register_step3')
+            return redirect('frontend:enrollment:register_step3')
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -90,7 +90,7 @@ def register_step3(request):
     registration_id = request.session.get('registration_id')
     if not registration_id:
         messages.error(request, _('Please start from step 1.'))
-        return redirect('enrollment:register_step1')
+        return redirect('frontend:enrollment:register_step1')
 
     registration = get_object_or_404(RegistrationForm, id=registration_id)
     tenant = registration.tenant if registration.tenant else getattr(request, 'tenant', None)
@@ -100,7 +100,7 @@ def register_step3(request):
         if form.is_valid():
             form.save()
             messages.success(request, _('Step 3 completed. Please provide additional information.'))
-            return redirect('enrollment:register_step4')
+            return redirect('frontend:enrollment:register_step4')
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -120,7 +120,7 @@ def register_step4(request):
     registration_id = request.session.get('registration_id')
     if not registration_id:
         messages.error(request, _('Please start from step 1.'))
-        return redirect('enrollment:register_step1')
+        return redirect('frontend:enrollment:register_step1')
 
     registration = get_object_or_404(RegistrationForm, id=registration_id)
 
@@ -143,7 +143,7 @@ def register_step4(request):
                 'You will receive an email confirmation shortly. '
                 'Our admissions team will review your application.'
             ))
-            return redirect('enrollment:register_complete', registration_id=registration.id)
+            return redirect('frontend:enrollment:register_complete', registration_id=registration.id)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -179,7 +179,7 @@ def upload_document(request, registration_id):
             document.registration = registration
             document.save()
             messages.success(request, _('Document uploaded successfully.'))
-            return redirect('enrollment:upload_document', registration_id=registration_id)
+            return redirect('frontend:enrollment:upload_document', registration_id=registration_id)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -319,7 +319,7 @@ def enrollment_review(request, registration_id):
             )
 
             messages.success(request, _(f'Registration {registration.get_status_display().lower()} successfully.'))
-            return redirect('enrollment:enrollment_detail', registration_id=registration.id)
+            return redirect('frontend:enrollment:enrollment_detail', registration_id=registration.id)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -351,7 +351,7 @@ def verify_document(request, document_id):
             document.verified_by = request.user
             document.save()
             messages.success(request, _('Document verification status updated.'))
-            return redirect('enrollment:enrollment_detail', registration_id=document.registration.id)
+            return redirect('frontend:enrollment:enrollment_detail', registration_id=document.registration.id)
     else:
         return JsonResponse({'error': 'Invalid request'}, status=400)
 

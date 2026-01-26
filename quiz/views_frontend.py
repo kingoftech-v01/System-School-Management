@@ -58,7 +58,7 @@ class QuizCreateView(CreateView):
         with transaction.atomic():
             self.object = form.save()
             return redirect(
-                "mc_create", slug=self.kwargs["slug"], quiz_id=self.object.id
+                "frontend:quiz:mc_create", slug=self.kwargs["slug"], quiz_id=self.object.id
             )
 
 
@@ -79,7 +79,7 @@ class QuizUpdateView(UpdateView):
     def form_valid(self, form):
         with transaction.atomic():
             self.object = form.save()
-            return redirect("quiz_index", self.kwargs["slug"])
+            return redirect("frontend:quiz:quiz_index", self.kwargs["slug"])
 
 
 @login_required
@@ -88,7 +88,7 @@ def quiz_delete(request, slug, pk):
     quiz = get_object_or_404(Quiz, pk=pk)
     quiz.delete()
     messages.success(request, "Quiz successfully deleted.")
-    return redirect("quiz_index", slug=slug)
+    return redirect("frontend:quiz:quiz_index", slug=slug)
 
 
 @login_required
@@ -154,7 +154,7 @@ class MCQuestionCreate(CreateView):
                         slug=self.kwargs["slug"],
                         quiz_id=self.kwargs["quiz_id"],
                     )
-                return redirect("quiz_index", slug=self.kwargs["slug"])
+                return redirect("frontend:quiz:quiz_index", slug=self.kwargs["slug"])
         else:
             return self.form_invalid(form)
 
@@ -235,7 +235,7 @@ class QuizTake(FormView):
         self.course = get_object_or_404(Course, pk=self.kwargs["pk"])
         if not Question.objects.filter(quiz=self.quiz).exists():
             messages.warning(request, "This quiz has no questions available.")
-            return redirect("quiz_index", slug=self.course.slug)
+            return redirect("frontend:quiz:quiz_index", slug=self.course.slug)
 
         self.sitting = Sitting.objects.user_sitting(
             request.user, self.quiz, self.course
@@ -245,7 +245,7 @@ class QuizTake(FormView):
                 request,
                 "You have already completed this quiz. Only one attempt is permitted.",
             )
-            return redirect("quiz_index", slug=self.course.slug)
+            return redirect("frontend:quiz:quiz_index", slug=self.course.slug)
 
         # Set self.question and self.progress here
         self.question = self.sitting.get_first_question()
