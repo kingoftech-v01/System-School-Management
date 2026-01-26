@@ -45,7 +45,7 @@ def event_create(request):
             event.created_by = request.user
             event.save()
             messages.success(request, _('Event created successfully.'))
-            return redirect('events:event_list')
+            return redirect('frontend:events:event_list')
     else:
         form = EventForm()
 
