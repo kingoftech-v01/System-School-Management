@@ -38,7 +38,7 @@ def borrow_book(request, book_id):
     else:
         messages.error(request, 'Book not available')
 
-    return redirect('library:book_list')
+    return redirect('frontend:library:book_list')
 
 
 @login_required
@@ -80,4 +80,4 @@ def return_book(request, record_id):
     record.book.save()
 
     messages.success(request, f'Successfully returned {record.book.title}')
-    return redirect('library:my_borrowed_books')
+    return redirect('frontend:library:my_borrowed_books')
