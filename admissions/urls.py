@@ -8,12 +8,12 @@ api_router.register(r'applications', views_api.AdmissionStudentViewSet, basename
 
 api_urlpatterns = [path('', include(api_router.urls))]
 frontend_urlpatterns = [
-    path('', views_frontend.admission_home, name='home'),
-    path('apply/', views_frontend.apply, name='apply'),
-    path('status/<int:application_id>/', views_frontend.check_status, name='check_status'),
+    path('', views_frontend.admission_session_list, name='home'),
+    path('apply/', views_frontend.admission_apply, name='apply'),
+    path('status/', views_frontend.admission_status, name='check_status'),
+    path('comment/<int:student_id>/', views_frontend.counseling_comment_create, name='counseling_comment'),
 ]
 
-app_name = 'admissions'
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),
     path('', include((frontend_urlpatterns, 'frontend'))),

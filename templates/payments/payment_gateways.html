@@ -72,7 +72,7 @@
 	<div class="row">
 		<div class="col-12 d-flex justify-content-center">
 
-			  <form method="POST" action="{% url 'gopay_payment' %}">
+			  <form method="POST" action="{% url 'frontend:payments:frontend:gopay_charge' %}">
 				{% csrf_token %}
 				<button name="pay" type="submit" class="btn btn-primary">Zaplatit</button>
 			  </form>
@@ -84,7 +84,7 @@
 			</div>
 			<div class="card-payment stripe">
 				<h4>Stripe</h4>
-				<form action="{% url 'charge' %}" method="POST">
+				<form action="{% url 'frontend:payments:frontend:stripe_charge' %}" method="POST">
 				  {% csrf_token %}
 				  <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
 			          data-key="{{ key }}"
@@ -99,14 +99,14 @@
 			</div>
 			<div class="card-payment coinbase">
 				<h4>CoinBase</h4>
-				<a href="{% url 'coinbase' %}" class="btn"><span style="font-weight: 1000">C</span> CoinBase</a>
+				<a href="{% url 'frontend:payments:frontend:coinbase' %}" class="btn"><span style="font-weight: 1000">C</span> CoinBase</a>
 				<p>
 					Make payment with stripe and get jobs done.
 				</p>
 			</div>
 			<div class="card-payment paylike">
 				<h4>Paylike</h4>
-				<a href="{% url 'paylike' %}" class="btn">Paylike</a>
+				<a href="{% url 'frontend:payments:frontend:paylike' %}" class="btn">Paylike</a>
 				<p>
 					Make payment with stripe and get jobs done.
 				</p>
@@ -147,7 +147,7 @@
     	// approve the payment complete for the invoice
     	function completeOrder() {
     		var invoice = '{{ invoice_session }}'
-    		var url = "{% url 'complete' %}";
+    		var url = "{% url 'frontend:payments:frontend:complete' %}";
 
     		fetch(url, {
     			method: 'POST',

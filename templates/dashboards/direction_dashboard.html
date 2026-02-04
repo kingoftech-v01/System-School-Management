@@ -35,25 +35,25 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <a href="{% url 'monitoring:dashboard' %}" class="btn btn-lg btn-outline-primary w-100">
+                            <a href="{% url 'frontend:monitoring:frontend:dashboard' %}" class="btn btn-lg btn-outline-primary w-100">
                                 <i class="ri-line-chart-line fs-3 d-block mb-2"></i>
                                 {% trans "View Reports" %}
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'enrollment:enrollment_list' %}" class="btn btn-lg btn-outline-success w-100">
+                            <a href="{% url 'frontend:enrollment:frontend:enrollment_list' %}" class="btn btn-lg btn-outline-success w-100">
                                 <i class="ri-user-add-line fs-3 d-block mb-2"></i>
                                 {% trans "Enroll Students" %}
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'payment_gateways' %}" class="btn btn-lg btn-outline-info w-100">
+                            <a href="{% url 'frontend:payments:frontend:payment_gateways' %}" class="btn btn-lg btn-outline-info w-100">
                                 <i class="ri-money-dollar-circle-line fs-3 d-block mb-2"></i>
                                 {% trans "Manage Payments" %}
                             </a>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'query' %}" class="btn btn-lg btn-outline-warning w-100">
+                            <a href="{% url 'frontend:search:frontend:query' %}" class="btn btn-lg btn-outline-warning w-100">
                                 <i class="ri-search-line fs-3 d-block mb-2"></i>
                                 {% trans "Search" %}
                             </a>

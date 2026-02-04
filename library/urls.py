@@ -9,12 +9,11 @@ api_router.register(r'borrow-records', views_api.BorrowRecordViewSet, basename='
 api_urlpatterns = [path('', include(api_router.urls))]
 frontend_urlpatterns = [
     path('', views_frontend.book_list, name='book_list'),
-    path('<int:pk>/', views_frontend.book_detail, name='book_detail'),
     path('my-borrowed/', views_frontend.my_borrowed_books, name='my_borrowed_books'),
     path('borrow/<int:book_id>/', views_frontend.borrow_book, name='borrow_book'),
+    path('return/<int:record_id>/', views_frontend.return_book, name='return_book'),
 ]
 
-app_name = 'library'
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),
     path('', include((frontend_urlpatterns, 'frontend'))),

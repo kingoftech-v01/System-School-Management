@@ -20,7 +20,7 @@
       <tr>
         <td> {{ forloop.counter }}.</td>
         <td>{{ lecturer.username }}</td>
-        <td><a href="{% url 'profile_single' lecturer.id %}">{{ lecturer.get_full_name }}</a></td>
+        <td><a href="{% url 'frontend:accounts:frontend:profile_single' lecturer.id %}">{{ lecturer.get_full_name }}</a></td>
         <td>{{ lecturer.email }}</td>
         <td>{{ lecturer.phone }}</td>
         <td>{{ lecturer.address }}</td>

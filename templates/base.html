@@ -47,7 +47,7 @@
     {% block navigation %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'frontend:core:frontend:dashboard' %}">
                 {% if tenant.logo %}
                 <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}" height="40" class="me-2">
                 {% else %}
@@ -66,7 +66,7 @@
                     {% if user.is_authenticated %}
 
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'dashboard' %}">
+                        <a class="nav-link" href="{% url 'frontend:core:frontend:dashboard' %}">
                             <i class="bi bi-speedometer2 me-1"></i>
                             {% trans "Dashboard" %}
                         </a>
@@ -159,7 +159,7 @@
                                 <small class="text-muted">{{ user.get_role_display }}</small>
                             </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'profile' %}">
+                            <li><a class="dropdown-item" href="{% url 'frontend:accounts:frontend:profile' %}">
                                 <i class="bi bi-person"></i> {% trans "My Profile" %}
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'account_change_password' %}">
@@ -254,9 +254,9 @@
                 <div class="col-md-4 mb-3 mb-md-0">
                     <h5>{% trans "Quick Links" %}</h5>
                     <ul class="list-unstyled">
-                        <li><a href="{% url 'dashboard' %}" class="text-decoration-none">{% trans "Dashboard" %}</a></li>
-                        <li><a href="{% url 'privacy' %}" class="text-decoration-none">{% trans "Privacy Policy" %}</a></li>
-                        <li><a href="{% url 'terms' %}" class="text-decoration-none">{% trans "Terms of Service" %}</a></li>
+                        <li><a href="{% url 'frontend:core:frontend:dashboard' %}" class="text-decoration-none">{% trans "Dashboard" %}</a></li>
+                        <li><a href="#" class="text-decoration-none">{% trans "Privacy Policy" %}</a></li>
+                        <li><a href="#" class="text-decoration-none">{% trans "Terms of Service" %}</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">

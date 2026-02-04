@@ -4,6 +4,6 @@
 <div class="text-center mt-5">
     <h1>{% trans 'Bad request' %}</h1>
     <p>{% trans 'Please make sure the form is correctly filled.' %}</p>
-    <a href="/" class="link">&LeftArrow; {% trans 'Return to the app' %}</a>
+    <a href="{% url 'frontend:core:frontend:home' %}" class="link">&LeftArrow; {% trans 'Return to the app' %}</a>
 </div>
 {% endblock %}

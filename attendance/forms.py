@@ -16,10 +16,9 @@ class AttendanceForm(forms.ModelForm):
 
     class Meta:
         model = Attendance
-        fields = ['subject', 'group', 'date']
+        fields = ['subject', 'date']
         widgets = {
             'subject': forms.Select(attrs={'class': 'form-select'}),
-            'group': forms.Select(attrs={'class': 'form-select'}),
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
@@ -70,8 +69,10 @@ class SubjectForm(forms.ModelForm):
 
     class Meta:
         model = Subject
-        fields = ['name', 'code']
+        fields = ['name', 'teacher', 'group', 'slug']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'teacher': forms.Select(attrs={'class': 'form-select'}),
+            'group': forms.SelectMultiple(attrs={'class': 'form-select'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control'}),
         }

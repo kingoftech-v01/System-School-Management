@@ -40,13 +40,13 @@ def attendance_dashboard(request):
     # Get today's attendance sessions
     today_attendances = Attendance.objects.filter(
         date=today,
-        lecturer=request.user
-    ).select_related('subject', 'group')
+        subject__teacher=request.user
+    ).select_related('subject')
 
     # Get recent attendance sessions
     recent_attendances = Attendance.objects.filter(
-        lecturer=request.user
-    ).select_related('subject', 'group').order_by('-date', '-created_at')[:10]
+        subject__teacher=request.user
+    ).select_related('subject').order_by('-date', '-created_at')[:10]
 
     context = {
         'today_attendances': today_attendances,
@@ -66,12 +66,10 @@ def take_attendance(request):
     if request.method == 'POST':
         form = AttendanceForm(request.POST, lecturer=request.user)
         if form.is_valid():
-            attendance = form.save(commit=False)
-            attendance.lecturer = request.user
-            attendance.save()
+            attendance = form.save()
 
             messages.success(request, _('Attendance session created. Now mark students.'))
-            return redirect('frontend:attendance:mark_attendance', pk=attendance.pk)
+            return redirect('frontend:attendance:frontend:mark_attendance', pk=attendance.pk)
     else:
         form = AttendanceForm(lecturer=request.user)
 
@@ -92,11 +90,12 @@ def mark_attendance(request, pk):
     attendance = get_object_or_404(
         Attendance,
         pk=pk,
-        lecturer=request.user
+        subject__teacher=request.user
     )
 
-    # Get students in the group
-    students = Student.objects.filter(group=attendance.group).order_by('last_name', 'first_name')
+    # Get students from all groups associated with the subject
+    groups = attendance.subject.group.all()
+    students = Student.objects.filter(group__in=groups).order_by('last_name', 'first_name')
 
     if request.method == 'POST':
         # Process attendance marks
@@ -110,7 +109,7 @@ def mark_attendance(request, pk):
                 )
 
         messages.success(request, _('Attendance marked successfully.'))
-        return redirect('frontend:attendance:attendance_detail', pk=attendance.pk)
+        return redirect('frontend:attendance:frontend:attendance_detail', pk=attendance.pk)
 
     # Get existing reports
     existing_reports = {
@@ -134,7 +133,7 @@ def mark_attendance(request, pk):
 def attendance_detail(request, pk):
     """View attendance session details."""
     attendance = get_object_or_404(
-        Attendance.objects.select_related('subject', 'group', 'lecturer'),
+        Attendance.objects.select_related('subject', 'subject__teacher'),
         pk=pk
     )
 

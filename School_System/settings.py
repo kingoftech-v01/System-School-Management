@@ -19,6 +19,20 @@ from django.utils.translation import gettext_lazy as _
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+ENV_FILE = BASE_DIR / '.env'
+load_dotenv(ENV_FILE)
+
+# Environment detection (production vs development)
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+IS_PRODUCTION = ENVIRONMENT == 'production'
+IS_DEVELOPMENT = ENVIRONMENT == 'development'
+
+# Debug output
+print(f"[SETTINGS] BASE_DIR: {BASE_DIR}")
+print(f"[SETTINGS] ENV_FILE: {ENV_FILE}, exists: {ENV_FILE.exists()}")
+print(f"[SETTINGS] ENVIRONMENT: {ENVIRONMENT} (IS_PRODUCTION={IS_PRODUCTION}, IS_DEVELOPMENT={IS_DEVELOPMENT})")
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -90,6 +104,13 @@ THIRD_PARTY_APPS = [
     "django_extensions",
 ]
 
+# Add django-tenants only in production (requires PostgreSQL)
+if IS_PRODUCTION:
+    THIRD_PARTY_APPS.insert(0, "django_tenants")
+    print(f"[SETTINGS] Production mode: django-tenants enabled")
+else:
+    print(f"[SETTINGS] Development mode: using SQLite, django-tenants disabled")
+
 # Custom apps
 PROJECT_APPS = [
     "core.apps.CoreConfig",
@@ -121,7 +142,7 @@ MIDDLEWARE = [
     "custom_account_u.middleware.AuthSecurityMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    "csp.middleware.CSPMiddleware",
+    # "csp.middleware.CSPMiddleware",  # Temporarily disabled due to CSP 4.0 migration issue
     "axes.middleware.AxesMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -160,20 +181,28 @@ ASGI_APPLICATION = "School_System.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "jac",
-        "USER": "postgres",
-        "PASSWORD": "Ps#yc7OmN4S+XNVtf&?8",
-        "HOST": "72.61.12.86",
-        "PORT": "8605",
-    },
-    "dev": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    },
-}
+# Database configuration (environment-aware)
+if IS_PRODUCTION:
+    # Production: PostgreSQL with django-tenants support
+    DATABASES = {
+        "default": {
+            "ENGINE": "django_tenants.postgresql_backend",
+            "NAME": os.getenv("DB_NAME", "jac"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", "Ps#yc7OmN4S+XNVtf&?8"),
+            "HOST": os.getenv("DB_HOST", "72.61.12.86"),
+            "PORT": os.getenv("DB_PORT", "8605"),
+        }
+    }
+    DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
+else:
+    # Development: SQLite (no multi-tenancy)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
@@ -491,7 +520,18 @@ REST_FRAMEWORK = {
 AXES_FAILURE_LIMIT = 5
 AXES_NEVER_LOCKOUT_WHITELIST = ["127.0.0.1", "localhost"]
 
-# django-csp settings
+# django-csp settings (new format for v4.0+)
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'"),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'),
+        'style-src': ("'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'),
+        'img-src': ("'self'", 'data:', 'https:'),
+        'font-src': ("'self'",),
+        'connect-src': ("'self'",),
+        'frame-ancestors': ("'none'",),
+    }
+}
 # CSP_REPORT_ONLY = True
 
 # django-compressor settings

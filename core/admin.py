@@ -4,45 +4,85 @@ Includes tenant management and shared models.
 """
 
 from django.contrib import admin
-from django_tenants.admin import TenantAdminMixin
+from django.conf import settings
 from modeltranslation.admin import TranslationAdmin
 from .models import School, Domain, Session, Semester, NewsAndEvents, ActivityLog
 
+# Check if we're using multi-tenancy (production mode)
+USE_TENANTS = 'django_tenants' in settings.INSTALLED_APPS
 
-@admin.register(School)
-class SchoolAdmin(TenantAdminMixin, admin.ModelAdmin):
-    """Admin for School (Tenant) model."""
-    list_display = ('name', 'slug', 'email', 'subscription_type', 'subscription_end', 'is_active', 'is_subscription_valid')
-    list_filter = ('is_active', 'subscription_type', 'country')
-    search_fields = ('name', 'slug', 'email', 'license_key')
-    readonly_fields = ('created_on', 'updated_on', 'schema_name')
+if USE_TENANTS:
+    from django_tenants.admin import TenantAdminMixin
 
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('name', 'slug', 'description', 'schema_name')
-        }),
-        ('Contact Information', {
-            'fields': ('email', 'phone', 'address', 'city', 'country', 'postal_code')
-        }),
-        ('Branding', {
-            'fields': ('logo', 'primary_color')
-        }),
-        ('Subscription & License', {
-            'fields': ('license_key', 'subscription_type', 'subscription_start', 'subscription_end', 'is_active', 'max_students', 'max_staff')
-        }),
-        ('Timestamps', {
-            'fields': ('created_on', 'updated_on'),
-            'classes': ('collapse',)
-        }),
-    )
+    @admin.register(School)
+    class SchoolAdmin(TenantAdminMixin, admin.ModelAdmin):
+        """Admin for School (Tenant) model - Production with multi-tenancy."""
+        list_display = ('name', 'slug', 'email', 'subscription_type', 'subscription_end', 'is_active', 'is_subscription_valid')
+        list_filter = ('is_active', 'subscription_type', 'country')
+        search_fields = ('name', 'slug', 'email', 'license_key')
+        readonly_fields = ('created_on', 'updated_on', 'schema_name')
 
+        fieldsets = (
+            ('Basic Information', {
+                'fields': ('name', 'slug', 'description', 'schema_name')
+            }),
+            ('Contact Information', {
+                'fields': ('email', 'phone', 'address', 'city', 'country', 'postal_code')
+            }),
+            ('Branding', {
+                'fields': ('logo', 'primary_color')
+            }),
+            ('Subscription & License', {
+                'fields': ('license_key', 'subscription_type', 'subscription_start', 'subscription_end', 'is_active', 'max_students', 'max_staff')
+            }),
+            ('Timestamps', {
+                'fields': ('created_on', 'updated_on'),
+                'classes': ('collapse',)
+            }),
+        )
 
-@admin.register(Domain)
-class DomainAdmin(admin.ModelAdmin):
-    """Admin for Domain model."""
-    list_display = ('domain', 'tenant', 'is_primary')
-    list_filter = ('is_primary',)
-    search_fields = ('domain', 'tenant__name')
+    @admin.register(Domain)
+    class DomainAdmin(admin.ModelAdmin):
+        """Admin for Domain model - Production with multi-tenancy."""
+        list_display = ('domain', 'tenant', 'is_primary')
+        list_filter = ('is_primary',)
+        search_fields = ('domain', 'tenant__name')
+
+else:
+    # Development mode: Regular admin without TenantAdminMixin
+    @admin.register(School)
+    class SchoolAdmin(admin.ModelAdmin):
+        """Admin for School model - Development without multi-tenancy."""
+        list_display = ('name', 'slug', 'email', 'subscription_type', 'subscription_end', 'is_active', 'is_subscription_valid')
+        list_filter = ('is_active', 'subscription_type', 'country')
+        search_fields = ('name', 'slug', 'email', 'license_key')
+        readonly_fields = ('created_on', 'updated_on')
+
+        fieldsets = (
+            ('Basic Information', {
+                'fields': ('name', 'slug', 'description')
+            }),
+            ('Contact Information', {
+                'fields': ('email', 'phone', 'address', 'city', 'country', 'postal_code')
+            }),
+            ('Branding', {
+                'fields': ('logo', 'primary_color')
+            }),
+            ('Subscription & License', {
+                'fields': ('license_key', 'subscription_type', 'subscription_start', 'subscription_end', 'is_active', 'max_students', 'max_staff')
+            }),
+            ('Timestamps', {
+                'fields': ('created_on', 'updated_on'),
+                'classes': ('collapse',)
+            }),
+        )
+
+    @admin.register(Domain)
+    class DomainAdmin(admin.ModelAdmin):
+        """Admin for Domain model - Development without multi-tenancy."""
+        list_display = ('domain', 'school', 'is_primary')
+        list_filter = ('is_primary',)
+        search_fields = ('domain', 'school__name')
 
 
 class NewsAndEventsAdmin(TranslationAdmin):

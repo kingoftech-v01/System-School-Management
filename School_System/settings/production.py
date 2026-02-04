@@ -184,15 +184,22 @@ SESSION_SAVE_EVERY_REQUEST = True
 # CORS - whitelist only
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Content Security Policy - strict
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'",)
-CSP_STYLE_SRC = ("'self'",)
-CSP_IMG_SRC = ("'self'", "data:", "https:")
-CSP_FONT_SRC = ("'self'",)
-CSP_CONNECT_SRC = ("'self'",)
-CSP_FRAME_ANCESTORS = ("'none'",)
-CSP_REPORT_URI = config('CSP_REPORT_URI', default='')
+# Content Security Policy - strict (django-csp 4.0+ format)
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'script-src': ("'self'",),
+        'style-src': ("'self'",),
+        'img-src': ("'self'", "data:", "https:"),
+        'font-src': ("'self'",),
+        'connect-src': ("'self'",),
+        'frame-ancestors': ("'none'",),
+        'report-uri': (config('CSP_REPORT_URI', default=''),) if config('CSP_REPORT_URI', default='') else None,
+    }
+}
+# Remove None values
+if CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri'] is None:
+    del CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri']
 
 # Trust X-Forwarded-* headers from nginx
 USE_X_FORWARDED_HOST = True

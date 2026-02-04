@@ -8,8 +8,8 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'session_list' %}">{% trans 'Session List' %}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:session_list' %}">{% trans 'Session List' %}</a></li>
       <li class="breadcrumb-item active" aria-current="page">{% trans 'Session Form' %}</li>
     </ol>
 </nav>

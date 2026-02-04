@@ -81,7 +81,7 @@
                     <small class="text-muted">{{ user.get_role_display }}</small>
                 </div>
                 <div class="dropdown-divider"></div>
-                <a href="{% url 'profile' %}" class="dropdown-item">
+                <a href="{% url 'frontend:accounts:frontend:profile' %}" class="dropdown-item">
                     <i class="ri-user-line me-2"></i>{% trans "Profile" %}
                 </a>
                 <a href="{% url 'account_change_password' %}" class="dropdown-item">

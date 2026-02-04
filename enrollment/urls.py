@@ -59,7 +59,6 @@ frontend_urlpatterns = [
 # APP URL CONFIGURATION
 # ============================================================================
 
-app_name = 'enrollment'
 
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),

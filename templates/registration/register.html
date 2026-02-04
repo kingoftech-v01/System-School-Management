@@ -76,7 +76,7 @@
     <button type="submit" class="btn btn-primary" id="login-btn"><i class="fas fa-sign-in-alt"></i><small>{% trans 'SIGN UP' %}</small></button>
   </form>
   <br>
-  <span> {% trans 'Already Registered ?' %} </span><a href="{% url 'login' %}" class="link">{% trans 'Login' %}</a>
+  <span> {% trans 'Already Registered ?' %} </span><a href="{% url 'account_login' %}" class="link">{% trans 'Login' %}</a>
 </div>
 {% endblock content %}
 

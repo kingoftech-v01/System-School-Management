@@ -46,7 +46,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">{% trans "Current Courses" %}</h5>
-                    <a href="{% url 'user_course_list' %}" class="btn btn-sm btn-primary">{% trans "View All" %}</a>
+                    <a href="{% url 'frontend:course:frontend:user_course_list' %}" class="btn btn-sm btn-primary">{% trans "View All" %}</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -98,7 +98,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">{% trans "Recent Grades" %}</h5>
-                    <a href="{% url 'grade_results' %}" class="btn btn-sm btn-primary">{% trans "View All" %}</a>
+                    <a href="{% url 'frontend:result:frontend:grade_results' %}" class="btn btn-sm btn-primary">{% trans "View All" %}</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">

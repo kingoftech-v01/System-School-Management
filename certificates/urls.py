@@ -70,7 +70,6 @@ frontend_urlpatterns = [
 # APP URL CONFIGURATION
 # ============================================================================
 
-app_name = 'certificates'
 
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),

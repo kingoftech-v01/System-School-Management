@@ -9,7 +9,7 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{% trans 'Course Registration' %}</li>
     </ol>
 </nav>
@@ -30,7 +30,7 @@
 
 {% if not all_courses_are_registered %}
 
-<form action="{% url 'course_registration' %}" method="POST">{% csrf_token %}
+<form action="{% url 'frontend:course:frontend:course_registration' %}" method="POST">{% csrf_token %}
     <div class="col-md-12 p-0 bg-white">
         <p class="form-title fw-bold">{% trans 'Course Add' %}</p>
         <div class="container">
@@ -186,7 +186,7 @@
     <p class="form-title"><b>{% trans 'Course Drop' %}</b></p>
     <div class="container">
         <p class="fw-bold">{{ student.level }}</p>
-        <form action="{% url 'course_drop' %}" method="POST">
+        <form action="{% url 'frontend:course:frontend:course_drop' %}" method="POST">
             {% csrf_token %}
             <div class="d-flex justify-content-between mb-4">
                 <button type="submit" class="btn btn-primary">
@@ -257,7 +257,7 @@
     </div>
 </div>
 
-<a class="btn btn-sm btn-secondary mt-3" href="{% url 'course_registration_form' %}" target="_blank" title="{% trans 'Print Registration Form' %}">
+<a class="btn btn-sm btn-secondary mt-3" href="{% url 'frontend:result:frontend:course_registration_form' %}" target="_blank" title="{% trans 'Print Registration Form' %}">
     <i class="fas fa-print"></i> {% trans 'Print Registerd Courses' %}
 </a>
 

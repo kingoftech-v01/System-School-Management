@@ -1,99 +1,97 @@
+"""
+Accounts URLs - Frontend and API routing.
+
+URL Namespaces:
+- Frontend: frontend:accounts:view_name
+- API: api:v1:accounts:resource-name
+"""
+
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
-# from django.contrib.auth.views import (
-#     PasswordResetView,
-#     PasswordResetDoneView,
-#     PasswordResetConfirmView,
-#     PasswordResetCompleteView,
-#     LoginView,
-#     LogoutView,
-# )
-from .views import (
-    profile,
-    profile_single,
-    admin_panel,
-    profile_update,
-    change_password,
-    LecturerFilterView,
-    StudentListView,
-    staff_add_view,
-    edit_staff,
-    delete_staff,
-    student_add_view,
-    edit_student,
-    delete_student,
-    edit_student_program,
-    ParentAdd,
-    validate_username,
-    register,
-    render_lecturer_pdf_list,  # new
-    render_student_pdf_list,  # new
-    setup_2fa,  # new
-    disable_2fa,  # new
-    manage_2fa,  # new
-)
+from . import views_frontend
+from . import views_api
 
-# from .forms import EmailValidationOnForgotPassword
 
+# ============================================================================
+# API ROUTER (DRF ViewSets)
+# ============================================================================
+
+api_router = DefaultRouter()
+api_router.register(r'users', views_api.UserViewSet, basename='user')
+api_router.register(r'students', views_api.StudentViewSet, basename='student')
+api_router.register(r'lecturers', views_api.LecturerViewSet, basename='lecturer')
+api_router.register(r'staff', views_api.StaffViewSet, basename='staff')
+
+
+# ============================================================================
+# API URLPATTERNS
+# ============================================================================
+
+api_urlpatterns = [
+    path('', include(api_router.urls)),
+    # Custom API views
+    path('validate-username/', views_api.ValidateUsernameAPIView.as_view(), name='validate-username'),
+    path('2fa/setup/', views_api.Setup2FAAPIView.as_view(), name='2fa-setup'),
+    path('2fa/disable/', views_api.Disable2FAAPIView.as_view(), name='2fa-disable'),
+]
+
+
+# ============================================================================
+# FRONTEND URLPATTERNS
+# ============================================================================
+
+frontend_urlpatterns = [
+    # Django auth URLs (login, logout, password reset)
+    path('', include('django.contrib.auth.urls')),
+
+    # Admin panel
+    path('admin_panel/', views_frontend.admin_panel, name='admin_panel'),
+
+    # Profile management
+    path('profile/', views_frontend.profile, name='profile'),
+    path('profile/<int:user_id>/detail/', views_frontend.profile_single, name='profile_single'),
+    path('setting/', views_frontend.profile_update, name='edit_profile'),
+    path('change_password/', views_frontend.change_password, name='change_password'),
+
+    # Lecturer management
+    path('lecturers/', views_frontend.LecturerFilterView.as_view(), name='lecturer_list'),
+    path('lecturer/add/', views_frontend.staff_add_view, name='add_lecturer'),
+    path('staff/<int:pk>/edit/', views_frontend.edit_staff, name='staff_edit'),
+    path('lecturers/<int:pk>/delete/', views_frontend.delete_staff, name='lecturer_delete'),
+
+    # Student management
+    path('students/', views_frontend.StudentListView.as_view(), name='student_list'),
+    path('student/add/', views_frontend.student_add_view, name='add_student'),
+    path('student/<int:pk>/edit/', views_frontend.edit_student, name='student_edit'),
+    path('students/<int:pk>/delete/', views_frontend.delete_student, name='student_delete'),
+    path('edit_student_program/<int:pk>/', views_frontend.edit_student_program, name='student_program_edit'),
+
+    # Parent management
+    path('parents/add/', views_frontend.ParentAdd.as_view(), name='add_parent'),
+
+    # Registration
+    path('register/', views_frontend.register, name='register'),
+
+    # AJAX endpoints
+    path('ajax/validate-username/', views_frontend.validate_username, name='validate_username'),
+
+    # PDF generation
+    path('create_lecturers_pdf_list/', views_frontend.render_lecturer_pdf_list, name='lecturer_list_pdf'),
+    path('create_students_pdf_list/', views_frontend.render_student_pdf_list, name='student_list_pdf'),
+
+    # Two-Factor Authentication
+    path('2fa/setup/', views_frontend.setup_2fa, name='setup_2fa'),
+    path('2fa/disable/', views_frontend.disable_2fa, name='disable_2fa'),
+    path('2fa/manage/', views_frontend.manage_2fa, name='manage_2fa'),
+]
+
+
+# ============================================================================
+# APP URL CONFIGURATION
+# ============================================================================
 
 urlpatterns = [
-    path("", include("django.contrib.auth.urls")),
-    path("admin_panel/", admin_panel, name="admin_panel"),
-    path("profile/", profile, name="profile"),
-    path("profile/<int:user_id>/detail/", profile_single, name="profile_single"),
-    path("setting/", profile_update, name="edit_profile"),
-    path("change_password/", change_password, name="change_password"),
-    path("lecturers/", LecturerFilterView.as_view(), name="lecturer_list"),
-    path("lecturer/add/", staff_add_view, name="add_lecturer"),
-    path("staff/<int:pk>/edit/", edit_staff, name="staff_edit"),
-    path("lecturers/<int:pk>/delete/", delete_staff, name="lecturer_delete"),
-    path("students/", StudentListView.as_view(), name="student_list"),
-    path("student/add/", student_add_view, name="add_student"),
-    path("student/<int:pk>/edit/", edit_student, name="student_edit"),
-    path("students/<int:pk>/delete/", delete_student, name="student_delete"),
-    path(
-        "edit_student_program/<int:pk>/",
-        edit_student_program,
-        name="student_program_edit",
-    ),
-    path("parents/add/", ParentAdd.as_view(), name="add_parent"),
-    path("ajax/validate-username/", validate_username, name="validate_username"),
-    path("register/", register, name="register"),
-    # paths to pdf
-    path(
-        "create_lecturers_pdf_list/", render_lecturer_pdf_list, name="lecturer_list_pdf"
-    ),  # new
-    path(
-        "create_students_pdf_list/", render_student_pdf_list, name="student_list_pdf"
-    ),  # new
-    # Two-Factor Authentication URLs
-    path("2fa/setup/", setup_2fa, name="setup_2fa"),
-    path("2fa/disable/", disable_2fa, name="disable_2fa"),
-    path("2fa/manage/", manage_2fa, name="manage_2fa"),
-    # path('add-student/', StudentAddView.as_view(), name='add_student'),
-    # path('programs/course/delete/<int:pk>/', course_delete, name='delete_course'),
-    # Setting urls
-    # path('profile/<int:pk>/edit/', profileUpdateView, name='edit_profile'),
-    # path('profile/<int:pk>/change-password/', changePasswordView, name='change_password'),
-    # ################################################################
-    # path('login/', LoginView.as_view(), name='login'),
-    # path('logout/', LogoutView.as_view(), name='logout', kwargs={'next_page': '/'}),
-    # path('password-reset/', PasswordResetView.as_view(
-    #     form_class=EmailValidationOnForgotPassword,
-    #     template_name='registration/password_reset.html'
-    # ),
-    #      name='password_reset'),
-    # path('password-reset/done/', PasswordResetDoneView.as_view(
-    #     template_name='registration/password_reset_done.html'
-    # ),
-    #      name='password_reset_done'),
-    # path('password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(
-    #     template_name='registration/password_reset_confirm.html'
-    # ),
-    #      name='password_reset_confirm'),
-    # path('password-reset-complete/', PasswordResetCompleteView.as_view(
-    #     template_name='registration/password_reset_complete.html'
-    # ),
-    #      name='password_reset_complete')
-    # ################################################################
+    path('api/', include((api_urlpatterns, 'api'))),
+    path('', include((frontend_urlpatterns, 'frontend'))),
 ]

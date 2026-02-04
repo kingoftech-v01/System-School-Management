@@ -3,7 +3,7 @@
 <aside class="sidebar" id="sidebar">
     <!-- Logo & Brand -->
     <div class="sidebar-header">
-        <a href="{% url 'dashboard' %}" class="sidebar-logo">
+        <a href="{% url 'frontend:core:frontend:dashboard' %}" class="sidebar-logo">
             {% if tenant.logo %}
             <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}" class="logo-img">
             {% else %}
@@ -38,7 +38,7 @@
         <ul class="sidebar-menu">
             <!-- Dashboard (All Roles) -->
             <li class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                <a href="{% url 'dashboard' %}" class="menu-link">
+                <a href="{% url 'frontend:core:frontend:dashboard' %}" class="menu-link">
                     <i class="ri-dashboard-line menu-icon"></i>
                     <span class="menu-text">{% trans "Dashboard" %}</span>
                 </a>
@@ -59,7 +59,7 @@
 
     <!-- Sidebar Footer -->
     <div class="sidebar-footer">
-        <a href="{% url 'profile' %}" class="sidebar-footer-link">
+        <a href="{% url 'frontend:accounts:frontend:profile' %}" class="sidebar-footer-link">
             <i class="ri-settings-3-line"></i>
             <span>{% trans "Settings" %}</span>
         </a>

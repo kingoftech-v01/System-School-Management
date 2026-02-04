@@ -11,7 +11,7 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
       <li class="breadcrumb-item active" aria-current="page">{{ user.get_full_name }}</li>
     </ol>
 </nav>
@@ -33,9 +33,9 @@
                 </ul>
             </div>
             <hr>
-            <a class="mb-2" href="{% url 'edit_profile' %}"><i class="fas fa-user-edit unstyled"></i>
+            <a class="mb-2" href="{% url 'frontend:accounts:frontend:edit_profile' %}"><i class="fas fa-user-edit unstyled"></i>
                 <span class="mobile-hide">{% trans 'Edit Profile' %}</span></a>
-            <a href="{% url 'change_password' %}"><i class="fas fa-lock unstyled"></i><span class="mobile-hide">
+            <a href="{% url 'frontend:accounts:frontend:change_password' %}"><i class="fas fa-lock unstyled"></i><span class="mobile-hide">
                 {% trans 'Change password' %}</span></a>
         </div>
     </div>

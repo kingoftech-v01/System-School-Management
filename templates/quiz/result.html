@@ -11,12 +11,12 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
 	<ol class="breadcrumb">
-		<li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
-		<li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
-		<li class="breadcrumb-item"><a href="{% url 'program_detail' course.program.id %}">{{ course.program }}</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:programs' %}">{% trans 'Programs' %}</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:program_detail' course.program.id %}">{{ course.program }}</a></li>
 		<li class="breadcrumb-item"><a href="{{ course.get_absolute_url }}">{{ course }}</a></li>
-		<li class="breadcrumb-item"><a href="{% url 'quiz_index' course.slug %}">{% trans 'Quizzes' %}</a></li>
-		<li class="breadcrumb-item"><a href="{% url 'quiz_take' course.id quiz.slug %}">{{ quiz.title|title }}</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'frontend:quiz:frontend:quiz_index' course.slug %}">{% trans 'Quizzes' %}</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'frontend:quiz:frontend:quiz_take' course.id quiz.slug %}">{{ quiz.title|title }}</a></li>
 		<li class="breadcrumb-item active" aria-current="page">{% trans 'Result' %}</li>
 	</ol>
 </nav>
@@ -115,7 +115,7 @@
       <li>{% trans "Review the questions below and try the quiz again in the future"%}.</li>
       <li>
         {% trans "The result of this quiz will be stored in your progress section" %} 
-        <a class="text-primary" href="{% url 'quiz_progress' %}">Here</a> 
+        <a class="text-primary" href="{% url 'frontend:quiz:frontend:quiz_progress' %}">Here</a> 
         {% trans "so you can review and monitor your progression" %}.
       </li>
     </ul>

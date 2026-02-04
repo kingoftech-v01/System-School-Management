@@ -9,12 +9,12 @@ api_router.register(r'events', views_api.AlumniEventViewSet, basename='event')
 api_urlpatterns = [path('', include(api_router.urls))]
 frontend_urlpatterns = [
     path('', views_frontend.alumni_directory, name='directory'),
-    path('<int:pk>/', views_frontend.alumni_profile, name='profile'),
-    path('register/', views_frontend.alumni_register, name='register'),
-    path('events/', views_frontend.alumni_events, name='events'),
+    path('profile/<int:pk>/', views_frontend.alumni_profile, name='profile'),
+    path('events/', views_frontend.alumni_event_list, name='events'),
+    path('events/<int:pk>/', views_frontend.alumni_event_detail, name='event_detail'),
+    path('donate/', views_frontend.donation_create, name='donate'),
 ]
 
-app_name = 'alumni'
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),
     path('', include((frontend_urlpatterns, 'frontend'))),

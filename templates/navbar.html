@@ -7,7 +7,7 @@
 				<i class="fas fa-bars"></i>
 			</div>
 
-			<form class="form-header" action="{% url 'frontend:search:query' %}" method="GET">
+			<form class="form-header" action="{% url 'frontend:search:frontend:query' %}" method="GET">
 				<input id="primary-search" class="form-control rounded-end-0" type="text" name="q" value="{{ request.GET.q }}"
 					placeholder="{% trans 'Search All... #course, #program, #Quiz, #News, #Events' %}" required />
 				<button class="btn btn-dark rounded-start-0" type="submit">
@@ -31,15 +31,15 @@
 					<hr>
 
 					{% if request.user.is_lecturer or request.user.is_student %}
-					<a class="dropdown-item" href="{% url 'user_course_list' %}"><i class="fas fa-book me-2"></i>{% trans 'My Courses' %}</a>
+					<a class="dropdown-item" href="{% url 'frontend:course:frontend:user_course_list' %}"><i class="fas fa-book me-2"></i>{% trans 'My Courses' %}</a>
 					{% endif %}
 
 					{% if request.user.is_superuser %}
-					<a class="dropdown-item" href="{% url 'admin_panel' %}"><i class="fas fa-user-tie me-2"></i>{% trans 'Admin Panel' %}</a>
+					<a class="dropdown-item" href="{% url 'frontend:accounts:frontend:admin_panel' %}"><i class="fas fa-user-tie me-2"></i>{% trans 'Admin Panel' %}</a>
 					{% endif %}
 
-					<a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>{% trans 'Profile' %}</a>
-					<a class="dropdown-item" href="{% url 'edit_profile' %}"><i class="fas fa-cog me-2"></i>{% trans 'Setting' %}</a>
+					<a class="dropdown-item" href="{% url 'frontend:accounts:frontend:profile' %}"><i class="fas fa-user me-2"></i>{% trans 'Profile' %}</a>
+					<a class="dropdown-item" href="{% url 'frontend:accounts:frontend:edit_profile' %}"><i class="fas fa-cog me-2"></i>{% trans 'Setting' %}</a>
 					<hr>
 					<div style="display: flex; justify-content: center; align-items: center;">
 						<a class="btn btn-secondary" href="{% url 'logout' %}">

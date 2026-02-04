@@ -74,7 +74,6 @@ frontend_urlpatterns = [
 # APP URL CONFIGURATION
 # ============================================================================
 
-app_name = 'analytics'
 
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),

@@ -6,7 +6,7 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
 	<ol class="breadcrumb">
-		<li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
 		<li class="breadcrumb-item active" aria-current="page">{% trans 'Complete Exams' %}</li>
 	</ol>
 </nav>
@@ -48,7 +48,7 @@
 			<td>{{ sitting.end|date }}</td>
 			<td>{{ sitting.get_percent_correct }}%</td>
 			<td>
-			<a href="{% url 'quiz_marking_detail' pk=sitting.id %}">
+			<a href="{% url 'frontend:quiz:frontend:quiz_marking_detail' pk=sitting.id %}">
 				{% trans "View details" %}
 			</a>
 			</td>

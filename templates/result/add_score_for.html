@@ -7,7 +7,7 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item"><a href="{{ course.get_absolute_url }}">{{ course }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{% trans 'Manage Score' %}</li>
     </ol>
@@ -19,7 +19,7 @@
     </button>
     <div class="dropdown-menu">
         {% for course in courses %}
-            <a class="dropdown-item" href="{% url 'add_score_for' course.id %}" title="{{ course.code }}">{{ course.title }}</a>
+            <a class="dropdown-item" href="{% url 'frontend:result:frontend:add_score_for' course.id %}" title="{{ course.code }}">{{ course.title }}</a>
         {% empty %}
             <p class="dropdown-item">{% trans 'No course.' %}</p>
         {% endfor %}
@@ -36,7 +36,7 @@
     {% csrf_token %}
     <div class="btn-flex">
         <button title="Save Score" type="submit" class="btn btn-primary">{% trans 'Save' %}</button>
-        <a target="_blank" href="{% url 'result_sheet_pdf_view' id=course.id %}">
+        <a target="_blank" href="{% url 'frontend:result:frontend:result_sheet_pdf_view' id=course.id %}">
             <span data-toggle="tooltip" title="Print Result sheet" class="btn btn-warning">
                 <i class="far fa-file-pdf"></i> {% trans 'Grade report' %}
             </span>

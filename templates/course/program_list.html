@@ -6,14 +6,14 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{% trans 'Programs' %}</li>
     </ol>
 </nav>
 
 {% if request.user.is_superuser %}
 <div class="manage-wrap">
-    <a class="btn btn-primary" href="{% url 'add_program' %}"><i class="fas fa-plus"></i>{% trans 'Add Program' %}</a>
+    <a class="btn btn-primary" href="{% url 'frontend:course:frontend:add_program' %}"><i class="fas fa-plus"></i>{% trans 'Add Program' %}</a>
 </div>
 {% endif %}
 
@@ -53,8 +53,8 @@
                                 <i class="fa fa-ellipsis-vertical"></i>
                             </button>
                             <ul class="dropdown-menu">
-                              <li><a class="dropdown-item" href="{% url 'edit_program' pk=program.pk %}"><i class="unstyled me-2 fas fa-edit"></i>{% trans 'Update' %}</a></li>
-                              <li><a class="dropdown-item text-danger" href="{% url 'program_delete' pk=program.pk %}"><i class="unstyled me-2 fas fa-trash-alt"></i>{% trans 'Delete' %}</a></li>
+                              <li><a class="dropdown-item" href="{% url 'frontend:course:frontend:edit_program' pk=program.pk %}"><i class="unstyled me-2 fas fa-edit"></i>{% trans 'Update' %}</a></li>
+                              <li><a class="dropdown-item text-danger" href="{% url 'frontend:course:frontend:program_delete' pk=program.pk %}"><i class="unstyled me-2 fas fa-trash-alt"></i>{% trans 'Delete' %}</a></li>
                             </ul>
                         </div>
                     </td>
@@ -68,7 +68,7 @@
                   <span class="text-danger">
                     {% trans 'No program.' %}
                     {% if request.user.is_superuser %}
-                    <a href="{% url 'add_program' %}">
+                    <a href="{% url 'frontend:course:frontend:add_program' %}">
                     <i class="primary" style="font-size: 22px;">
                         {% trans 'Add program now.' %}
                     </i>

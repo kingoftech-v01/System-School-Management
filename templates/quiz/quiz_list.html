@@ -8,13 +8,13 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
         {% if request.user.is_student %}
-        <li class="breadcrumb-item"><a href="{% url 'user_course_list' %}">{% trans 'My courses' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:user_course_list' %}">{% trans 'My courses' %}</a></li>
         {% else %}
-        <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:programs' %}">{% trans 'Programs' %}</a></li>
         {% endif %}
-        <li class="breadcrumb-item"><a href="{% url 'program_detail' pk=1 %}">{{ course.program }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:program_detail' pk=1 %}">{{ course.program }}</a></li>
         <li class="breadcrumb-item"><a href="{{ course.get_absolute_url }}">{{ course }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{% trans 'Quizzes' %}</li>
     </ol>
@@ -22,7 +22,7 @@
 
 {% if request.user.is_superuser or request.user.is_lecturer %}
 <div class="manage-wrap">
-    <a class="btn btn-primary" href="{% url 'quiz_create' course.slug %}"><i class="fas fa-plus"></i>{% trans 'Add Quiz' %}</a>
+    <a class="btn btn-primary" href="{% url 'frontend:quiz:frontend:quiz_create' course.slug %}"><i class="fas fa-plus"></i>{% trans 'Add Quiz' %}</a>
 </div>
 {% endif %}
 
@@ -58,17 +58,17 @@
                 {% endif %}
 
                 <div class="d-flex align-items-center">
-                    <a class="btn btn-block btn-secondary w-100" href="{% url 'quiz_take' pk=course.pk slug=quiz.slug %}">{% trans "Start quiz" %} &raquo;</a>
+                    <a class="btn btn-block btn-secondary w-100" href="{% url 'frontend:quiz:frontend:quiz_take' pk=course.pk slug=quiz.slug %}">{% trans "Start quiz" %} &raquo;</a>
 
                     {% if request.user.is_superuser or request.user.is_lecturer %}
                         <div class="dropup">
                             <button class="btn btn-sm p-0 ms-2" type="button" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v m-0"></i></button>
                             <div class="dropdown-menu" aria-labelledby="dropdown01">
                                 <div class="dropdown-item">
-                                    <a href="{% url 'quiz_update' slug=course.slug pk=quiz.id %}" class="update"><i class="unstyled me-2 fas fa-pencil-alt"></i>{% trans 'Edit' %}</a>
+                                    <a href="{% url 'frontend:quiz:frontend:quiz_update' slug=course.slug pk=quiz.id %}" class="update"><i class="unstyled me-2 fas fa-pencil-alt"></i>{% trans 'Edit' %}</a>
                                 </div>
                                 <div class="dropdown-item">
-                                    <a href="{% url 'quiz_delete' slug=course.slug pk=quiz.id %}" class="delete"><i class="unstyled me-2 fas fa-trash-alt"></i>{% trans 'Delete' %}</a>
+                                    <a href="{% url 'frontend:quiz:frontend:quiz_delete' slug=course.slug pk=quiz.id %}" class="delete"><i class="unstyled me-2 fas fa-trash-alt"></i>{% trans 'Delete' %}</a>
                                 </div>
                             </div>
                         </div>

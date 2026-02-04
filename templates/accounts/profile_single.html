@@ -11,7 +11,7 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
       <li class="breadcrumb-item active" aria-current="page">{{ user.get_full_name }}</li>
     </ol>
 </nav>
@@ -36,15 +36,15 @@
             {% if request.user.is_superuser %}
             <div class="d-flex flex-column">
                 {% if user.is_student %}
-                <a href="{% url 'student_edit' pk=user.id %}">
+                <a href="{% url 'frontend:accounts:frontend:student_edit' pk=user.id %}">
                     <i class="fas fa-user-edit unstyled"></i><span class="mobile-hide">{% trans 'Edit Profile' %}</span>
                 </a>
-                <a href="{% url 'student_program_edit' user.id %}">
+                <a href="{% url 'frontend:accounts:frontend:student_program_edit' user.id %}">
                     <i class="fas fa-pen-to-square unstyled"></i><span class="mobile-hide">{% trans 'Change Program' %}</span>
                 </a>
                 {% endif %}
                 {% if user.is_lecturer %}
-                <a href="{% url 'staff_edit' pk=user.id %}">
+                <a href="{% url 'frontend:accounts:frontend:staff_edit' pk=user.id %}">
                     <i class="fas fa-user-edit unstyled"></i><span class="mobile-hide">{% trans 'Edit Profile' %}</span>
                 </a>
                 {% endif %}

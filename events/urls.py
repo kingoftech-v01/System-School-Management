@@ -71,7 +71,6 @@ frontend_urlpatterns = [
 # APP URL CONFIGURATION
 # ============================================================================
 
-app_name = 'events'
 
 urlpatterns = [
     # API URLs: /api/v1/events/

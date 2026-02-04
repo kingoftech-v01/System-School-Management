@@ -13,7 +13,6 @@ frontend_urlpatterns = [
     path('category/<slug:category_slug>/', views_frontend.category_articles, name='category_articles'),
 ]
 
-app_name = 'articles'
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),
     path('', include((frontend_urlpatterns, 'frontend'))),

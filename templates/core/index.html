@@ -13,7 +13,7 @@
 
 {% if request.user.is_superuser %}
 <div class="manage-wrap">
-    <a class="btn btn-primary" href="{% url 'add_item' %}"><i class="fas fa-plus"></i>{% trans 'Add New Post' %}</a>
+    <a class="btn btn-primary" href="{% url 'frontend:core:frontend:add_item' %}"><i class="fas fa-plus"></i>{% trans 'Add New Post' %}</a>
 </div>
 {% endif %}
 
@@ -48,9 +48,9 @@
                             <i class="fas fa-ellipsis-v text-white"></i>
                         </button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="{% url 'edit_post' pk=item.id %}"><i
+                            <a class="dropdown-item" href="{% url 'frontend:core:frontend:edit_post' pk=item.id %}"><i
                                     class="unstyled me-2 fas fa-pencil-alt"></i>{% trans 'Edit' %}</a>
-                            <a class="dropdown-item" href="{% url 'delete_post' pk=item.id %}"><i
+                            <a class="dropdown-item" href="{% url 'frontend:core:frontend:delete_post' pk=item.id %}"><i
                                     class="unstyled me-2 fas fa-trash-alt"></i>{% trans 'Delete' %}</a>
                         </div>
                     </div>

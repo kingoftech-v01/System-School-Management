@@ -2,9 +2,26 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from accounts.decorators import direction_only, tenant_required
 from django_ratelimit.decorators import ratelimit
 from .models import Event
+from core.models import School
+
+
+def get_current_tenant(request):
+    """Get current tenant from request or return default for development."""
+    if hasattr(request, 'tenant') and request.tenant:
+        return request.tenant
+    # Development mode: get or create default School
+    school, _ = School.objects.get_or_create(
+        slug='default',
+        defaults={
+            'name': 'Default School',
+            'email': 'admin@school.local',
+        }
+    )
+    return school
 
 
 @login_required
@@ -12,7 +29,8 @@ from .models import Event
 @ratelimit(key='user', rate='100/h')
 def event_list(request):
     """List all events for the current tenant."""
-    events = Event.objects.filter(tenant=request.tenant).order_by('start_date')
+    tenant = get_current_tenant(request)
+    events = Event.objects.filter(tenant=tenant).order_by('start_date')
 
     # Filter by target audience based on user role
     if request.user.role == 'student':
@@ -37,15 +55,17 @@ def event_create(request):
     """Create a new event (direction only)."""
     from .forms import EventForm
 
+    tenant = get_current_tenant(request)
+
     if request.method == 'POST':
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
-            event.tenant = request.tenant
+            event.tenant = tenant
             event.created_by = request.user
             event.save()
             messages.success(request, _('Event created successfully.'))
-            return redirect('frontend:events:event_list')
+            return redirect('frontend:events:frontend:event_list')
     else:
         form = EventForm()
 
@@ -59,7 +79,8 @@ def event_create(request):
 @tenant_required
 def event_detail(request, pk):
     """View event details."""
-    event = get_object_or_404(Event, pk=pk, tenant=request.tenant)
+    tenant = get_current_tenant(request)
+    event = get_object_or_404(Event, pk=pk, tenant=tenant)
 
     return render(request, 'events/event_detail.html', {
         'event': event,

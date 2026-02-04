@@ -46,7 +46,6 @@ frontend_urlpatterns = [
 # APP URL CONFIGURATION
 # ============================================================================
 
-app_name = 'search'
 
 urlpatterns = [
     # API URLs: /api/v1/search/

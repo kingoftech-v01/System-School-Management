@@ -431,17 +431,21 @@ AXES_NEVER_LOCKOUT_WHITELIST = []
 AXES_IP_WHITELIST = []
 
 # ==============================================================================
-# CONTENT SECURITY POLICY
+# CONTENT SECURITY POLICY (django-csp 4.0+ format)
 # ==============================================================================
 
 # All assets served locally - no CDN dependencies
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")  # Removed CDN
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")   # Removed CDN
-CSP_IMG_SRC = ("'self'", "data:", "https:")
-CSP_FONT_SRC = ("'self'",)                      # Removed CDN
-CSP_CONNECT_SRC = ("'self'",)
-CSP_FRAME_ANCESTORS = ("'none'",)
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'script-src': ("'self'", "'unsafe-inline'"),
+        'style-src': ("'self'", "'unsafe-inline'"),
+        'img-src': ("'self'", "data:", "https:"),
+        'font-src': ("'self'",),
+        'connect-src': ("'self'",),
+        'frame-ancestors': ("'none'",),
+    }
+}
 
 # ==============================================================================
 # REDIS CONFIGURATION

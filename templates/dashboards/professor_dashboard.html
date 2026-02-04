@@ -47,8 +47,8 @@
                                     <td><code>{{ course.code }}</code></td>
                                     <td>{{ course.students.count }}</td>
                                     <td>
-                                        <a href="{% url 'add_score' %}" class="btn btn-sm btn-primary">{% trans "Mark Attendance" %}</a>
-                                        <a href="{% url 'add_score' %}" class="btn btn-sm btn-success">{% trans "Enter Grades" %}</a>
+                                        <a href="{% url 'frontend:result:frontend:add_score' %}" class="btn btn-sm btn-primary">{% trans "Mark Attendance" %}</a>
+                                        <a href="{% url 'frontend:result:frontend:add_score' %}" class="btn btn-sm btn-success">{% trans "Enter Grades" %}</a>
                                     </td>
                                 </tr>
                                 {% empty %}

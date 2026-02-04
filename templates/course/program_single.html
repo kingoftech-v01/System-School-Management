@@ -7,11 +7,11 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
         {% if request.user.is_student %}
-        <li class="breadcrumb-item"><a href="{% url 'user_course_list' %}">{% trans 'My courses' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:user_course_list' %}">{% trans 'My courses' %}</a></li>
         {% else %}
-        <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:programs' %}">{% trans 'Programs' %}</a></li>
         {% endif %}
         <li class="breadcrumb-item active" aria-current="page">{{ program.title }}</li>
     </ol>
@@ -19,7 +19,7 @@
 
 {% if request.user.is_superuser %}
 <div class="manage-wrap">
-    <a class="btn btn-sm btn-primary" href="{% url 'course_add' pk=program.pk %}"><i class="fas fa-plus"></i>{% trans 'Add Course' %}</a>
+    <a class="btn btn-sm btn-primary" href="{% url 'frontend:course:frontend:course_add' pk=program.pk %}"><i class="fas fa-plus"></i>{% trans 'Add Course' %}</a>
 </div>
 {% endif %}
 
@@ -78,10 +78,10 @@
                                 <i class="fas fa-ellipsis-v m-0"></i>
                             </button>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item" href="{% url 'edit_course' slug=course.slug %}">
+                                <a class="dropdown-item" href="{% url 'frontend:course:frontend:edit_course' slug=course.slug %}">
                                     <i class="unstyled me-2 fas fa-pencil-alt"></i> {% trans 'Edit' %}
                                 </a>
-                                <a class="dropdown-item" href="{% url 'delete_course' slug=course.slug %}">
+                                <a class="dropdown-item" href="{% url 'frontend:course:frontend:delete_course' slug=course.slug %}">
                                     <i class="unstyled me-2 fas fa-trash-alt"></i> {% trans 'Delete' %}
                                 </a>
                             </div>
@@ -95,7 +95,7 @@
                   <span class="text-danger">
                     {% trans 'No course for this progrm.' %}
                     {% if request.user.is_superuser %}
-                    <a href="{% url 'course_add' pk=program.pk %}" class="text-primary">
+                    <a href="{% url 'frontend:course:frontend:course_add' pk=program.pk %}" class="text-primary">
                     <i class="primary" style="font-size: 22px;">
                         {% trans 'Add one now.' %}
                     </i>

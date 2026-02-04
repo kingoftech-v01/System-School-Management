@@ -46,7 +46,6 @@ frontend_urlpatterns = [
 # APP URL CONFIGURATION
 # ============================================================================
 
-app_name = 'dailystat'
 
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),

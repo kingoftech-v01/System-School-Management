@@ -7,13 +7,13 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
         {% if request.user.is_student %}
-        <li class="breadcrumb-item"><a href="{% url 'user_course_list' %}">{% trans 'My courses' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:user_course_list' %}">{% trans 'My courses' %}</a></li>
         {% else %}
-        <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:programs' %}">{% trans 'Programs' %}</a></li>
         {% endif %}
-        <li class="breadcrumb-item"><a href="{% url 'program_detail' course.program.id %}">{{ course.program }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:program_detail' course.program.id %}">{{ course.program }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ course }}</li>
     </ol>
 </nav>
@@ -22,21 +22,21 @@
     <div class="d-flex">
         <div class="">
             {% if request.user.is_superuser %}
-            <a class="btn btn-sm btn-light" href="{% url 'edit_course' course.slug %}">
+            <a class="btn btn-sm btn-light" href="{% url 'frontend:course:frontend:edit_course' course.slug %}">
                 <i class="fas fa-pencil-alt"></i> {% trans 'Edit course' %}
             </a>
             {% endif %}
             {% if request.user.is_superuser or request.user.is_lecturer %}
-            <a class="btn btn-sm btn-primary" href="{% url 'upload_file_view' course.slug %}"><i class="fas fa-plus"></i>
+            <a class="btn btn-sm btn-primary" href="{% url 'frontend:course:frontend:upload_file_view' course.slug %}"><i class="fas fa-plus"></i>
                 {% trans 'Upload new file' %}
             </a>
-            <a class="btn btn-sm btn-primary" href="{% url 'upload_video' course.slug %}"><i class="fas fa-plus"></i>
+            <a class="btn btn-sm btn-primary" href="{% url 'frontend:course:frontend:upload_video' course.slug %}"><i class="fas fa-plus"></i>
                 {% trans 'Upload new video' %}
             </a>
             {% endif %}
         </div>
         <div class="ms-auto">
-            <a class="btn btn-sm btn-warning" href="{% url 'quiz_index' course.slug %}"><i class="fas fa-list"></i>
+            <a class="btn btn-sm btn-warning" href="{% url 'frontend:quiz:frontend:quiz_index' course.slug %}"><i class="fas fa-list"></i>
                 {% trans 'Take a Quiz' %}
             </a>
         </div>
@@ -87,11 +87,11 @@
                             {% if request.user.is_superuser or request.user.is_lecturer %}
                             <td>
                                 <div class="update-delete">
-                                    <a href="{% url 'upload_video_edit' slug=course.slug video_slug=video.slug %}"
+                                    <a href="{% url 'frontend:course:frontend:upload_video_edit' slug=course.slug video_slug=video.slug %}"
                                         class="update" title="{% trans 'Edit' %}">
                                         <i class="fas fa-pencil-alt"></i>
                                     </a>
-                                    <a href="{% url 'upload_video_delete' slug=course.slug video_slug=video.slug %}"
+                                    <a href="{% url 'frontend:course:frontend:upload_video_delete' slug=course.slug video_slug=video.slug %}"
                                         class="delete" title="{% trans 'Delete' %}">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
@@ -107,7 +107,7 @@
                                 <span class="text-danger">
                                     {% trans 'No video Uploaded.' %}
                                     {% if request.user.is_superuser or request.user.is_lecturer %}
-                                    <a href="{% url 'upload_video' course.slug %}" class="text-primary">
+                                    <a href="{% url 'frontend:course:frontend:upload_video' course.slug %}" class="text-primary">
                                         <i class="primary" style="font-size: 22px;">
                                             {% trans 'Upload now.' %}
                                         </i>
@@ -164,11 +164,11 @@
                             {% if request.user.is_superuser or request.user.is_lecturer %}
                             <td>
                                 <div class="update-delete">
-                                    <a href="{% url 'upload_file_edit' slug=course.slug file_id=file.pk %}"
+                                    <a href="{% url 'frontend:course:frontend:upload_file_edit' slug=course.slug file_id=file.pk %}"
                                         class="update" title="{% trans 'Edit' %}">
                                         <i class="fas fa-pencil-alt"></i>
                                     </a>
-                                    <a href="{% url 'upload_file_delete' slug=course.slug file_id=file.pk %}"
+                                    <a href="{% url 'frontend:course:frontend:upload_file_delete' slug=course.slug file_id=file.pk %}"
                                         class="delete" title="{% trans 'Delete' %}">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
@@ -184,7 +184,7 @@
                                 <span class="text-danger">
                                     {% trans 'No File Uploaded.' %}
                                     {% if request.user.is_superuser or request.user.is_lecturer %}
-                                    <a href="{% url 'upload_file_view' course.slug %}" class="text-primary">
+                                    <a href="{% url 'frontend:course:frontend:upload_file_view' course.slug %}" class="text-primary">
                                         <i class="primary" style="font-size: 22px;">
                                             {% trans 'Upload now.' %}
                                         </i>

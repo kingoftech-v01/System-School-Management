@@ -1,5 +1,6 @@
 """
 Django development settings for School Management System.
+Uses SQLite without multi-tenancy for easy local development.
 """
 
 from .base import *
@@ -13,14 +14,51 @@ ALLOWED_HOSTS = ['*']
 # Development email backend
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Development database (override if needed)
-# Keep the same postgres config for multi-tenancy
+# ==============================================================================
+# DEVELOPMENT DATABASE - SQLite (no multi-tenancy)
+# ==============================================================================
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# Remove django-tenants database router for development
+DATABASE_ROUTERS = []
+
+# ==============================================================================
+# REMOVE MULTI-TENANCY FOR DEVELOPMENT
+# ==============================================================================
+
+# Combine all apps into a single INSTALLED_APPS (no tenant separation)
+# Remove django_tenants from the list
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django_tenants']
+
+# Remove TenantMainMiddleware from MIDDLEWARE
+MIDDLEWARE = [mw for mw in MIDDLEWARE if 'TenantMainMiddleware' not in mw]
+
+# Disable tenant-specific settings
+TENANT_MODEL = None
+TENANT_DOMAIN_MODEL = None
 
 # Development CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Development cache (can use dummy cache for development if needed)
-# Keeping Redis for consistency with production
+# ==============================================================================
+# DEVELOPMENT CACHE - Use Local Memory Cache instead of Redis
+# ==============================================================================
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
 
 # Disable HTTPS redirects in development
 SECURE_SSL_REDIRECT = False
@@ -47,10 +85,18 @@ DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
 }
 
-# Relaxed CSP for development
-CSP_DEFAULT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net")
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
+# Relaxed CSP for development (django-csp 4.0+ format)
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'"),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"),
+        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"),
+        'img-src': ("'self'", "data:", "https:"),
+        'font-src': ("'self'",),
+        'connect-src': ("'self'",),
+        'frame-ancestors': ("'none'",),
+    }
+}
 
 # Logging - more verbose in development
 LOGGING['loggers']['django']['level'] = 'DEBUG'

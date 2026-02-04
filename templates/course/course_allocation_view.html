@@ -6,14 +6,14 @@
 
 <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{% trans 'Allocation list' %}</li>
     </ol>
 </nav>
 
 {% if request.user.is_superuser %}
 <div class="manage-wrap">
-    <a class="btn btn-primary" href="{% url 'course_allocation' %}"><i class="fas fa-plus"></i>{% trans 'Allocate Now' %}</a>
+    <a class="btn btn-primary" href="{% url 'frontend:course:frontend:course_allocation' %}"><i class="fas fa-plus"></i>{% trans 'Allocate Now' %}</a>
 </div>
 {% endif %}
 
@@ -47,10 +47,10 @@
                 </td>
                 {% if request.user.is_superuser %}
                 <td><div class="update-delete">
-                    <a href="{% url 'edit_allocated_course' pk=course.pk %}" class="update" title="{% trans 'Edit or Update' %}">
+                    <a href="{% url 'frontend:course:frontend:edit_allocated_course' pk=course.pk %}" class="update" title="{% trans 'Edit or Update' %}">
                         <i class="fas fa-edit"></i>
                     </a>
-                    <a href="{% url 'course_deallocate' pk=course.pk %}" class="delete" title="{% trans 'Deallocate' %}">
+                    <a href="{% url 'frontend:course:frontend:course_deallocate' pk=course.pk %}" class="delete" title="{% trans 'Deallocate' %}">
                         <i class="fas fa-trash-alt"></i>
                     </a>
                     </div>
@@ -64,7 +64,7 @@
               <td>
                 <span class="text-danger">{% trans 'No Course Allocated.' %}
                     {% if request.user.is_superuser %}
-                    <a href="{% url 'course_allocation' %}">
+                    <a href="{% url 'frontend:course:frontend:course_allocation' %}">
                     <i class="primary" style="font-size: 22px;">
                         {% trans 'Allocate now' %}
                     </i>
