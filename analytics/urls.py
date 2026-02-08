@@ -56,17 +56,23 @@ frontend_urlpatterns = [
     path('outcomes/', views_frontend.learning_outcome_list, name='learning_outcome_list'),
     path('outcomes/create/', views_frontend.learning_outcome_create, name='learning_outcome_create'),
     path('outcomes/<int:pk>/', views_frontend.learning_outcome_detail, name='learning_outcome_detail'),
+    path('outcomes/<int:pk>/edit/', views_frontend.learning_outcome_edit, name='learning_outcome_edit'),
+    path('outcomes/<int:pk>/delete/', views_frontend.learning_outcome_delete, name='learning_outcome_delete'),
 
     # At-risk students
     path('at-risk/', views_frontend.at_risk_list, name='at_risk_list'),
     path('at-risk/<int:pk>/', views_frontend.at_risk_detail, name='at_risk_detail'),
     path('at-risk/<int:pk>/intervene/', views_frontend.at_risk_intervene, name='at_risk_intervene'),
+    path('at-risk/<int:pk>/resolve/', views_frontend.at_risk_resolve, name='at_risk_resolve'),
 
     # Activity logs
     path('activity-logs/', views_frontend.activity_log_list, name='activity_log_list'),
 
     # Reports
     path('reports/', views_frontend.analytics_reports, name='analytics_reports'),
+
+    # Exports
+    path('export/engagement/', views_frontend.export_engagement_csv, name='export_engagement_csv'),
 ]
 
 

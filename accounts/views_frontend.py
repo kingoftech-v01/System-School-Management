@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import get_template, render_to_string
@@ -411,6 +412,74 @@ class ParentAdd(CreateView):
     def form_valid(self, form):
         messages.success(self.request, "Parent added successfully.")
         return super().form_valid(form)
+
+
+@login_required
+@admin_required
+def parent_list(request):
+    """List all parents with related student and user info."""
+    parents = Parent.objects.select_related('student', 'user').all()
+    paginator = Paginator(parents, 20)
+    page_num = request.GET.get('page', 1)
+    parents_page = paginator.get_page(page_num)
+    return render(request, "accounts/parent_list.html", {
+        "title": "Parents",
+        "parents": parents_page,
+    })
+
+
+@login_required
+@admin_required
+def parent_detail(request, pk):
+    """Show single parent with related student info."""
+    parent = get_object_or_404(
+        Parent.objects.select_related('student', 'user'),
+        pk=pk
+    )
+    return render(request, "accounts/parent_detail.html", {
+        "title": f"Parent: {parent.first_name} {parent.last_name}",
+        "parent": parent,
+    })
+
+
+@login_required
+@admin_required
+def parent_edit(request, pk):
+    """Edit parent using ParentAddForm with instance."""
+    parent = get_object_or_404(Parent, pk=pk)
+    user = parent.user
+    if request.method == "POST":
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Parent {parent.first_name} {parent.last_name} has been updated.")
+            return redirect("frontend:accounts:parent_detail", pk=parent.pk)
+        messages.error(request, "Please correct the error(s) below.")
+    else:
+        form = ProfileUpdateForm(instance=user)
+    return render(request, "accounts/parent_form.html", {
+        "title": "Edit Parent",
+        "form": form,
+        "parent": parent,
+    })
+
+
+@login_required
+@admin_required
+def parent_delete(request, pk):
+    """Delete parent with GET confirmation and POST action."""
+    parent = get_object_or_404(Parent, pk=pk)
+    if request.method == "POST":
+        name = f"{parent.first_name} {parent.last_name}"
+        parent.delete()
+        messages.success(request, f"Parent {name} has been deleted.")
+        return redirect("frontend:accounts:parent_list")
+    return render(request, "accounts/confirm_delete.html", {
+        "title": "Delete Parent",
+        "object": parent,
+        "object_name": f"{parent.first_name} {parent.last_name}",
+        "cancel_url": "frontend:accounts:parent_list",
+    })
 
 
 # ########################################################

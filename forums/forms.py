@@ -83,6 +83,31 @@ class ReportForm(forms.ModelForm):
         return description
 
 
+class CategoryForm(forms.ModelForm):
+    """Form for creating/editing forum categories."""
+
+    class Meta:
+        model = ForumCategory
+        fields = ['name', 'description', 'icon', 'order', 'is_active', 'requires_approval']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'icon': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _("e.g., fa-comments")
+            }),
+            'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'requires_approval': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if len(name) < 2:
+            raise forms.ValidationError(_('Category name must be at least 2 characters long.'))
+        return name
+
+
 class SearchForm(forms.Form):
     """Form for searching forums."""
 

@@ -279,6 +279,64 @@ def certificate_create(request):
 @direction_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
+def certificate_edit(request, pk):
+    """
+    Edit certificate details.
+    Direction only.
+    """
+    certificate = get_object_or_404(Certificate, pk=pk)
+
+    if request.method == 'POST':
+        form = CertificateForm(request.POST, instance=certificate)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Certificate updated successfully.'))
+            return redirect('frontend:certificates:certificate_detail', pk=certificate.pk)
+    else:
+        form = CertificateForm(instance=certificate)
+
+    context = {
+        'form': form,
+        'certificate': certificate,
+        'title': _('Edit Certificate'),
+    }
+
+    return render(request, 'certificates/certificate_form.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='100/h')
+def certificate_reissue(request, pk):
+    """
+    Reissue a revoked certificate.
+    POST-only: clears revocation status.
+    Direction only.
+    """
+    certificate = get_object_or_404(Certificate, pk=pk)
+
+    if request.method == 'POST':
+        if not certificate.is_revoked:
+            messages.error(request, _('Certificate is not revoked.'))
+        else:
+            certificate.is_revoked = False
+            certificate.revoked_at = None
+            certificate.revoked_by = None
+            certificate.revocation_reason = ''
+            certificate.status = 'issued'
+            certificate.save()
+            messages.success(request, _('Certificate has been reissued successfully.'))
+        return redirect('frontend:certificates:certificate_detail', pk=certificate.pk)
+
+    # If not POST, redirect back to detail
+    return redirect('frontend:certificates:certificate_detail', pk=certificate.pk)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='100/h')
 def certificate_revoke(request, pk):
     """
     Revoke certificate.
@@ -456,7 +514,7 @@ def batch_generation_create(request):
 
             # Count students that meet criteria
             from accounts.models import Student
-            students = Student.objects.filter(group__courses=batch.course)
+            students = Student.objects.filter(program=batch.course.program)
 
             # Apply filters if specified
             if batch.min_gpa:
@@ -501,7 +559,7 @@ def batch_generation_detail(request, pk):
     context = {
         'batch': batch,
         'progress_percentage': progress_percentage,
-        'title': f'Batch Generation - {batch.course.name}',
+        'title': f'Batch Generation - {batch.course.title}',
     }
 
     return render(request, 'certificates/batch_detail.html', context)

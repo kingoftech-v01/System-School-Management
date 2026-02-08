@@ -1,0 +1,134 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+
+{% block title %}Library - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Library</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Library</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Library Books</h4>
+                    {% if is_direction %}
+                    <a href="{% url 'frontend:library:book_create' %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle"></i> Add Book</a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <form method="get" class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" name="q" class="form-control" placeholder="Search by title, author, or ISBN..." value="{{ query }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select name="category" class="form-select" title="Filter by category">
+                                <option value="">All Categories</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.pk }}" {% if selected_category == cat.pk|stringformat:"d" %}selected{% endif %}>{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel"></i> Filter</button>
+                            <a href="{% url 'frontend:library:book_list' %}" class="btn btn-outline-secondary">Clear</a>
+                        </div>
+                    </form>
+
+                    <!-- Book Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Category</th>
+                                    <th>Available</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for book in books %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ book.title }}</td>
+                                    <td>{{ book.author }}</td>
+                                    <td>{{ book.category.name|default:"-" }}</td>
+                                    <td>{{ book.available }} / {{ book.quantity }}</td>
+                                    <td>
+                                        {% if book.available > 0 %}
+                                        <span class="badge bg-success">Available</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Unavailable</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'frontend:library:book_detail' book.pk %}" class="btn btn-sm btn-info" title="View details"><i class="bi bi-eye"></i></a>
+                                        {% if is_student and book.available > 0 %}
+                                        <form method="post" action="{% url 'frontend:library:borrow_book' book.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-book"></i> Borrow</button>
+                                        </form>
+                                        {% endif %}
+                                        {% if is_direction %}
+                                        <a href="{% url 'frontend:library:book_edit' book.pk %}" class="btn btn-sm btn-primary" title="Edit book"><i class="bi bi-pencil"></i></a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No books found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if books.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if books.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ books.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">Previous</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                            {% endif %}
+
+                            {% for num in books.paginator.page_range %}
+                                {% if books.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > books.number|add:'-3' and num < books.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if books.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ books.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">Next</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">Next</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

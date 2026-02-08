@@ -1,64 +1,25 @@
-{% extends "base_dashboard.html" %}
-{% load static i18n %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
 
-{% block title %}{% trans "Direction Dashboard" %}{% endblock %}
-{% block page_title %}{% trans "Direction Dashboard" %}{% endblock %}
+{% block title %}Direction Dashboard - School Management{% endblock %}
 
-{% block dashboard_content %}
-<div class="container-fluid px-4 py-4">
-    <div class="dashboard-welcome mb-4">
-        <h2 class="welcome-title">{% trans "School Overview" %}</h2>
-        <p class="text-muted">{% trans "School-wide statistics and management" %}</p>
-    </div>
-
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            {% include "components/widgets/stat_card.html" with label="Total Students" value=total_students|default:"0" icon="ri-user-line" color="primary" %}
-        </div>
-        <div class="col-md-3">
-            {% include "components/widgets/stat_card.html" with label="Total Professors" value=total_professors|default:"0" icon="ri-user-star-line" color="success" %}
-        </div>
-        <div class="col-md-3">
-            {% include "components/widgets/stat_card.html" with label="Payment Rate" value=payment_collection_rate|default:"0"|add:"%" icon="ri-money-dollar-circle-line" color="info" %}
-        </div>
-        <div class="col-md-3">
-            {% include "components/widgets/stat_card.html" with label="Current Session" value=current_session.session|default:"N/A" icon="ri-calendar-line" color="warning" %}
-        </div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-12">
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Direction Dashboard</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Direction Dashboard</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">{% trans "Quick Actions" %}</h5>
+                    <h4 class="card-title">Direction Dashboard</h4>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <a href="{% url 'frontend:monitoring:frontend:dashboard' %}" class="btn btn-lg btn-outline-primary w-100">
-                                <i class="ri-line-chart-line fs-3 d-block mb-2"></i>
-                                {% trans "View Reports" %}
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'frontend:enrollment:frontend:enrollment_list' %}" class="btn btn-lg btn-outline-success w-100">
-                                <i class="ri-user-add-line fs-3 d-block mb-2"></i>
-                                {% trans "Enroll Students" %}
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'frontend:payments:frontend:payment_gateways' %}" class="btn btn-lg btn-outline-info w-100">
-                                <i class="ri-money-dollar-circle-line fs-3 d-block mb-2"></i>
-                                {% trans "Manage Payments" %}
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'frontend:search:frontend:query' %}" class="btn btn-lg btn-outline-warning w-100">
-                                <i class="ri-search-line fs-3 d-block mb-2"></i>
-                                {% trans "Search" %}
-                            </a>
-                        </div>
-                    </div>
+                    <p>Welcome to the Direction Dashboard page.</p>
                 </div>
             </div>
         </div>

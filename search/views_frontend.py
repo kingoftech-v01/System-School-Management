@@ -1,11 +1,12 @@
 from itertools import chain
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from core.models import NewsAndEvents
 from course.models import Program, Course
 from quiz.models import Quiz
 
 
-class SearchView(ListView):
+class SearchView(LoginRequiredMixin, ListView):
     template_name = "search/search_view.html"
     paginate_by = 20
     count = 0
@@ -20,7 +21,7 @@ class SearchView(ListView):
         request = self.request
         query = request.GET.get("q", None)
 
-        if query is not None:
+        if query is not None and len(query.strip()) >= 2:
             news_events_results = NewsAndEvents.objects.search(query)
             program_results = Program.objects.search(query)
             course_results = Course.objects.search(query)

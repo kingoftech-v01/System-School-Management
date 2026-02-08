@@ -1,145 +1,18 @@
-{% extends "base.html" %}
-{% load static i18n %}
-
-{% block title %}403 - {% trans "Access Forbidden" %}{% endblock %}
-
-{% block content %}
-<div class="error-page-container">
-    <div class="container">
-        <div class="row justify-content-center align-items-center min-vh-100">
-            <div class="col-md-8 col-lg-6 text-center">
-                <div class="error-content">
-                    <!-- Error Icon -->
-                    <div class="error-icon mb-4">
-                        <i class="ri-forbid-line"></i>
-                    </div>
-
-                    <!-- Error Code -->
-                    <h1 class="error-code">403</h1>
-
-                    <!-- Error Title -->
-                    <h2 class="error-title">{% trans "Access Forbidden" %}</h2>
-
-                    <!-- Error Message -->
-                    <p class="error-message">
-                        {{ error_message|default:_("You don't have permission to access this resource. This could be because:") }}
-                    </p>
-
-                    <ul class="error-reasons text-start d-inline-block">
-                        <li>{% trans "You don't have the required permissions" %}</li>
-                        <li>{% trans "Your account role doesn't allow this action" %}</li>
-                        <li>{% trans "This resource is restricted to administrators" %}</li>
-                        <li>{% trans "Your session may have expired" %}</li>
-                    </ul>
-
-                    <!-- Action Buttons -->
-                    <div class="error-actions mt-4">
-                        <a href="{% url 'frontend:core:frontend:dashboard' %}" class="btn btn-primary btn-lg me-2">
-                            <i class="ri-dashboard-line me-2"></i>
-                            {% trans "Go to Dashboard" %}
-                        </a>
-                        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">
-                            <i class="ri-arrow-left-line me-2"></i>
-                            {% trans "Go Back" %}
-                        </a>
-                    </div>
-
-                    <!-- Help Text -->
-                    <div class="error-help mt-4">
-                        <p class="text-muted">
-                            {% trans "If you believe this is an error, please contact your system administrator" %}.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>403 Forbidden</title>
+    <link rel="stylesheet" href="{% static 'w3crm/vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}">
+    <link rel="stylesheet" href="{% static 'w3crm/css/style.css' %}">
+</head>
+<body>
+    <div class="container text-center mt-5 pt-5">
+        <h1 class="display-1 text-primary mb-4">403 Forbidden</h1>
+        <p class="fs-18">Something went wrong.</p>
+        <a href="/" class="btn btn-primary mt-3">Back to Home</a>
     </div>
-</div>
-
-<style>
-    .error-page-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .error-content {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 3rem 2rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    }
-
-    .error-icon i {
-        font-size: 8rem;
-        color: #dc3545;
-        opacity: 0.8;
-    }
-
-    .error-code {
-        font-size: 6rem;
-        font-weight: 700;
-        color: #dc3545;
-        margin: 0;
-        line-height: 1;
-    }
-
-    .error-title {
-        font-size: 2rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 1rem 0;
-    }
-
-    .error-message {
-        font-size: 1.1rem;
-        color: #64748b;
-        margin: 1.5rem 0;
-    }
-
-    .error-reasons {
-        text-align: left;
-        margin: 1.5rem 0;
-        color: #64748b;
-    }
-
-    .error-reasons li {
-        margin-bottom: 0.5rem;
-    }
-
-    .error-actions .btn {
-        min-width: 150px;
-    }
-
-    .error-help {
-        padding-top: 1.5rem;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    @media (max-width: 768px) {
-        .error-icon i {
-            font-size: 5rem;
-        }
-
-        .error-code {
-            font-size: 4rem;
-        }
-
-        .error-title {
-            font-size: 1.5rem;
-        }
-
-        .error-message {
-            font-size: 1rem;
-        }
-
-        .error-actions .btn {
-            display: block;
-            width: 100%;
-            margin: 0.5rem 0 !important;
-        }
-    }
-</style>
-{% endblock %}
+</body>
+</html>

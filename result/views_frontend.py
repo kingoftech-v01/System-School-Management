@@ -23,11 +23,13 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 
-from core.models import Session, Semester
+from core.models import Session, Semester, School
 from course.models import Course
 from accounts.models import Student
 from accounts.decorators import lecturer_required, student_required
-from .models import TakenCourse, Result
+from django.core.paginator import Paginator
+from .models import TakenCourse, Result, GradeAppeal
+from .forms import GradeAppealForm
 
 
 CM = 2.54
@@ -174,7 +176,7 @@ def add_score_for(request, id):
                 a.gpa = gpa
                 a.cgpa = cgpa
                 a.save()
-            except:
+            except Result.DoesNotExist:
                 Result.objects.get_or_create(
                     student=student.student,
                     gpa=gpa,
@@ -183,19 +185,9 @@ def add_score_for(request, id):
                     level=student.student.level,
                 )
 
-            # try:
-            #     a = Result.objects.get(student=student.student,
-            # semester=current_semester, level=student.student.level)
-            #     a.gpa = gpa
-            #     a.cgpa = cgpa
-            #     a.save()
-            # except:
-            #     Result.objects.get_or_create(student=student.student, gpa=gpa,
-            # semester=current_semester, level=student.student.level)
-
         messages.success(request, "Successfully Recorded! ")
-        return HttpResponseRedirect(reverse_lazy("add_score_for", kwargs={"id": id}))
-    return HttpResponseRedirect(reverse_lazy("add_score_for", kwargs={"id": id}))
+        return HttpResponseRedirect(reverse_lazy("frontend:result:add_score_for", kwargs={"id": id}))
+    return HttpResponseRedirect(reverse_lazy("frontend:result:add_score_for", kwargs={"id": id}))
 
 
 # ########################################################
@@ -208,7 +200,7 @@ def grade_result(request):
         student = Student.objects.get(student__pk=request.user.id)
     except Student.DoesNotExist:
         messages.error(request, _('Your student profile has not been created yet. Please contact the administrator.'))
-        return redirect('frontend:core:frontend:dashboard')
+        return redirect('frontend:core:dashboard')
 
     courses = TakenCourse.objects.filter(student__student__pk=request.user.id).filter(
         course__level=student.level
@@ -244,7 +236,7 @@ def grade_result(request):
             )
             previousCGPA = a.cgpa
             break
-        except:
+        except Result.DoesNotExist:
             previousCGPA = 0
 
     context = {
@@ -269,7 +261,7 @@ def assessment_result(request):
         student = Student.objects.get(student__pk=request.user.id)
     except Student.DoesNotExist:
         messages.error(request, _('Your student profile has not been created yet. Please contact the administrator.'))
-        return redirect('frontend:core:frontend:dashboard')
+        return redirect('frontend:core:dashboard')
 
     courses = TakenCourse.objects.filter(
         student__student__pk=request.user.id, course__level=student.level
@@ -331,8 +323,6 @@ def result_sheet_pdf_view(request, id):
     # im_logo.__setattr__("_offs_y", -60)
     # Story.append(im_logo)
 
-    print("\nsettings.MEDIA_ROOT", settings.MEDIA_ROOT)
-    print("\nsettings.STATICFILES_DIRS[0]", settings.STATICFILES_DIRS[0])
     logo = settings.STATICFILES_DIRS[0] + "/img/brand.png"
     im = Image(logo, 1 * inch, 1 * inch)
     im.__setattr__("_offs_x", -200)
@@ -438,7 +428,7 @@ def result_sheet_pdf_view(request, id):
         ],
         [
             Paragraph(
-                "<b>Siganture / Stamp:</b> _____________________________",
+                "<b>Signature / Stamp:</b> _____________________________",
                 styles["Normal"],
             ),
             Paragraph("<b>No. of FAIL: </b>" + str(no_of_fail), style_right),
@@ -482,7 +472,9 @@ def course_registration_form(request):
     normal.fontName = "Helvetica"
     normal.fontSize = 12
     normal.leading = 18
-    title = "<b>EZOD UNIVERSITY OF TECHNOLOGY, ADAMA</b>"  # TODO: Make this dynamic
+    school_obj = School.objects.first()
+    school_name = school_obj.name if school_obj else "University"
+    title = "<b>" + school_name + "</b>"
     title = Paragraph(title.upper(), normal)
     Story.append(title)
     style = getSampleStyleSheet()
@@ -492,11 +484,11 @@ def course_registration_form(request):
     school.fontName = "Helvetica"
     school.fontSize = 10
     school.leading = 18
-    school_title = (
-        "<b>SCHOOL OF ELECTRICAL ENGINEERING & COMPUTING</b>"  # TODO: Make this dynamic
-    )
-    school_title = Paragraph(school_title.upper(), school)
-    Story.append(school_title)
+    school_desc = school_obj.description if school_obj and school_obj.description else ""
+    school_title = "<b>" + school_desc + "</b>" if school_desc else ""
+    if school_title:
+        school_title = Paragraph(school_title.upper(), school)
+        Story.append(school_title)
 
     style = getSampleStyleSheet()
     Story.append(Spacer(1, 0.1 * inch))
@@ -505,9 +497,9 @@ def course_registration_form(request):
     department.fontName = "Helvetica"
     department.fontSize = 9
     department.leading = 18
-    department_title = (
-        "<b>DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING</b>"  # TODO: Make this dynamic
-    )
+    student_obj = Student.objects.filter(student__pk=request.user.id).first()
+    dept_name = student_obj.program.title if student_obj and hasattr(student_obj, 'program') and student_obj.program else "Department"
+    department_title = "<b>" + dept_name + "</b>"
     department_title = Paragraph(department_title, department)
     Story.append(department_title)
     Story.append(Spacer(1, 0.3 * inch))
@@ -520,7 +512,7 @@ def course_registration_form(request):
         student = Student.objects.get(student__pk=request.user.id)
     except Student.DoesNotExist:
         messages.error(request, _('Your student profile has not been created yet. Please contact the administrator.'))
-        return redirect('frontend:core:frontend:dashboard')
+        return redirect('frontend:core:dashboard')
 
     tbl_data = [
         [
@@ -565,7 +557,7 @@ def course_registration_form(request):
             "Course Code",
             "Course Title",
             "Unit",
-            Paragraph("Name, Siganture of course lecturer & Date", style["Normal"]),
+            Paragraph("Name, Signature of course lecturer & Date", style["Normal"]),
         )
     ]
     table_header = Table(header, 1 * [1.4 * inch], 1 * [0.5 * inch])
@@ -734,7 +726,7 @@ def course_registration_form(request):
         student = Student.objects.get(student__pk=request.user.id)
     except Student.DoesNotExist:
         messages.error(request, _('Your student profile has not been created yet. Please contact the administrator.'))
-        return redirect('frontend:core:frontend:dashboard')
+        return redirect('frontend:core:dashboard')
 
     certification_text = (
         "CERTIFICATION OF REGISTRATION: I certify that <b>"
@@ -770,3 +762,129 @@ def course_registration_form(request):
         response["Content-Disposition"] = "inline; filename=" + fname + ""
         return response
     return response
+
+
+# ########################################################
+# Grade Appeal Views
+# ########################################################
+
+
+@login_required
+@student_required
+def grade_appeal_create(request, taken_course_id):
+    """Create a grade appeal for a specific TakenCourse (student only)."""
+    try:
+        student = Student.objects.get(student__pk=request.user.id)
+    except Student.DoesNotExist:
+        messages.error(request, _('Your student profile has not been created yet. Please contact the administrator.'))
+        return redirect('frontend:core:dashboard')
+
+    taken_course = get_object_or_404(TakenCourse, pk=taken_course_id, student=student)
+
+    # Check if an active appeal already exists for this course
+    existing_appeal = GradeAppeal.objects.filter(
+        taken_course=taken_course,
+        student=student,
+        status__in=['submitted', 'under_review']
+    ).first()
+    if existing_appeal:
+        messages.warning(request, _('You already have an active appeal for this course.'))
+        return redirect('frontend:result:grade_appeal_detail', pk=existing_appeal.pk)
+
+    if request.method == 'POST':
+        form = GradeAppealForm(request.POST, request.FILES, student=student)
+        if form.is_valid():
+            appeal = form.save(commit=False)
+            appeal.student = student
+            appeal.taken_course = taken_course
+            appeal.save()
+            messages.success(request, _('Grade appeal submitted successfully.'))
+            return redirect('frontend:result:grade_appeal_detail', pk=appeal.pk)
+    else:
+        form = GradeAppealForm(student=student, initial={'taken_course': taken_course})
+
+    return render(request, 'result/appeal_form.html', {
+        'form': form,
+        'taken_course': taken_course,
+        'student': student,
+        'title': _('Submit Grade Appeal'),
+    })
+
+
+@login_required
+def grade_appeal_list(request):
+    """
+    List grade appeals.
+    Students see their own appeals.
+    Lecturers see appeals for courses they teach.
+    Direction/admin see all appeals.
+    """
+    user = request.user
+    user_role = getattr(user, 'role', '')
+
+    if user_role == 'student' or (hasattr(user, 'is_student') and user.is_student):
+        try:
+            student = Student.objects.get(student__pk=user.id)
+            appeals = GradeAppeal.objects.filter(student=student)
+        except Student.DoesNotExist:
+            appeals = GradeAppeal.objects.none()
+    elif user_role in ('professor',) or (hasattr(user, 'is_lecturer') and user.is_lecturer):
+        # Lecturers see appeals for courses allocated to them
+        appeals = GradeAppeal.objects.filter(
+            taken_course__course__allocated_course__lecturer__pk=user.id
+        )
+    elif user_role in ('direction', 'admin') or user.is_superuser:
+        appeals = GradeAppeal.objects.all()
+    else:
+        appeals = GradeAppeal.objects.none()
+
+    appeals = appeals.select_related(
+        'student', 'student__student', 'taken_course', 'taken_course__course', 'reviewed_by'
+    ).order_by('-submitted_at')
+
+    # Filter by status
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter:
+        appeals = appeals.filter(status=status_filter)
+
+    paginator = Paginator(appeals, 20)
+    page_num = request.GET.get('page', 1)
+    page = paginator.get_page(page_num)
+
+    return render(request, 'result/appeal_list.html', {
+        'appeals': page,
+        'total_count': paginator.count,
+        'status_filter': status_filter,
+        'status_choices': GradeAppeal.STATUS_CHOICES,
+        'title': _('Grade Appeals'),
+    })
+
+
+@login_required
+def grade_appeal_detail(request, pk):
+    """Show a single grade appeal with detail."""
+    user = request.user
+    user_role = getattr(user, 'role', '')
+
+    appeal = get_object_or_404(
+        GradeAppeal.objects.select_related(
+            'student', 'student__student', 'taken_course', 'taken_course__course', 'reviewed_by'
+        ),
+        pk=pk
+    )
+
+    # Permission check: students can only see their own appeals
+    if user_role == 'student' or (hasattr(user, 'is_student') and user.is_student):
+        try:
+            student = Student.objects.get(student__pk=user.id)
+            if appeal.student != student:
+                messages.error(request, _('You do not have permission to view this appeal.'))
+                return redirect('frontend:result:grade_appeal_list')
+        except Student.DoesNotExist:
+            messages.error(request, _('Your student profile has not been created yet.'))
+            return redirect('frontend:core:dashboard')
+
+    return render(request, 'result/appeal_detail.html', {
+        'appeal': appeal,
+        'title': _('Grade Appeal Detail'),
+    })

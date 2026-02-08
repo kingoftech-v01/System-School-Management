@@ -171,6 +171,56 @@ class RegistrationFormStep4(forms.ModelForm):
         }
 
 
+class RegistrationEditForm(forms.ModelForm):
+    """Form for editing a registration (Direction only)."""
+
+    class Meta:
+        model = RegistrationForm
+        fields = [
+            'student_name', 'date_of_birth', 'gender', 'nationality',
+            'email', 'phone', 'address',
+            'parent_name', 'parent_email', 'parent_phone', 'parent_relationship',
+            'enrollment_type', 'filiere', 'academic_year', 'level', 'previous_school',
+            'special_needs', 'medical_information',
+            'status', 'review_notes', 'rejection_reason',
+        ]
+        widgets = {
+            'student_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'nationality': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'parent_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'parent_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'parent_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'parent_relationship': forms.Select(attrs={'class': 'form-control'}, choices=[
+                ('father', _('Father')),
+                ('mother', _('Mother')),
+                ('guardian', _('Legal Guardian')),
+                ('other', _('Other')),
+            ]),
+            'enrollment_type': forms.Select(attrs={'class': 'form-control'}),
+            'filiere': forms.Select(attrs={'class': 'form-control'}),
+            'academic_year': forms.TextInput(attrs={'class': 'form-control'}),
+            'level': forms.Select(attrs={'class': 'form-control'}),
+            'previous_school': forms.TextInput(attrs={'class': 'form-control'}),
+            'special_needs': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'medical_information': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'review_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'rejection_reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        tenant = kwargs.pop('tenant', None)
+        super().__init__(*args, **kwargs)
+        if tenant:
+            from filieres.models import Filiere
+            self.fields['filiere'].queryset = Filiere.objects.filter(tenant=tenant)
+
+
 class DocumentUploadForm(forms.ModelForm):
     """Form for uploading enrollment documents."""
 

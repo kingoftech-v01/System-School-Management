@@ -15,8 +15,8 @@ from accounts.decorators import direction_only, tenant_required, role_required
 from .models import RegistrationForm, EnrollmentDocument, EnrollmentStatusHistory
 from .forms import (
     RegistrationFormStep1, RegistrationFormStep2, RegistrationFormStep3,
-    RegistrationFormStep4, DocumentUploadForm, RegistrationReviewForm,
-    EnrollmentSearchForm, DocumentVerificationForm
+    RegistrationFormStep4, DocumentUploadForm, RegistrationEditForm,
+    RegistrationReviewForm, EnrollmentSearchForm, DocumentVerificationForm
 )
 from .tasks import send_enrollment_status_email
 import csv
@@ -446,3 +446,92 @@ def enrollment_statistics(request):
     }
 
     return render(request, 'enrollment/enrollment_statistics.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def registration_edit(request, registration_id):
+    """Edit a registration form entry (direction only)."""
+    registration = get_object_or_404(
+        RegistrationForm,
+        id=registration_id,
+        tenant=request.tenant,
+    )
+
+    if request.method == 'POST':
+        form = RegistrationEditForm(
+            request.POST, instance=registration, tenant=request.tenant
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Registration updated successfully.'))
+            return redirect(
+                'frontend:enrollment:enrollment_detail',
+                registration_id=registration.id,
+            )
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = RegistrationEditForm(instance=registration, tenant=request.tenant)
+
+    return render(request, 'enrollment/registration_edit.html', {
+        'form': form,
+        'registration': registration,
+        'title': _('Edit Registration'),
+    })
+
+
+@login_required
+@direction_only
+@tenant_required
+def registration_delete(request, registration_id):
+    """Delete a registration. GET shows confirm page, POST deletes."""
+    registration = get_object_or_404(
+        RegistrationForm,
+        id=registration_id,
+        tenant=request.tenant,
+    )
+
+    if request.method == 'POST':
+        student_name = registration.student_name
+        registration.delete()
+        messages.success(
+            request,
+            _(f'Registration for {student_name} has been deleted.'),
+        )
+        return redirect('frontend:enrollment:enrollment_list')
+
+    return render(request, 'enrollment/registration_confirm_delete.html', {
+        'registration': registration,
+        'title': _('Delete Registration'),
+    })
+
+
+@login_required
+@direction_only
+@tenant_required
+def document_delete(request, document_id):
+    """Delete an enrollment document (POST-only, direction only)."""
+    document = get_object_or_404(
+        EnrollmentDocument,
+        id=document_id,
+        registration__tenant=request.tenant,
+    )
+    registration_id = document.registration.id
+
+    if request.method == 'POST':
+        document.file.delete(save=False)
+        document.delete()
+        messages.success(request, _('Document deleted successfully.'))
+        return redirect(
+            'frontend:enrollment:enrollment_detail',
+            registration_id=registration_id,
+        )
+
+    # If not POST, redirect back to enrollment detail
+    return redirect(
+        'frontend:enrollment:enrollment_detail',
+        registration_id=registration_id,
+    )

@@ -28,8 +28,9 @@ from .models import (
     ForumCategory, Thread, Post, Vote, Tag,
     ThreadSubscription, Report
 )
+from accounts.decorators import direction_only
 from .forms import (
-    ThreadForm, PostForm, ReportForm, SearchForm
+    ThreadForm, PostForm, ReportForm, SearchForm, CategoryForm
 )
 
 
@@ -751,3 +752,136 @@ def my_posts(request):
     }
 
     return render(request, 'forums/my_posts.html', context)
+
+
+# ============================================================================
+# CATEGORY MANAGEMENT (Direction only)
+# ============================================================================
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def category_create(request):
+    """
+    Create a new forum category.
+    Direction only.
+    """
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Category created successfully.'))
+            return redirect('frontend:forums:category_list')
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = CategoryForm()
+
+    context = {
+        'form': form,
+        'title': _('Create Forum Category'),
+    }
+
+    return render(request, 'forums/category_form.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def category_edit(request, pk):
+    """
+    Edit an existing forum category.
+    Direction only.
+    """
+    category = get_object_or_404(ForumCategory, pk=pk)
+
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Category updated successfully.'))
+            return redirect('frontend:forums:category_detail', slug=category.slug)
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = CategoryForm(instance=category)
+
+    context = {
+        'form': form,
+        'category': category,
+        'title': _('Edit Category: %(name)s') % {'name': category.name},
+    }
+
+    return render(request, 'forums/category_form.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def category_delete(request, pk):
+    """
+    Delete a forum category.
+    Direction only. GET shows confirmation page, POST performs delete.
+    """
+    category = get_object_or_404(ForumCategory, pk=pk)
+
+    if request.method == 'POST':
+        category.delete()
+        messages.success(request, _('Category deleted successfully.'))
+        return redirect('frontend:forums:category_list')
+
+    # GET: show confirmation page
+    thread_count = category.threads.count()
+
+    context = {
+        'category': category,
+        'thread_count': thread_count,
+        'title': _('Delete Category: %(name)s') % {'name': category.name},
+    }
+
+    return render(request, 'forums/category_confirm_delete.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='100/h')
+def moderation_queue(request):
+    """
+    Moderation queue showing reported content, pending threads, and flagged posts.
+    Direction only.
+    """
+    # Pending threads (awaiting approval)
+    pending_threads = Thread.objects.filter(
+        status='pending'
+    ).select_related('author', 'category').order_by('-created_at')
+
+    # Reported content (pending and under review)
+    pending_reports = Report.objects.filter(
+        status__in=['pending', 'reviewing']
+    ).select_related('reported_by', 'reviewed_by').order_by('-created_at')
+
+    # Flagged posts (soft-deleted posts that may need review)
+    flagged_posts = Post.objects.filter(
+        is_deleted=True
+    ).select_related('author', 'thread').order_by('-updated_at')[:50]
+
+    # Statistics
+    total_pending_threads = pending_threads.count()
+    total_pending_reports = pending_reports.count()
+    total_flagged_posts = flagged_posts.count()
+
+    context = {
+        'pending_threads': pending_threads,
+        'pending_reports': pending_reports,
+        'flagged_posts': flagged_posts,
+        'total_pending_threads': total_pending_threads,
+        'total_pending_reports': total_pending_reports,
+        'total_flagged_posts': total_flagged_posts,
+        'title': _('Moderation Queue'),
+    }
+
+    return render(request, 'forums/moderation_queue.html', context)

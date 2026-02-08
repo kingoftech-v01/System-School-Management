@@ -15,10 +15,12 @@ from django.views.generic import (
 from accounts.decorators import lecturer_required
 from .forms import (
     EssayForm,
+    EssayQuestionForm,
     MCQuestionForm,
     MCQuestionFormSet,
     QuestionForm,
     QuizAddForm,
+    TrueFalseQuestionForm,
 )
 from .models import (
     Course,
@@ -28,6 +30,7 @@ from .models import (
     Question,
     Quiz,
     Sitting,
+    TrueFalseQuestion,
 )
 
 
@@ -150,7 +153,7 @@ class MCQuestionCreate(CreateView):
 
                 if "another" in self.request.POST:
                     return redirect(
-                        "mc_create",
+                        "frontend:quiz:mc_create",
                         slug=self.kwargs["slug"],
                         quiz_id=self.kwargs["quiz_id"],
                     )
@@ -334,3 +337,125 @@ class QuizTake(FormView):
             self.sitting.delete()
 
         return render(self.request, self.result_template_name, results)
+
+
+# ########################################################
+# Essay Question Views
+# ########################################################
+
+
+@method_decorator([login_required, lecturer_required], name="dispatch")
+class EssayQuestionCreate(CreateView):
+    """Create an essay-style question linked to a quiz."""
+    model = EssayQuestion
+    form_class = EssayQuestionForm
+    template_name = "quiz/essay_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["course"] = get_object_or_404(Course, slug=self.kwargs["slug"])
+        context["quiz_obj"] = get_object_or_404(Quiz, id=self.kwargs["quiz_id"])
+        context["quiz_questions_count"] = Question.objects.filter(
+            quiz=self.kwargs["quiz_id"]
+        ).count()
+        return context
+
+    def form_valid(self, form):
+        with transaction.atomic():
+            self.object = form.save(commit=False)
+            self.object.save()
+
+            quiz = get_object_or_404(Quiz, id=self.kwargs["quiz_id"])
+            self.object.quiz.add(quiz)
+
+            if "another" in self.request.POST:
+                return redirect(
+                    "frontend:quiz:essay_create",
+                    slug=self.kwargs["slug"],
+                    quiz_id=self.kwargs["quiz_id"],
+                )
+            return redirect("frontend:quiz:quiz_index", slug=self.kwargs["slug"])
+
+
+# ########################################################
+# True/False Question Views
+# ########################################################
+
+
+@method_decorator([login_required, lecturer_required], name="dispatch")
+class TFQuestionCreate(CreateView):
+    """Create a True/False question linked to a quiz."""
+    model = TrueFalseQuestion
+    form_class = TrueFalseQuestionForm
+    template_name = "quiz/tf_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["course"] = get_object_or_404(Course, slug=self.kwargs["slug"])
+        context["quiz_obj"] = get_object_or_404(Quiz, id=self.kwargs["quiz_id"])
+        context["quiz_questions_count"] = Question.objects.filter(
+            quiz=self.kwargs["quiz_id"]
+        ).count()
+        return context
+
+    def form_valid(self, form):
+        with transaction.atomic():
+            self.object = form.save(commit=False)
+            self.object.save()
+
+            quiz = get_object_or_404(Quiz, id=self.kwargs["quiz_id"])
+            self.object.quiz.add(quiz)
+
+            if "another" in self.request.POST:
+                return redirect(
+                    "frontend:quiz:tf_create",
+                    slug=self.kwargs["slug"],
+                    quiz_id=self.kwargs["quiz_id"],
+                )
+            return redirect("frontend:quiz:quiz_index", slug=self.kwargs["slug"])
+
+
+# ########################################################
+# MC Question Edit View
+# ########################################################
+
+
+@method_decorator([login_required, lecturer_required], name="dispatch")
+class MCQuestionEdit(UpdateView):
+    """Edit an existing multiple-choice question."""
+    model = MCQuestion
+    form_class = MCQuestionForm
+    template_name = "quiz/mcquestion_form.html"
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(MCQuestion, pk=self.kwargs["pk"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["course"] = get_object_or_404(Course, slug=self.kwargs["slug"])
+        # Get the quiz this question belongs to (first one if multiple)
+        question = self.get_object()
+        quiz_obj = question.quiz.first()
+        context["quiz_obj"] = quiz_obj
+        context["quiz_questions_count"] = Question.objects.filter(
+            quiz=quiz_obj
+        ).count() if quiz_obj else 0
+        context["editing"] = True
+        if self.request.method == "POST":
+            context["formset"] = MCQuestionFormSet(self.request.POST, instance=self.object)
+        else:
+            context["formset"] = MCQuestionFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context["formset"]
+        if formset.is_valid():
+            with transaction.atomic():
+                self.object = form.save()
+                formset.instance = self.object
+                formset.save()
+                messages.success(self.request, "Question updated successfully.")
+                return redirect("frontend:quiz:quiz_index", slug=self.kwargs["slug"])
+        else:
+            return self.form_invalid(form)

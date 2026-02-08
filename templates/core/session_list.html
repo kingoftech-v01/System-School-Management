@@ -1,85 +1,114 @@
-{% extends 'base.html' %}
-{% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Sessions - School Management{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'w3crm/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
 
 {% block content %}
-
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<div class="page-titles">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{% trans 'Session List' %}</li>
+        <li><h5 class="bc-title">Sessions</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Sessions</a></li>
     </ol>
-</nav>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Sessions</h4>
+                    {% if is_direction or is_admin or is_professor %}
+                    <a href="{% url 'frontend:core:add_session' %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add Session
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="datatable" class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Session</th>
+                                    <th>Next Session Begins</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for session in sessions %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        {{ session.session }}
+                                        {% if session.is_current_session %}
+                                            <span class="badge bg-success ms-1"><i class="bi bi-check-circle"></i> Current</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ session.next_session_begins|default:"Not set" }}</td>
+                                    <td>
+                                        {% if session.is_current_session %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'frontend:core:edit_session' pk=session.pk %}" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        {% if not session.is_current_session %}
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSessionModal{{ session.pk }}">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No sessions found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-{% if request.user.is_superuser %}
-<div class="manage-wrap">
-    <a class="btn btn-primary" href="{% url 'frontend:core:frontend:add_session' %}"><i class="fas fa-plus"></i>{% trans 'Add New Session' %}</a>
+<!-- Delete Confirmation Modals -->
+{% for session in sessions %}
+{% if not session.is_current_session %}
+<div class="modal fade" id="deleteSessionModal{{ session.pk }}" tabindex="-1" aria-labelledby="deleteSessionModalLabel{{ session.pk }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteSessionModalLabel{{ session.pk }}">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the session <strong>{{ session.session }}</strong>? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'frontend:core:delete_session' pk=session.pk %}" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Delete
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endif %}
+{% endfor %}
+{% endblock %}
 
-<div class="title-1"><i class="fas fa-calendar-week"></i>{% trans 'Session List' %}</div>
-
-{% include 'snippets/messages.html' %}
-
-<div class="table-responsive table-shadow p-0 mt-5">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th> {% trans 'Session' %} </th>
-                <th> {% trans 'Is Current Session' %} </th>
-                <th> {% trans 'Next Session Begins' %} </th>
-                {% if request.user.is_superuser %}
-                <th> {% trans 'Actions' %} </th>
-                {% endif %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for session in sessions %}
-            <tr>
-                <td>{{ forloop.counter }}.</td>
-                <td>{{ session.session }}</td>
-                <th>
-                    {% if session.is_current_session == True %}
-                    <i class="fas fa-check-circle fa-1-5x"></i>
-                    {% else %}
-                    <i class="fas fa-times-circle fa-1-5x danger"></i>
-                    {% endif %}
-                </th>
-                <td>{{ session.next_session_begins }}</td>
-
-                {% if request.user.is_superuser %}
-                <td> <div class="update-delete">
-                    <a href="{% url 'frontend:core:frontend:edit_session' pk=session.pk %}" class="update" title="{% trans 'Edit' %}"><i class="fas fa-pencil-alt"></i></a>
-                    <a href="{% url 'frontend:core:frontend:delete_session' pk=session.pk %}" class="delete" title="{% trans 'Delete' %}"><i class="fas fa-trash-alt"></i></a>
-                    </div>
-                </td>
-                {% endif %}
-                
-                {% empty %}
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td>
-                  <span class="text-danger">
-                    {% trans 'No Session.' %}
-                    {% if request.user.is_superuser %}
-                    <a href="{% url 'frontend:core:frontend:add_session' %}">
-                    <i class="primary" style="font-size: 22px;">
-                        {% trans 'Add Session Now.' %}
-                    </i>
-                    {% endif %}
-                    </a>
-                  </span>
-                </td>
-                <td></td>
-                <td></td>
-                <td></td>
-                </tr>
-
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endblock content %}
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>$(document).ready(function() { $('#datatable').DataTable(); });</script>
+{% endblock %}

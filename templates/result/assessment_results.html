@@ -1,104 +1,53 @@
-{% extends 'base.html' %}
-{% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Assessment Results - School Management{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'w3crm/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
 
 {% block content %}
-
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-  <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{% trans 'Assesment Results' %}</li>
-  </ol>
-</nav>
-
-{% include 'snippets/messages.html' %}
-
-<div class="title-1"><i class="fa fa-spell-check"></i>{% trans 'Assesment Results' %}</div>
-<p>{{ student.level }} {% trans 'Result' %}</p>
-
-<div class="table-responsive p-0 px-2 mt-3">
-  <div class="table-title"><u>{% trans 'First Semester:' %}</u></div>
-  <table class="table table-light">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>{% trans 'Course Title' %}</th>
-        <th>{% trans 'Course Code' %}</th>
-        <th>{% trans 'Cr.Hr(s)' %}</th>
-        <th>{% trans 'Assignment' %}</th>
-        <th>{% trans 'Mid exam' %}</th>
-        <th>{% trans 'Quiz' %}</th>
-        <th>{% trans 'Attendance' %}</th>
-        <th>{% trans 'Final exam' %}</th>
-        <th>{% trans 'Total' %}</th>
-      </tr>
-    </thead>
-    {% for course in courses %}
-    {% if course.course.semester == "First" %}
-    <tbody>
-      <tr class="{% if forloop.counter|divisibleby:2 %}bg-gray{% endif %}">
-        <th scope="row">{{ forloop.counter }}</th>
-        <td><a href="{{ course.course.get_absolute_url }}">{{ course.course.title }}</a></td>
-        <td>{{ course.course.code }}</td>
-        <td>{{ course.course.credit }}</td>
-        <td>{{ course.assignment }}</td>
-        <td>{{ course.mid_exam }}</td>
-        <td>{{ course.quiz }}</td>
-        <td>{{ course.attendance }}</td>
-        <td>{{ course.final_exam }}</td>
-        {% if course.total >= 45 %}
-        <td class="success"><i class="fas fa-check-circle"></i> {{ course.total }}</td>
-        {% else %}
-        <td class="danger"><i class="fas fa-exclamation-circle"></i> {{ course.total }}</td>
-        {% endif %}
-      </tr>
-    </tbody>
-    {% endif %}
-    {% endfor %}
-  </table>
-  </div>
-
-  <div class="table-responsive p-3 mt-3">
-    <div class="table-title"><u>{% trans 'Second Semester:' %}</u></div>
-    <table class="table table-light">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>{% trans 'Course Title' %}</th>
-        <th>{% trans 'Course Code' %}</th>
-        <th>{% trans 'Cr.Hr(s)' %}</th>
-        <th>{% trans 'Assignment' %}</th>
-        <th>{% trans 'Mid exam' %}</th>
-        <th>{% trans 'Quiz' %}</th>
-        <th>{% trans 'Attendance' %}</th>
-        <th>{% trans 'Final exam' %}</th>
-        <th>{% trans 'Total' %}</th>
-      </tr>
-    </thead>
-    {% for course in courses %}
-    {% if course.course.semester == "Second" %}
-    <tbody>
-      <tr>
-        <th scope="row">{{ forloop.counter }}</th>
-        <td><a href="{{ course.course.get_absolute_url }}">{{ course.course.title }}</a></td>
-        <td>{{ course.course.code }}</td>
-        <td>{{ course.course.credit }}</td>
-        <td>{{ course.assignment }}</td>
-        <td>{{ course.mid_exam }}</td>
-        <td>{{ course.quiz }}</td>
-        <td>{{ course.attendance }}</td>
-        <td>{{ course.final_exam }}</td>
-        {% if course.total >= 45 %}
-        <td class="success"><i class="fas fa-check-circle"></i> {{ course.total }}</td>
-        {% else %}
-        <td class="danger"><i class="fas fa-exclamation-circle"></i> {{ course.total }}</td>
-        {% endif %}
-      </tr>
-    </tbody>
-    {% endif %}
-    {% endfor %}
-  </table>
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Assessment Results</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Assessment Results</a></li>
+    </ol>
 </div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Assessment Results</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="datatable" class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="text-center">No data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-<br>
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>$(document).ready(function() { $('#datatable').DataTable(); });</script>
 {% endblock %}

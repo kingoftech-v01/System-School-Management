@@ -68,7 +68,11 @@ frontend_urlpatterns = [
     path('edit_student_program/<int:pk>/', views_frontend.edit_student_program, name='student_program_edit'),
 
     # Parent management
+    path('parents/', views_frontend.parent_list, name='parent_list'),
     path('parents/add/', views_frontend.ParentAdd.as_view(), name='add_parent'),
+    path('parents/<int:pk>/', views_frontend.parent_detail, name='parent_detail'),
+    path('parents/<int:pk>/edit/', views_frontend.parent_edit, name='parent_edit'),
+    path('parents/<int:pk>/delete/', views_frontend.parent_delete, name='parent_delete'),
 
     # Registration
     path('register/', views_frontend.register, name='register'),

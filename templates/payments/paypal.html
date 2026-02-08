@@ -1,56 +1,25 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}PayPal Payment - School Management{% endblock %}
 
-<head>
-    <!-- Add meta tags for mobile and IE -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title> PayPal Smart Payment Buttons Integration | Client Demo </title>
-</head>
-
-<body>
-    <!-- Set up a container element for the button -->
-    <div id="paypal-button-container"></div>
-
-    <!-- Include the PayPal JavaScript SDK -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AabPcZJCP3oBL_2GTVXO58VnsyvVEzUrWORwilbX9fA5ywWdR9YSaIdu4v-nDVMIszpI1PEy9K-76jlW&currency=USD"></script>
-
-    <script>
-        // Render the PayPal button into #paypal-button-container
-        paypal.Buttons({
-
-            // Set up the transaction
-            createOrder: function(data, actions) {
-                return actions.order.create({
-                    purchase_units: [{
-                        amount: {
-                            value: '88.44'
-                        }
-                    }]
-                });
-            },
-
-            style: {
-                color:  'blue',
-                shape:  'pill',
-                label:  'pay',
-                height: 40
-            },
-
-
-            // Finalize the transaction
-            onApprove: function(data, actions) {
-                return actions.order.capture().then(function(details) {
-                    // Show a success message to the buyer
-                    alert('Transaction completed by ' + details.payer.name.given_name + '!');
-                });
-            }
-
-
-        }).render('#paypal-button-container');
-
-    </script>
-</body>
-
-</html>
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">PayPal Payment</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">PayPal Payment</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4>PayPal Payment</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -3,7 +3,7 @@ from django.forms.widgets import RadioSelect, Textarea
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.utils.translation import gettext_lazy as _
 from django.forms.models import inlineformset_factory
-from .models import Question, Quiz, MCQuestion, Choice
+from .models import Question, Quiz, MCQuestion, Choice, EssayQuestion, TrueFalseQuestion
 
 
 class QuestionForm(forms.Form):
@@ -101,3 +101,49 @@ MCQuestionFormSet = inlineformset_factory(
     can_delete=True,
     extra=5,
 )
+
+
+class EssayQuestionForm(forms.ModelForm):
+    """Form for creating/editing essay-style questions."""
+
+    class Meta:
+        model = EssayQuestion
+        fields = ['content', 'explanation', 'figure']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': _('Enter the essay question text...'),
+            }),
+            'explanation': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': _('Explanation shown after answering (optional)...'),
+            }),
+            'figure': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class TrueFalseQuestionForm(forms.ModelForm):
+    """Form for creating/editing True/False questions."""
+
+    class Meta:
+        model = TrueFalseQuestion
+        fields = ['content', 'correct_answer', 'explanation', 'figure']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': _('Enter the True/False question text...'),
+            }),
+            'correct_answer': forms.Select(
+                choices=[(True, _('True')), (False, _('False'))],
+                attrs={'class': 'form-select'},
+            ),
+            'explanation': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': _('Explanation shown after answering (optional)...'),
+            }),
+            'figure': forms.FileInput(attrs={'class': 'form-control'}),
+        }

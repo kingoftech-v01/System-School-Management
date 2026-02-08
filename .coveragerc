@@ -1,0 +1,40 @@
+[run]
+omit =
+    # Dead code / legacy duplicates
+    REMAINING_APPS_COMPLETE_CODE.py
+    accounts/views.py
+    result/views.py
+    course/views.py
+    core/views.py
+    # Scripts (not part of the app)
+    scripts/*
+    manage.py
+    validate_migration.py
+    # Django infrastructure
+    School_System/asgi.py
+    School_System/wsgi.py
+    School_System/__init__2.py
+    # Virtual environment
+    venv/*
+    # Migrations
+    */migrations/*
+    # Test files
+    */tests/*
+    tests/*
+    conftest.py
+    # Management commands
+    */management/*
+    # Legacy/unused settings
+    School_System/settings.py
+    School_System/settings/production.py
+    # Test/migration scripts
+    test_migration_urls.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.
+    raise NotImplementedError
+    pass
+    except ImportError

@@ -1,31 +1,28 @@
-{% extends 'base.html' %}
-{% load i18n %}
-{% block title %}{{ video.title }} | {% trans 'Learning management system' %}{% endblock title %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
+{% block title %}Video - School Management{% endblock %}
+
 {% block content %}
-
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<div class="page-titles">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:programs' %}">{% trans 'Programs' %}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:program_detail' video.course.program.id %}">{{ video.course.program }}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:course_detail' video.course.slug %}">{{ video.course }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ video.title }}</li>
+        <li><h5 class="bc-title">Video</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Video</a></li>
     </ol>
-</nav>
-    
-<p class="title-1">{{ video.title }}</p>
-<br><br>
-
-<div class="col-md-10 mx-auto d-block">
-    <div class=""><video src="{{ video.video.url }}" controls ></video></div>
-    <p><i class="fas fa-calendar"></i> {{ video.timestamp|timesince }} {% trans 'ago' %}</p>
-    {% if video.summary %}
-    <p class="text-orange text-center">{{ video.summary }}</p>
-    {% else %}
-    {% trans 'No video description set.' %}
-    {% endif %}
 </div>
-
-{% endblock content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Video</h4>
+                </div>
+                <div class="card-body">
+                    <p>Detail content goes here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -56,6 +56,21 @@ frontend_urlpatterns = [
         views_frontend.MCQuestionCreate.as_view(),
         name="mc_create",
     ),
+    path(
+        "mc-question/edit/<slug>/<int:pk>/",
+        views_frontend.MCQuestionEdit.as_view(),
+        name="mc_edit",
+    ),
+    path(
+        "essay-question/add/<slug>/<int:quiz_id>/",
+        views_frontend.EssayQuestionCreate.as_view(),
+        name="essay_create",
+    ),
+    path(
+        "tf-question/add/<slug>/<int:quiz_id>/",
+        views_frontend.TFQuestionCreate.as_view(),
+        name="tf_create",
+    ),
 ]
 
 

@@ -1,0 +1,163 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Parent Detail</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:accounts:parent_list' %}">Parents</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ parent.first_name }} {{ parent.last_name }}</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Parent Information -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Parent Information</h4>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'frontend:accounts:parent_edit' parent.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th class="text-muted" style="width: 35%;">First Name</th>
+                            <td>{{ parent.first_name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Last Name</th>
+                            <td>{{ parent.last_name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Email</th>
+                            <td>
+                                {% if parent.email %}
+                                <a href="mailto:{{ parent.email }}">{{ parent.email }}</a>
+                                {% else %}
+                                <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Phone</th>
+                            <td>{{ parent.phone|default:"Not provided" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Relationship</th>
+                            <td>{{ parent.get_relation_ship_display|default:"Not specified" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">User Account</th>
+                            <td>
+                                {% if parent.user %}
+                                <a href="{% url 'frontend:accounts:profile_single' parent.user.id %}">{{ parent.user.username }}</a>
+                                {% else %}
+                                <span class="text-muted">No account</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linked Student Information -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Linked Student</h4>
+                </div>
+                <div class="card-body">
+                    {% if parent.student %}
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th class="text-muted" style="width: 35%;">Name</th>
+                            <td>
+                                <a href="{% url 'frontend:accounts:profile_single' parent.student.student.id %}">
+                                    {{ parent.student.student.get_full_name }}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Student ID</th>
+                            <td>{{ parent.student.student.username }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Program</th>
+                            <td>{{ parent.student.program|default:"Not assigned" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Level</th>
+                            <td>{{ parent.student.level|default:"--" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Email</th>
+                            <td>
+                                {% if parent.student.student.email %}
+                                <a href="mailto:{{ parent.student.student.email }}">{{ parent.student.student.email }}</a>
+                                {% else %}
+                                <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-person-x fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No student linked to this parent.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="d-flex gap-2">
+        <a href="{% url 'frontend:accounts:parent_list' %}" class="btn btn-light">
+            <i class="bi bi-arrow-left me-1"></i> Back to Parents
+        </a>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete parent <strong>{{ parent.first_name }} {{ parent.last_name }}</strong>? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'frontend:accounts:parent_delete' parent.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

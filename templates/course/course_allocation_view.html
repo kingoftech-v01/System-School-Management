@@ -1,82 +1,53 @@
-{% extends 'base.html' %}
-{% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Course Allocations - School Management{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'w3crm/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
 
 {% block content %}
-
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<div class="page-titles">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{% trans 'Allocation list' %}</li>
+        <li><h5 class="bc-title">Course Allocations</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Course Allocations</a></li>
     </ol>
-</nav>
-
-{% if request.user.is_superuser %}
-<div class="manage-wrap">
-    <a class="btn btn-primary" href="{% url 'frontend:course:frontend:course_allocation' %}"><i class="fas fa-plus"></i>{% trans 'Allocate Now' %}</a>
 </div>
-{% endif %}
-
-<div class="title-1"><i class="fas fa-tasks"></i>{% trans 'Course Allocations' %}</div>
-<br>
-<br>
-
-{% include 'snippets/messages.html' %}
-{% include 'snippets/filter_form.html' %}
-
-<div class="table-responsive table-shadow p-0 mt-4">
-    <table class="table table-light table-striped">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>{% trans 'Lecturer' %}</th>
-                <th>{% trans 'Courses' %}</th>
-                {% if request.user.is_superuser %}
-                <th>{% trans 'Action' %}</th>
-                {% endif %}
-            </tr>
-        </thead>
-        {% for course in filter.qs %}
-        <tbody>
-            <tr>
-                <td> {{ forloop.counter }}.</td>
-                <td><a href="{{ course.lecturer.get_absolute_url }}">{{ course.lecturer.get_full_name }}</a></td>
-                <td><div class="flex">{% for i in course.courses.all %}
-                        <div class="flex"><a class="edit-btn" href="{{ i.get_absolute_url }}">{{ i }}</a></div>
-                    {% endfor %}</div>
-                </td>
-                {% if request.user.is_superuser %}
-                <td><div class="update-delete">
-                    <a href="{% url 'frontend:course:frontend:edit_allocated_course' pk=course.pk %}" class="update" title="{% trans 'Edit or Update' %}">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <a href="{% url 'frontend:course:frontend:course_deallocate' pk=course.pk %}" class="delete" title="{% trans 'Deallocate' %}">
-                        <i class="fas fa-trash-alt"></i>
-                    </a>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Course Allocations</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="datatable" class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="text-center">No data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </td>
-                {% endif %}
-            </tr>
-            {% empty %}
-            <tr>
-              <td></td>
-              <td></td>
-              <td>
-                <span class="text-danger">{% trans 'No Course Allocated.' %}
-                    {% if request.user.is_superuser %}
-                    <a href="{% url 'frontend:course:frontend:course_allocation' %}">
-                    <i class="primary" style="font-size: 22px;">
-                        {% trans 'Allocate now' %}
-                    </i>
-                    {% endif %}
-                    </a>
-                </span>
-                </td>
-              <td></td>
-            </tr>
-
-        </tbody>
-        {% endfor %}
-    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock content %}
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>$(document).ready(function() { $('#datatable').DataTable(); });</script>
+{% endblock %}

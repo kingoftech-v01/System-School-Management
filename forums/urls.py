@@ -45,6 +45,9 @@ frontend_urlpatterns = [
 
     # Categories
     path('categories/', views_frontend.category_list, name='category_list'),
+    path('categories/create/', views_frontend.category_create, name='category_create'),
+    path('categories/<int:pk>/edit/', views_frontend.category_edit, name='category_edit'),
+    path('categories/<int:pk>/delete/', views_frontend.category_delete, name='category_delete'),
     path('categories/<slug:slug>/', views_frontend.category_detail, name='category_detail'),
 
     # Threads
@@ -74,6 +77,7 @@ frontend_urlpatterns = [
     path('my-subscriptions/', views_frontend.my_subscriptions, name='my_subscriptions'),
 
     # Moderation
+    path('moderation/', views_frontend.moderation_queue, name='moderation_queue'),
     path('report/<int:content_type_id>/<int:object_id>/', views_frontend.report_content, name='report_content'),
 
     # Search

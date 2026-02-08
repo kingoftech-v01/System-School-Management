@@ -1,89 +1,106 @@
-{% extends 'base.html' %}
-{% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Lecturers - School Management{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'w3crm/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
 
 {% block content %}
-
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<div class="page-titles">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{% trans 'Lecturers' %}</li>
+        <li><h5 class="bc-title">Lecturers</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Lecturers</a></li>
     </ol>
-</nav>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Lecturers <span class="badge bg-primary">{{ page_obj.paginator.count|default:"0" }}</span></h4>
+                    {% if is_admin or is_direction %}
+                    <a href="{% url 'frontend:accounts:add_lecturer' %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle"></i> Add Lecturer</a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="datatable" class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lecturer in object_list %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <a href="{% url 'frontend:accounts:profile_single' lecturer.id %}" title="View {{ lecturer.get_full_name }}">
+                                            {{ lecturer.get_full_name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if lecturer.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'frontend:accounts:staff_edit' lecturer.pk %}" class="btn btn-sm btn-primary" title="Edit {{ lecturer.get_full_name }}"><i class="bi bi-pencil"></i></a>
+                                        {% if is_admin or is_direction %}
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ lecturer.pk }}" title="Delete {{ lecturer.get_full_name }}"><i class="bi bi-trash"></i></button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No lecturers found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-{% if request.user.is_superuser %}
-<div class="manage-wrap">
-    <a class="btn btn-primary" href="{% url 'frontend:accounts:frontend:add_lecturer' %}"><i class="fas fa-plus"></i>{% trans 'Add Lecturer' %}</a>
-    <a class="btn btn-primary" target="_blank" href="{% url 'frontend:accounts:frontend:lecturer_list_pdf' %}"><i class="fas fa-download"></i> {% trans 'Download pdf' %}</a><!--new-->
+{% for lecturer in object_list %}
+{% if is_admin or is_direction %}
+<!-- Delete Confirmation Modal for {{ lecturer.get_full_name }} -->
+<div class="modal fade" id="deleteModal{{ lecturer.pk }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ lecturer.pk }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ lecturer.pk }}">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete lecturer <strong>{{ lecturer.get_full_name }}</strong>? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'frontend:accounts:lecturer_delete' lecturer.pk %}" class="d-inline">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 {% endif %}
+{% endfor %}
+{% endblock %}
 
-<p class="title-1"><i class="fas fa-chalkboard-teacher"></i>{% trans 'Lecturers' %}</p>
-
-{% include 'snippets/messages.html' %}
-{% include 'snippets/filter_form.html' %}
-
-<div class="table-responsive table-shadow table-light table-striped m-0 mt-4">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th> {% trans 'ID No.' %}' </th>
-                <th> {% trans 'Full Name' %} </th>
-                <th> {% trans 'Email' %} </th>
-                <th> {% trans 'Mob No.' %} </th>
-                <th> {% trans 'Address/city' %} </th>
-                <th> {% trans 'Last login' %}  </th>
-                {% if request.user.is_superuser %}
-                <th> {% trans 'Action' %} </th>
-                {% endif %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for lecturer in filter.qs %}
-            <tr>
-                <td> {{ forloop.counter }}.</td>
-                <td>{{ lecturer.username }}</td>
-                <td><a href="{% url 'frontend:accounts:frontend:profile_single' lecturer.id %}">{{ lecturer.get_full_name }}</a></td>
-                <td>{{ lecturer.email }}</td>
-                <td>{{ lecturer.phone }}</td>
-                <td>{{ lecturer.address }}</td>
-                <td>{{ lecturer.last_login }}</td>
-                {% if request.user.is_superuser %}
-                <td> 
-                    <div class="dropdown">
-                        <button class="btn btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa fa-ellipsis-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                          <li><a class="dropdown-item" href="{% url 'frontend:accounts:frontend:staff_edit' pk=lecturer.pk %}"><i class="unstyled me-2 fas fa-edit"></i>{% trans 'Update' %}</a></li>
-                          <li><a class="dropdown-item"  target="_blank" href="{% url 'frontend:accounts:frontend:profile_single' lecturer.id %}?download_pdf=1"><i class="unstyled me-2 fas fa-download"></i>{% trans 'Download PDF' %}</a></li>
-                          <li><a class="dropdown-item text-danger" href="{% url 'frontend:accounts:frontend:lecturer_delete' pk=lecturer.pk %}"><i class="unstyled me-2 fas fa-trash-alt"></i> {% trans 'Delete' %}</a></li>
-                        </ul>
-                    </div>
-                </td>
-                {% endif %}
-                
-                {% empty %}
-                <tr>
-                  <td colspan="8">
-                  <span class="text-danger">
-                    {% trans 'No Lecturer(s).' %}
-                    {% if request.user.is_superuser %}
-                    <a href="{% url 'frontend:accounts:frontend:add_lecturer' %}">
-                    <i class="primary" style="font-size: 22px;">
-                        {% trans 'Add Lecturer Now.' %}
-                    </i>
-                    {% endif %}
-                    </a>
-                  </span>
-                </td>
-                </tr>
-
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endblock content %}
-
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>$(document).ready(function() { $('#datatable').DataTable(); });</script>
+{% endblock %}

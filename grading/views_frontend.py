@@ -393,7 +393,6 @@ def grade_entry_create(request, rubric_pk=None, student_id=None):
 
 
 @login_required
-@login_required
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def grade_entry_detail(request, pk):
@@ -423,6 +422,97 @@ def grade_entry_detail(request, pk):
     }
 
     return render(request, 'grading/grade_entry_detail.html', context)
+
+
+@login_required
+@lecturer_required
+@tenant_required
+@ratelimit(key='user', rate='100/h')
+def grade_entry_edit(request, pk):
+    """
+    Edit an existing grade entry.
+    Lecturers can only edit grades they assigned.
+    Direction can edit any grade.
+    """
+    grade = get_object_or_404(
+        RubricGrade.objects.select_related('rubric', 'student', 'graded_by'),
+        pk=pk
+    )
+
+    # Check permissions
+    if request.user.role != 'direction' and grade.graded_by != request.user:
+        messages.error(request, _('You do not have permission to edit this grade.'))
+        return redirect('frontend:grading:grade_entry_list')
+
+    rubric = grade.rubric
+
+    if request.method == 'POST':
+        form = RubricGradeForm(request.POST, instance=grade, rubric=rubric, user=request.user)
+        formset = CriterionGradeFormSet(request.POST, rubric=rubric)
+
+        if form.is_valid() and formset.is_valid():
+            grade = form.save()
+
+            # Update criterion grades
+            # Remove existing criterion grades and re-create
+            grade.criterion_grades.all().delete()
+            for criterion_form in formset:
+                if criterion_form.cleaned_data:
+                    criterion_grade = criterion_form.save(commit=False)
+                    criterion_grade.rubric_grade = grade
+                    criterion_grade.save()
+
+            # Recalculate total score
+            grade.calculate_grade()
+
+            messages.success(request, _('Grade updated successfully.'))
+            return redirect('frontend:grading:grade_entry_detail', pk=grade.pk)
+    else:
+        form = RubricGradeForm(instance=grade, rubric=rubric, user=request.user)
+        formset = CriterionGradeFormSet(rubric=rubric)
+
+    context = {
+        'form': form,
+        'formset': formset,
+        'grade': grade,
+        'rubric': rubric,
+        'title': _('Edit Grade Entry'),
+    }
+
+    return render(request, 'grading/grade_entry_form.html', context)
+
+
+@login_required
+@lecturer_required
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def grade_entry_delete(request, pk):
+    """
+    Delete a grade entry.
+    Lecturers can only delete grades they assigned.
+    Direction can delete any grade. GET shows confirmation, POST deletes.
+    """
+    grade = get_object_or_404(
+        RubricGrade.objects.select_related('rubric', 'student', 'graded_by'),
+        pk=pk
+    )
+
+    # Check permissions
+    if request.user.role != 'direction' and grade.graded_by != request.user:
+        messages.error(request, _('You do not have permission to delete this grade.'))
+        return redirect('frontend:grading:grade_entry_list')
+
+    if request.method == 'POST':
+        grade.delete()
+        messages.success(request, _('Grade entry deleted successfully.'))
+        return redirect('frontend:grading:grade_entry_list')
+
+    context = {
+        'grade': grade,
+        'title': _('Delete Grade Entry'),
+    }
+
+    return render(request, 'grading/grade_entry_confirm_delete.html', context)
 
 
 # ============================================================================
@@ -648,6 +738,61 @@ def grade_curve_detail(request, pk):
     }
 
     return render(request, 'grading/grade_curve_detail.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='100/h')
+def grade_curve_edit(request, pk):
+    """
+    Edit an existing grade curve.
+    Direction only.
+    """
+    curve = get_object_or_404(GradeCurve, pk=pk)
+
+    if request.method == 'POST':
+        form = GradeCurveForm(request.POST, instance=curve)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Grade curve updated successfully.'))
+            return redirect('frontend:grading:grade_curve_detail', pk=curve.pk)
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = GradeCurveForm(instance=curve)
+
+    context = {
+        'form': form,
+        'curve': curve,
+        'title': _('Edit Grade Curve'),
+    }
+
+    return render(request, 'grading/grade_curve_form.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def grade_curve_delete(request, pk):
+    """
+    Delete a grade curve.
+    Direction only. GET shows confirmation, POST deletes.
+    """
+    curve = get_object_or_404(GradeCurve.objects.select_related('course', 'applied_by'), pk=pk)
+
+    if request.method == 'POST':
+        curve.delete()
+        messages.success(request, _('Grade curve deleted successfully.'))
+        return redirect('frontend:grading:grade_curve_list')
+
+    context = {
+        'curve': curve,
+        'title': _('Delete Grade Curve'),
+    }
+
+    return render(request, 'grading/grade_curve_confirm_delete.html', context)
 
 
 # ============================================================================

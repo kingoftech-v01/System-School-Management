@@ -1,145 +1,28 @@
-{% extends "base_dashboard.html" %}
-{% load static i18n %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
 
-{% block title %}{% trans "Student Dashboard" %}{% endblock %}
+{% block title %}Student Dashboard - School Management{% endblock %}
 
-{% block page_title %}{% trans "Student Dashboard" %}{% endblock %}
-
-{% block breadcrumb_items %}
-<li class="breadcrumb-item active">{% trans "Dashboard" %}</li>
-{% endblock %}
-
-{% block dashboard_content %}
-<div class="container-fluid px-4 py-4">
-    <!-- Welcome Section -->
-    <div class="dashboard-welcome mb-4">
-        <h2 class="welcome-title">{% trans "Welcome back" %}, {{ user.first_name }}! 👋</h2>
-        <p class="text-muted">{% trans "Here's what's happening with your academic journey" %}</p>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="row g-3 mb-4">
-        <!-- GPA Card -->
-        <div class="col-md-3 col-sm-6">
-            {% include "components/widgets/stat_card.html" with label="Current GPA" value=gpa|default:"0.0" icon="ri-award-line" color="primary" %}
-        </div>
-
-        <!-- Courses Card -->
-        <div class="col-md-3 col-sm-6">
-            {% include "components/widgets/stat_card.html" with label="Active Courses" value=courses_count|default:"0" icon="ri-book-open-line" color="success" %}
-        </div>
-
-        <!-- Attendance Card -->
-        <div class="col-md-3 col-sm-6">
-            {% include "components/widgets/stat_card.html" with label="Attendance" value=attendance_summary.percentage|default:"0"|add:"%" icon="ri-calendar-check-line" color="info" %}
-        </div>
-
-        <!-- Pending Tasks Card -->
-        <div class="col-md-3 col-sm-6">
-            {% include "components/widgets/stat_card.html" with label="Pending Tasks" value="5" icon="ri-task-line" color="warning" %}
-        </div>
-    </div>
-
-    <!-- Current Courses Table -->
-    <div class="row g-3 mb-4">
-        <div class="col-lg-12">
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Student Dashboard</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Student Dashboard</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">{% trans "Current Courses" %}</h5>
-                    <a href="{% url 'frontend:course:frontend:user_course_list' %}" class="btn btn-sm btn-primary">{% trans "View All" %}</a>
+                <div class="card-header">
+                    <h4 class="card-title">Student Dashboard</h4>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{% trans "Course" %}</th>
-                                    <th>{% trans "Code" %}</th>
-                                    <th>{% trans "Professor" %}</th>
-                                    <th>{% trans "Progress" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for taken_course in courses %}
-                                <tr>
-                                    <td>{{ taken_course.course.title }}</td>
-                                    <td><code>{{ taken_course.course.code }}</code></td>
-                                    <td>
-                                        {% if taken_course.course.allocated_course.all %}
-                                            {{ taken_course.course.allocated_course.first.lecturer.get_full_name|default:"TBA" }}
-                                        {% else %}
-                                            {% trans "TBA" %}
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%">75%</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="4">
-                                        {% include "components/widgets/empty_state.html" with icon="ri-book-open-line" title="No Courses" message="No courses registered for this semester" %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Grades -->
-    <div class="row g-3">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">{% trans "Recent Grades" %}</h5>
-                    <a href="{% url 'frontend:result:frontend:grade_results' %}" class="btn btn-sm btn-primary">{% trans "View All" %}</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>{% trans "Course" %}</th>
-                                    <th>{% trans "Grade" %}</th>
-                                    <th>{% trans "Status" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for grade in recent_grades %}
-                                <tr>
-                                    <td>{{ grade.course.title }}</td>
-                                    <td><strong>{{ grade.total }}</strong></td>
-                                    <td>
-                                        {% if grade.total >= 70 %}
-                                        {% include "components/widgets/badge.html" with text="Pass" color="success" icon="ri-checkbox-circle-line" %}
-                                        {% else %}
-                                        {% include "components/widgets/badge.html" with text="Fail" color="danger" icon="ri-close-circle-line" %}
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="3">
-                                        {% include "components/widgets/empty_state.html" with icon="ri-file-list-line" title="No Grades" message="No grades available yet" %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <p>Welcome to the Student Dashboard page.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/vendor/apexcharts/apexcharts.min.js' %}"></script>
 {% endblock %}

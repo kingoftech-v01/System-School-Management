@@ -48,8 +48,13 @@ frontend_urlpatterns = [
     path('<int:filiere_pk>/subjects/add/', views_frontend.add_subject, name='add_subject'),
     path('<int:filiere_pk>/subjects/<int:subject_pk>/remove/', views_frontend.remove_subject, name='remove_subject'),
 
+    # Subject editing
+    path('<int:filiere_pk>/subjects/<int:subject_pk>/edit/', views_frontend.edit_subject, name='edit_subject'),
+
     # Requirement management
     path('<int:filiere_pk>/requirements/add/', views_frontend.add_requirement, name='add_requirement'),
+    path('<int:filiere_pk>/requirements/<int:requirement_pk>/edit/', views_frontend.edit_requirement, name='edit_requirement'),
+    path('<int:filiere_pk>/requirements/<int:requirement_pk>/remove/', views_frontend.remove_requirement, name='remove_requirement'),
 ]
 
 

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Avg, Count
 from django.utils import timezone
 
@@ -256,6 +257,7 @@ def dashboard_view(request):
 
 
 @login_required
+@lecturer_required
 def post_add(request):
     if request.method == "POST":
         form = NewsAndEventsForm(request.POST)
@@ -295,6 +297,36 @@ def delete_post(request, pk):
     post.delete()
     messages.success(request, f"{post_title} has been deleted.")
     return redirect("frontend:core:home")
+
+
+@login_required
+def post_detail(request, pk):
+    """Show a single news or event post."""
+    post = get_object_or_404(NewsAndEvents, pk=pk)
+    return render(request, "core/post_detail.html", {
+        "title": post.title,
+        "post": post,
+    })
+
+
+@login_required
+def news_search(request):
+    """Search news and events by query string."""
+    query = request.GET.get('q', '').strip()
+    results = NewsAndEvents.objects.none()
+
+    if query:
+        results = NewsAndEvents.objects.search(query)
+
+    paginator = Paginator(results, 20)
+    page_num = request.GET.get('page', 1)
+    results_page = paginator.get_page(page_num)
+
+    return render(request, "core/news_search.html", {
+        "title": "Search News & Events",
+        "query": query,
+        "results": results_page,
+    })
 
 
 # ########################################################

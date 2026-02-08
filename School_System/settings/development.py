@@ -39,6 +39,9 @@ INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django_tenants']
 # Remove TenantMainMiddleware from MIDDLEWARE
 MIDDLEWARE = [mw for mw in MIDDLEWARE if 'TenantMainMiddleware' not in mw]
 
+# Disable 2FA enforcement in development
+MIDDLEWARE = [mw for mw in MIDDLEWARE if 'Enforce2FAMiddleware' not in mw]
+
 # Disable tenant-specific settings
 TENANT_MODEL = None
 TENANT_DOMAIN_MODEL = None
@@ -83,6 +86,7 @@ INTERNAL_IPS = [
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+    'IS_RUNNING_TESTS': False,
 }
 
 # Relaxed CSP for development (django-csp 4.0+ format)
@@ -109,8 +113,19 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # Disable some security checks for development
 AXES_ENABLED = config('AXES_ENABLED', default=True, cast=bool)
 
+# Allow login without email verification in development
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+
+# Stripe placeholder keys for development
+STRIPE_PUBLISHABLE_KEY = 'pk_test_placeholder'
+STRIPE_SECRET_KEY = 'sk_test_placeholder'
+
 # Development file storage
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# Use simple static files storage (no manifest needed, no collectstatic required)
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 print("=" * 80)
 print("DEVELOPMENT MODE ACTIVE")

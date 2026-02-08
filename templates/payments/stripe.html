@@ -1,16 +1,25 @@
-{% extends 'base.html' %}
-{% block title %}Stripe{% endblock title %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block header %}
-<script src="https://js.stripe.com/v3/"></script>
-{% endblock %}
+{% block title %}Stripe Payment - School Management{% endblock %}
 
 {% block content %}
-<div class="container">
-	<center>
-		<h1>Stripe</h1>
-		<button id="checkout-button">Checkout</button>
-	</center>
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Stripe Payment</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Stripe Payment</a></li>
+    </ol>
 </div>
-{% endblock content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4>Stripe Payment</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

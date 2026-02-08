@@ -3,7 +3,7 @@ School Management System - Main URL Configuration.
 
 All apps follow nested namespace pattern:
 - Frontend: frontend:app:view_name
-- API: api:v1:app:resource-name
+- API: api:app:resource-name
 """
 
 from django.contrib import admin
@@ -20,53 +20,60 @@ admin.site.site_title = "School Admin"
 admin.site.index_title = "Administration"
 
 
+def _get(module_path, attr='frontend_urlpatterns'):
+    """Import specific pattern list from an app's urls module."""
+    from importlib import import_module
+    return getattr(import_module(module_path), attr)
+
+
 # ============================================================================
 # FRONTEND URLPATTERNS
 # ============================================================================
 
 frontend_urlpatterns = [
     # Core (root)
-    path('', include(('core.urls', 'core'), namespace='core')),
+    path('', include((_get('core.urls'), 'core'))),
 
     # Accounts
-    path('accounts/', include(('accounts.urls', 'accounts'), namespace='accounts')),
+    path('accounts/', include((_get('accounts.urls'), 'accounts'))),
 
     # Academic
-    path('courses/', include(('course.urls', 'course'), namespace='course')),
-    path('filieres/', include(('filieres.urls', 'filieres'), namespace='filieres')),
-    path('quiz/', include(('quiz.urls', 'quiz'), namespace='quiz')),
-    path('results/', include(('result.urls', 'result'), namespace='result')),
-    path('grading/', include(('grading.urls', 'grading'), namespace='grading')),
+    path('courses/', include((_get('course.urls'), 'course'))),
+    path('filieres/', include((_get('filieres.urls'), 'filieres'))),
+    path('quiz/', include((_get('quiz.urls'), 'quiz'))),
+    path('results/', include((_get('result.urls'), 'result'))),
+    path('grading/', include((_get('grading.urls'), 'grading'))),
 
     # Student services
-    path('enrollment/', include(('enrollment.urls', 'enrollment'), namespace='enrollment')),
-    path('admissions/', include(('admissions.urls', 'admissions'), namespace='admissions')),
-    path('library/', include(('library.urls', 'library'), namespace='library')),
-    path('notes/', include(('notes.urls', 'notes'), namespace='notes')),
+    path('enrollment/', include((_get('enrollment.urls'), 'enrollment'))),
+    path('admissions/', include((_get('admissions.urls'), 'admissions'))),
+    path('library/', include((_get('library.urls'), 'library'))),
+    path('notes/', include((_get('notes.urls'), 'notes'))),
 
     # Attendance & monitoring
-    path('attendance/', include(('attendance.urls', 'attendance'), namespace='attendance')),
-    path('monitoring/', include(('monitoring.urls', 'monitoring'), namespace='monitoring')),
+    path('attendance/', include((_get('attendance.urls'), 'attendance'))),
+    path('monitoring/', include((_get('monitoring.urls'), 'monitoring'))),
+    path('dailystat/', include((_get('dailystat.urls'), 'dailystat'))),
 
     # Communication
-    path('forums/', include(('forums.urls', 'forums'), namespace='forums')),
-    path('events/', include(('events.urls', 'events'), namespace='events')),
-    path('notices/', include(('notices.urls', 'notices'), namespace='notices')),
-    path('articles/', include(('articles.urls', 'articles'), namespace='articles')),
+    path('forums/', include((_get('forums.urls'), 'forums'))),
+    path('events/', include((_get('events.urls'), 'events'))),
+    path('notices/', include((_get('notices.urls'), 'notices'))),
+    path('articles/', include((_get('articles.urls'), 'articles'))),
 
     # Student management
-    path('discipline/', include(('discipline.urls', 'discipline'), namespace='discipline')),
-    path('certificates/', include(('certificates.urls', 'certificates'), namespace='certificates')),
+    path('discipline/', include((_get('discipline.urls'), 'discipline'))),
+    path('certificates/', include((_get('certificates.urls'), 'certificates'))),
 
     # Analytics
-    path('analytics/', include(('analytics.urls', 'analytics'), namespace='analytics')),
+    path('analytics/', include((_get('analytics.urls'), 'analytics'))),
 
     # Alumni & Payments
-    path('alumni/', include(('alumni.urls', 'alumni'), namespace='alumni')),
-    path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
+    path('alumni/', include((_get('alumni.urls'), 'alumni'))),
+    path('payments/', include((_get('payments.urls'), 'payments'))),
 
     # Search
-    path('search/', include(('search.urls', 'search'), namespace='search')),
+    path('search/', include((_get('search.urls'), 'search'))),
 ]
 
 
@@ -75,29 +82,30 @@ frontend_urlpatterns = [
 # ============================================================================
 
 api_v1_urlpatterns = [
-    path('core/', include(('core.urls', 'core'), namespace='core')),
-    path('accounts/', include(('accounts.urls', 'accounts'), namespace='accounts')),
-    path('courses/', include(('course.urls', 'course'), namespace='course')),
-    path('filieres/', include(('filieres.urls', 'filieres'), namespace='filieres')),
-    path('quiz/', include(('quiz.urls', 'quiz'), namespace='quiz')),
-    path('results/', include(('result.urls', 'result'), namespace='result')),
-    path('grading/', include(('grading.urls', 'grading'), namespace='grading')),
-    path('enrollment/', include(('enrollment.urls', 'enrollment'), namespace='enrollment')),
-    path('admissions/', include(('admissions.urls', 'admissions'), namespace='admissions')),
-    path('library/', include(('library.urls', 'library'), namespace='library')),
-    path('notes/', include(('notes.urls', 'notes'), namespace='notes')),
-    path('attendance/', include(('attendance.urls', 'attendance'), namespace='attendance')),
-    path('monitoring/', include(('monitoring.urls', 'monitoring'), namespace='monitoring')),
-    path('forums/', include(('forums.urls', 'forums'), namespace='forums')),
-    path('events/', include(('events.urls', 'events'), namespace='events')),
-    path('notices/', include(('notices.urls', 'notices'), namespace='notices')),
-    path('articles/', include(('articles.urls', 'articles'), namespace='articles')),
-    path('discipline/', include(('discipline.urls', 'discipline'), namespace='discipline')),
-    path('certificates/', include(('certificates.urls', 'certificates'), namespace='certificates')),
-    path('analytics/', include(('analytics.urls', 'analytics'), namespace='analytics')),
-    path('alumni/', include(('alumni.urls', 'alumni'), namespace='alumni')),
-    path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
-    path('search/', include(('search.urls', 'search'), namespace='search')),
+    path('core/', include((_get('core.urls', 'api_urlpatterns'), 'core'))),
+    path('accounts/', include((_get('accounts.urls', 'api_urlpatterns'), 'accounts'))),
+    path('courses/', include((_get('course.urls', 'api_urlpatterns'), 'course'))),
+    path('filieres/', include((_get('filieres.urls', 'api_urlpatterns'), 'filieres'))),
+    path('quiz/', include((_get('quiz.urls', 'api_urlpatterns'), 'quiz'))),
+    path('results/', include((_get('result.urls', 'api_urlpatterns'), 'result'))),
+    path('grading/', include((_get('grading.urls', 'api_urlpatterns'), 'grading'))),
+    path('enrollment/', include((_get('enrollment.urls', 'api_urlpatterns'), 'enrollment'))),
+    path('admissions/', include((_get('admissions.urls', 'api_urlpatterns'), 'admissions'))),
+    path('library/', include((_get('library.urls', 'api_urlpatterns'), 'library'))),
+    path('notes/', include((_get('notes.urls', 'api_urlpatterns'), 'notes'))),
+    path('attendance/', include((_get('attendance.urls', 'api_urlpatterns'), 'attendance'))),
+    path('monitoring/', include((_get('monitoring.urls', 'api_urlpatterns'), 'monitoring'))),
+    path('forums/', include((_get('forums.urls', 'api_urlpatterns'), 'forums'))),
+    path('events/', include((_get('events.urls', 'api_urlpatterns'), 'events'))),
+    path('notices/', include((_get('notices.urls', 'api_urlpatterns'), 'notices'))),
+    path('articles/', include((_get('articles.urls', 'api_urlpatterns'), 'articles'))),
+    path('discipline/', include((_get('discipline.urls', 'api_urlpatterns'), 'discipline'))),
+    path('certificates/', include((_get('certificates.urls', 'api_urlpatterns'), 'certificates'))),
+    path('analytics/', include((_get('analytics.urls', 'api_urlpatterns'), 'analytics'))),
+    path('alumni/', include((_get('alumni.urls', 'api_urlpatterns'), 'alumni'))),
+    path('payments/', include((_get('payments.urls', 'api_urlpatterns'), 'payments'))),
+    path('search/', include((_get('search.urls', 'api_urlpatterns'), 'search'))),
+    path('dailystat/', include((_get('dailystat.urls', 'api_urlpatterns'), 'dailystat'))),
 ]
 
 
@@ -113,7 +121,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('accounts/', include('allauth.mfa.urls')),
 
-    # API v1 (namespace: api:v1:app:resource)
+    # API v1 (namespace: api:app:resource)
     path('api/v1/', include((api_v1_urlpatterns, 'api'), namespace='api')),
 
     # JWT Authentication
@@ -133,17 +141,18 @@ urlpatterns = [
 # DEVELOPMENT SETTINGS
 # ============================================================================
 
+# Debug toolbar - include URLs whenever the module is installed
+# (must be outside DEBUG check so tests with DEBUG=False still resolve djdt namespace)
+try:
+    import debug_toolbar
+    urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
+except ImportError:
+    pass
+
 # Static and media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-    # Debug toolbar
-    try:
-        import debug_toolbar
-        urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
-    except ImportError:
-        pass
 
     # Error page testing in development
     urlpatterns += [

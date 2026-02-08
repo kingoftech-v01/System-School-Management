@@ -1,5 +1,6 @@
 from django import forms
-from .models import AdmissionStudent, AdmissionSession
+from .models import AdmissionStudent, AdmissionSession, CounselingComment
+
 
 class AdmissionApplicationForm(forms.ModelForm):
     class Meta:
@@ -15,3 +16,22 @@ class AdmissionApplicationForm(forms.ModelForm):
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+
+class CounselingCommentForm(forms.ModelForm):
+    class Meta:
+        model = CounselingComment
+        fields = ['comment', 'is_recommendation']
+        widgets = {
+            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'is_recommendation': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class AdmissionStatusForm(forms.Form):
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter application email',
+        })
+    )

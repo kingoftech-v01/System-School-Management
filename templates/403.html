@@ -1,38 +1,73 @@
-{% extends 'base_auth.html' %}
-{% load static i18n %}
+<!DOCTYPE html>
+<html lang="en" class="h-100">
 
-{% block title %}{% trans "403 - Access Forbidden" %}{% endblock %}
+<head>
+    {% load static custom_tags %}
+    <meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="keywords" content="" />
+	<meta name="author" content="" />
+	<meta name="robots" content="" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="{{ dz_array.public.description }}" />
+	<meta property="og:title" content="{{ dz_array.public.og_title }}" />
+	<meta property="og:description" content="{{ dz_array.public.og_description }}" />
+	<meta property="og:image" content="{{ dz_array.public.og_image }}" />
+	<meta name="format-detection" content="telephone=no">
+	
+	<!-- PAGE TITLE HERE -->
+	<title>{{ dz_array.public.title }}</title>
+	
+	<!-- FAVICONS ICON -->
+	<link rel="shortcut icon" type="image/png" href="{% static dz_array.public.favicon  %}" />
+    {% for cssurl in dz_array.pagelevel.w3crm.w3crm_views.css|getdata:request.path %}
+    <link rel="stylesheet" href="{% static cssurl %}" >
+	{% endfor %}
+    {% for cssurl in dz_array.global.css %}
+    <link rel="stylesheet" href="{% static cssurl %}">
+	{% endfor %}
+    {% block additional_css %}
+	{% endblock %}
+	
+</head>
 
-{% block auth_title %}{% trans "Access Denied" %}{% endblock %}
-{% block auth_subtitle %}{% trans "You don't have permission to access this resource" %}{% endblock %}
-
-{% block content %}
-<div class="text-center">
-    <div class="mb-4">
-        <i class="bi bi-shield-x text-danger" style="font-size: 5rem;"></i>
+<body class="vh-100">
+    <div class="authincation h-100">
+        <div class="container h-100">
+            <div class="row justify-content-center h-100 align-items-center">
+                <div class="col-md-6">
+                    <div class="error-page">
+                        <div class="error-inner text-center">
+                            <div class="dz-error" data-text="403">403</div>
+                            <h4 class="error-head"><i class="fa fa-times-circle text-danger"></i> Forbidden Error!</h4>
+                            <p class="error-head">You do not have permission to view this resource.</p>
+                            <div>
+                                <a href="{% url 'w3crm:index' %}" class="btn btn-secondary">BACK TO HOMEPAGE</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <h1 class="display-4 fw-bold mb-3">403</h1>
-    <h3 class="mb-3">{% trans "Access Forbidden" %}</h3>
+<!--**********************************
+	Scripts
+***********************************-->
+<!-- Required vendors -->
+{% for jsurl in dz_array.global.js.top %}
+<script src="{% static jsurl %}"></script>
+{% endfor %}
 
-    <p class="text-muted mb-4">
-        {% trans "You don't have the necessary permissions to access this resource. This incident has been logged." %}
-    </p>
+{% for jsurl in dz_array.pagelevel.w3crm.w3crm_views.js|getdata:request.path %}
+<script src="{% static jsurl %}"></script>
+{% endfor %}
 
-    <div class="alert alert-warning" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {% trans "If you believe this is an error, please contact your system administrator." %}
-    </div>
+{% for jsurl in dz_array.global.js.bottom %}
+<script src="{% static jsurl %}"></script>
+{% endfor %}
 
-    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
-        <a href="javascript:history.back()" class="btn btn-outline-primary">
-            <i class="bi bi-arrow-left me-2"></i>
-            {% trans "Go Back" %}
-        </a>
-        <a href="{% url 'frontend:core:frontend:dashboard' %}" class="btn btn-primary">
-            <i class="bi bi-house me-2"></i>
-            {% trans "Return to Dashboard" %}
-        </a>
-    </div>
-</div>
+{% block additional_js %}
 {% endblock %}
+</body>
+</html>

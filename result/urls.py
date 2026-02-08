@@ -53,6 +53,11 @@ frontend_urlpatterns = [
 
     # Registration form
     path('registration/form/', views_frontend.course_registration_form, name='course_registration_form'),
+
+    # Grade Appeals
+    path('appeals/', views_frontend.grade_appeal_list, name='grade_appeal_list'),
+    path('appeals/<int:pk>/', views_frontend.grade_appeal_detail, name='grade_appeal_detail'),
+    path('appeals/create/<int:taken_course_id>/', views_frontend.grade_appeal_create, name='grade_appeal_create'),
 ]
 
 

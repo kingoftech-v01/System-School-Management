@@ -1,203 +1,25 @@
-{% extends "base_dashboard.html" %}
-{% load static i18n %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
 
-{% block title %}{% trans "Two-Factor Authentication" %}{% endblock %}
-{% block page_title %}{% trans "Two-Factor Authentication" %}{% endblock %}
+{% block title %}Manage 2FA - School Management{% endblock %}
 
-{% block dashboard_content %}
-<div class="container-fluid px-4 py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Manage 2FA</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Manage 2FA</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="ri-shield-check-line me-2"></i>
-                        {% trans "Manage Two-Factor Authentication" %}
-                    </h5>
+                    <h4 class="card-title">Manage 2FA</h4>
                 </div>
                 <div class="card-body">
-                    {% if has_2fa %}
-                        <!-- 2FA is enabled -->
-                        <div class="alert alert-success">
-                            <h6 class="alert-heading">
-                                <i class="ri-checkbox-circle-line me-2"></i>
-                                {% trans "Two-Factor Authentication is Enabled" %}
-                            </h6>
-                            <p class="mb-0">
-                                {% trans "Your account is protected with an additional layer of security." %}
-                            </p>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <div class="stat-card stat-card-success">
-                                    <div class="stat-icon">
-                                        <i class="ri-shield-check-line"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <h6 class="stat-label">{% trans "Status" %}</h6>
-                                        <h3 class="stat-value">{% trans "Active" %}</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="stat-card stat-card-info">
-                                    <div class="stat-icon">
-                                        <i class="ri-smartphone-line"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <h6 class="stat-label">{% trans "Method" %}</h6>
-                                        <h3 class="stat-value" style="font-size: 1rem;">TOTP</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h6 class="mb-3">{% trans "Active Devices" %}</h6>
-                        {% if devices %}
-                            <div class="list-group mb-4">
-                                {% for device in devices %}
-                                <div class="list-group-item">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <i class="ri-smartphone-line fs-3 text-success"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1">{% trans "Authenticator App" %}</h6>
-                                            <small class="text-muted">
-                                                {% trans "Added on" %} {{ device.created_at|date:"F d, Y" }}
-                                            </small>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-success">{% trans "Active" %}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-
-                        <h6 class="mb-3">{% trans "Manage Your 2FA Settings" %}</h6>
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'frontend:accounts:frontend:disable_2fa' %}" class="btn btn-outline-danger">
-                                <i class="ri-shield-cross-line me-2"></i>
-                                {% trans "Disable Two-Factor Authentication" %}
-                            </a>
-                            <a href="{% url 'frontend:accounts:frontend:profile' %}" class="btn btn-outline-secondary">
-                                <i class="ri-arrow-left-line me-2"></i>
-                                {% trans "Back to Profile" %}
-                            </a>
-                        </div>
-
-                        <div class="alert alert-info mt-4">
-                            <strong><i class="ri-information-line me-2"></i>{% trans "Important:" %}</strong><br>
-                            {% trans "Make sure to keep your authenticator app installed and backed up. If you get a new phone, you'll need to set up 2FA again." %}
-                        </div>
-
-                    {% else %}
-                        <!-- 2FA is disabled -->
-                        <div class="alert alert-warning">
-                            <h6 class="alert-heading">
-                                <i class="ri-error-warning-line me-2"></i>
-                                {% trans "Two-Factor Authentication is Disabled" %}
-                            </h6>
-                            <p class="mb-0">
-                                {% trans "Your account is only protected by your password. Enable 2FA for enhanced security." %}
-                            </p>
-                        </div>
-
-                        <h6 class="mb-3">{% trans "Why enable Two-Factor Authentication?" %}</h6>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="ri-shield-check-line fs-3 text-success"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6>{% trans "Enhanced Security" %}</h6>
-                                        <p class="text-muted small mb-0">
-                                            {% trans "Protect your account even if your password is compromised" %}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="ri-lock-password-line fs-3 text-primary"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6>{% trans "Prevent Unauthorized Access" %}</h6>
-                                        <p class="text-muted small mb-0">
-                                            {% trans "Stop hackers from accessing your academic records" %}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="ri-user-follow-line fs-3 text-info"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6>{% trans "Secure Personal Data" %}</h6>
-                                        <p class="text-muted small mb-0">
-                                            {% trans "Keep your personal and financial information safe" %}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="ri-smartphone-line fs-3 text-warning"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6>{% trans "Easy to Use" %}</h6>
-                                        <p class="text-muted small mb-0">
-                                            {% trans "Works with popular authenticator apps on your phone" %}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h6 class="mb-3">{% trans "How it works" %}</h6>
-                        <ol class="mb-4">
-                            <li class="mb-2">
-                                <strong>{% trans "Install an authenticator app" %}</strong> -
-                                {% trans "Download Google Authenticator, Microsoft Authenticator, or Authy" %}
-                            </li>
-                            <li class="mb-2">
-                                <strong>{% trans "Scan the QR code" %}</strong> -
-                                {% trans "Use your app to scan the code we provide" %}
-                            </li>
-                            <li class="mb-2">
-                                <strong>{% trans "Enter the verification code" %}</strong> -
-                                {% trans "Confirm setup by entering the 6-digit code" %}
-                            </li>
-                            <li>
-                                <strong>{% trans "Login securely" %}</strong> -
-                                {% trans "From now on, you'll use both your password and the code from your app" %}
-                            </li>
-                        </ol>
-
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'frontend:accounts:frontend:setup_2fa' %}" class="btn btn-primary btn-lg">
-                                <i class="ri-shield-check-line me-2"></i>
-                                {% trans "Enable Two-Factor Authentication" %}
-                            </a>
-                            <a href="{% url 'frontend:accounts:frontend:profile' %}" class="btn btn-outline-secondary">
-                                <i class="ri-arrow-left-line me-2"></i>
-                                {% trans "Maybe Later" %}
-                            </a>
-                        </div>
-
-                        <div class="alert alert-success mt-4">
-                            <strong><i class="ri-lightbulb-line me-2"></i>{% trans "Recommended:" %}</strong><br>
-                            {% trans "We strongly recommend enabling Two-Factor Authentication to keep your account secure." %}
-                        </div>
-                    {% endif %}
+                    <p>Detail content goes here.</p>
                 </div>
             </div>
         </div>

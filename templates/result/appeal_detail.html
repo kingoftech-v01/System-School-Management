@@ -1,0 +1,167 @@
+{% extends "w3crm/elements/layouts/admin.html" %}
+{% load static %}
+
+{% block title %}Grade Appeal Detail - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Grade Appeal Detail</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:result:grade_appeal_list' %}">Grade Appeals</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Appeal Detail</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Appeal Status & Info -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Appeal Status</h4>
+                </div>
+                <div class="card-body text-center">
+                    {% if appeal.status == 'submitted' %}
+                    <span class="badge bg-info fs-6 px-3 py-2">Submitted</span>
+                    {% elif appeal.status == 'under_review' %}
+                    <span class="badge bg-warning text-dark fs-6 px-3 py-2">Under Review</span>
+                    {% elif appeal.status == 'approved' %}
+                    <span class="badge bg-success fs-6 px-3 py-2">Approved</span>
+                    {% elif appeal.status == 'rejected' %}
+                    <span class="badge bg-danger fs-6 px-3 py-2">Rejected</span>
+                    {% elif appeal.status == 'resolved' %}
+                    <span class="badge bg-secondary fs-6 px-3 py-2">Resolved</span>
+                    {% endif %}
+
+                    <table class="table table-sm table-borderless mt-3 text-start">
+                        <tr>
+                            <th class="text-muted">Submitted</th>
+                            <td>{{ appeal.submitted_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% if appeal.reviewed_at %}
+                        <tr>
+                            <th class="text-muted">Reviewed</th>
+                            <td>{{ appeal.reviewed_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if appeal.resolved_at %}
+                        <tr>
+                            <th class="text-muted">Resolved</th>
+                            <td>{{ appeal.resolved_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if appeal.reviewed_by %}
+                        <tr>
+                            <th class="text-muted">Reviewed By</th>
+                            <td>{{ appeal.reviewed_by.get_full_name }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Course Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Course Information</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th class="text-muted">Course</th>
+                            <td>{{ appeal.taken_course.course.title }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Code</th>
+                            <td>{{ appeal.taken_course.course.code }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Grade</th>
+                            <td>
+                                {% if appeal.taken_course.grade %}
+                                <span class="badge bg-{% if appeal.taken_course.comment == 'PASS' %}success{% else %}danger{% endif %}">
+                                    {{ appeal.taken_course.grade }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">Not graded</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Total Score</th>
+                            <td>{{ appeal.taken_course.total|default:"--" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Student</th>
+                            <td>{{ appeal.student.student.get_full_name }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appeal Details -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Appeal Details</h4>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Reason for Appeal</h6>
+                    <div class="p-3 bg-light rounded mb-3">
+                        {{ appeal.reason|linebreaksbr }}
+                    </div>
+
+                    {% if appeal.supporting_documents %}
+                    <h6 class="text-muted mb-2">Supporting Documents</h6>
+                    <div class="mb-3">
+                        <a href="{{ appeal.supporting_documents.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i> Download Document
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Review Notes (if reviewed) -->
+            {% if appeal.review_notes %}
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Review Notes</h4>
+                </div>
+                <div class="card-body">
+                    <div class="p-3 bg-light rounded">
+                        {{ appeal.review_notes|linebreaksbr }}
+                    </div>
+                    {% if appeal.reviewed_by %}
+                    <small class="text-muted mt-2 d-block">
+                        Reviewed by {{ appeal.reviewed_by.get_full_name }}
+                        {% if appeal.reviewed_at %} on {{ appeal.reviewed_at|date:"M d, Y H:i" }}{% endif %}
+                    </small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="d-flex gap-2">
+                <a href="{% url 'frontend:result:grade_appeal_list' %}" class="btn btn-light">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Appeals
+                </a>
+                <a href="{% url 'frontend:result:grade_results' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-mortarboard me-1"></i> View Grades
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -39,6 +39,8 @@ frontend_urlpatterns = [
     path('today/', views_frontend.today_stats, name='today_stats'),
     path('date/', views_frontend.date_stats, name='date_stats'),
     path('trends/', views_frontend.attendance_trends, name='trends'),
+    path('export/csv/', views_frontend.export_csv, name='export_csv'),
+    path('export/pdf/', views_frontend.export_pdf, name='export_pdf'),
 ]
 
 

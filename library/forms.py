@@ -4,7 +4,7 @@ from .models import Book, BorrowRecord
 class BookForm(forms.ModelForm):
     class Meta:
         model = Book
-        fields = ['title', 'isbn', 'author', 'publisher', 'category', 'quantity', 'available_quantity']
+        fields = ['title', 'isbn', 'author', 'publisher', 'category', 'quantity', 'available']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'isbn': forms.TextInput(attrs={'class': 'form-control'}),
@@ -12,7 +12,7 @@ class BookForm(forms.ModelForm):
             'publisher': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
-            'available_quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'available': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 class BorrowForm(forms.ModelForm):

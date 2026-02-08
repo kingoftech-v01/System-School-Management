@@ -1,0 +1,171 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Alumni Profile</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:alumni:directory' %}">Alumni</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Profile</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Profile Overview -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h4 class="card-title mb-0">{{ alumni.student.student.get_full_name }}</h4>
+                    {% if is_direction or is_admin %}
+                    <a href="{% url 'frontend:alumni:alumni_edit' pk=alumni.pk %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th class="text-muted" style="width: 35%;">Graduation Year</th>
+                            <td>{{ alumni.graduation_year }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Graduation Date</th>
+                            <td>{{ alumni.graduation_date|date:"M d, Y"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Status</th>
+                            <td>
+                                {% if alumni.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Willing to Mentor</th>
+                            <td>
+                                {% if alumni.willing_to_mentor %}
+                                <span class="badge bg-info">Yes</span>
+                                {% else %}
+                                <span class="text-muted">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Career Information -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Career Information</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th class="text-muted" style="width: 35%;">Occupation</th>
+                            <td>{{ alumni.current_occupation|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Job Title</th>
+                            <td>{{ alumni.job_title|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Employer</th>
+                            <td>{{ alumni.current_employer|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Industry</th>
+                            <td>{{ alumni.industry|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contact Information -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Contact Information</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th class="text-muted" style="width: 35%;">Personal Email</th>
+                            <td>{{ alumni.personal_email|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Phone</th>
+                            <td>{{ alumni.phone|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Location</th>
+                            <td>
+                                {% if alumni.city and alumni.country %}
+                                {{ alumni.city }}, {{ alumni.country }}
+                                {% elif alumni.country %}
+                                {{ alumni.country }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">LinkedIn</th>
+                            <td>
+                                {% if alumni.linkedin_url %}
+                                <a href="{{ alumni.linkedin_url }}" target="_blank" rel="noopener">
+                                    <i class="bi bi-linkedin"></i> View Profile
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Achievements</h4>
+                </div>
+                <div class="card-body">
+                    {% for achievement in achievements %}
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ achievement.title }}</h6>
+                                <span class="badge bg-primary">{{ achievement.get_achievement_type_display }}</span>
+                                {% if achievement.is_featured %}
+                                <span class="badge bg-warning text-dark">Featured</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ achievement.achievement_date|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mt-2 mb-0 text-muted">{{ achievement.description|truncatewords:30 }}</p>
+                        {% if achievement.url %}
+                        <a href="{{ achievement.url }}" target="_blank" rel="noopener" class="small">Read more</a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No achievements recorded.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

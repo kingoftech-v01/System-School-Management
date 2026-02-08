@@ -1,0 +1,225 @@
+============================= test session starts =============================
+collected 2053 items
+
+tests\test_admin_registration.py ....................................... [  1%]
+....................................                                     [  3%]
+tests\test_api_smoke.py ...............................................  [  5%]
+tests\test_cache.py .................                                    [  6%]
+tests\test_components.py ...................                             [  7%]
+tests\test_forms_all.py ................................................ [ 10%]
+.............                                                            [ 10%]
+tests\test_permissions_serializers.py .................................. [ 12%]
+......................                                                   [ 13%]
+tests\test_tasks_all.py ......................                           [ 14%]
+tests\test_url_resolution.py ................................            [ 16%]
+tests\test_views_coverage.py ........................................... [ 18%]
+........................................................................ [ 21%]
+........................................................................ [ 25%]
+..........................                                               [ 26%]
+tests\test_views_deep.py ............................................... [ 28%]
+........................................................................ [ 32%]
+..................................                                       [ 33%]
+tests\test_views_phase2.py ............................................. [ 36%]
+..............................                                           [ 37%]
+tests\test_views_smoke.py .............................................. [ 39%]
+...............................................                          [ 42%]
+tests\test_views_targeted.py ........................................... [ 44%]
+...................................                                      [ 45%]
+core\tests\test_forms.py .............                                   [ 46%]
+core\tests\test_models.py ..............................                 [ 47%]
+core\tests\test_models_extended.py ....................                  [ 48%]
+core\tests\test_serializers.py .........                                 [ 49%]
+core\tests\test_utils.py ..........                                      [ 49%]
+core\tests\test_views.py ...................                             [ 50%]
+accounts\tests\test_context_processors.py .....................          [ 51%]
+accounts\tests\test_decorators.py .......................FF........      [ 53%]
+accounts\tests\test_email_utils.py ....................                  [ 54%]
+accounts\tests\test_filters.py ........                                  [ 54%]
+accounts\tests\test_forms.py ...........                                 [ 55%]
+accounts\tests\test_middleware.py ..................................     [ 56%]
+accounts\tests\test_models.py ......................................     [ 58%]
+accounts\tests\test_permissions.py ....................                  [ 59%]
+accounts\tests\test_serializers.py ..........                            [ 60%]
+accounts\tests\test_views.py ...............                             [ 60%]
+course\tests\test_forms.py ...........                                   [ 61%]
+course\tests\test_models.py .................................            [ 63%]
+course\tests\test_serializers.py ......                                  [ 63%]
+course\tests\test_views.py ..............                                [ 64%]
+attendance\tests\test_models.py ........................                 [ 65%]
+payments\tests\test_forms.py ......                                      [ 65%]
+payments\tests\test_models.py .....................................      [ 67%]
+payments\tests\test_serializers.py ........                              [ 67%]
+result\tests\test_forms.py .......                                       [ 68%]
+result\tests\test_models.py ..........................                   [ 69%]
+result\tests\test_serializers.py .....                                   [ 69%]
+enrollment\tests\test_forms.py ............                              [ 70%]
+enrollment\tests\test_models.py ..................                       [ 71%]
+enrollment\tests\test_serializers.py ......                              [ 71%]
+enrollment\tests\test_tasks.py ....                                      [ 71%]
+search\tests\test_forms.py ..............                                [ 72%]
+search\tests\test_search.py .....................                        [ 73%]
+search\tests\test_serializers.py ..........                              [ 73%]
+notes\tests\test_models.py .................                             [ 74%]
+filieres\tests\test_forms.py ...........                                 [ 75%]
+filieres\tests\test_models.py .....................                      [ 76%]
+filieres\tests\test_serializers.py .......                               [ 76%]
+library\tests\test_models.py ................................            [ 78%]
+events\tests\test_forms.py ...                                           [ 78%]
+events\tests\test_models.py ......                                       [ 78%]
+events\tests\test_tasks.py ...                                           [ 78%]
+discipline\tests\test_forms.py ...                                       [ 78%]
+discipline\tests\test_models.py .....                                    [ 79%]
+monitoring\tests\test_forms.py ...........                               [ 79%]
+monitoring\tests\test_serializers.py .............                       [ 80%]
+quiz\tests\test_forms.py ......                                          [ 80%]
+quiz\tests\test_models.py ...................................            [ 82%]
+quiz\tests\test_models_extended.py ..................................... [ 83%]
+..........................                                               [ 85%]
+articles\tests\test_models.py ....................                       [ 86%]
+articles\tests\test_tasks.py ........                                    [ 86%]
+notices\tests\test_forms.py ......                                       [ 86%]
+notices\tests\test_models.py .............                               [ 87%]
+notices\tests\test_tasks.py .......                                      [ 87%]
+admissions\tests\test_models.py ............                             [ 88%]
+admissions\tests\test_tasks.py ..                                        [ 88%]
+alumni\tests\test_models.py ..................                           [ 89%]
+alumni\tests\test_tasks.py ...............                               [ 90%]
+forums\tests\test_forms.py ..........                                    [ 90%]
+forums\tests\test_models.py ...............................              [ 92%]
+forums\tests\test_tasks.py .......                                       [ 92%]
+certificates\tests\test_forms.py .......                                 [ 92%]
+certificates\tests\test_models.py ...........                            [ 93%]
+certificates\tests\test_permissions.py ...............                   [ 94%]
+certificates\tests\test_tasks.py ........                                [ 94%]
+grading\tests\test_forms.py ..........                                   [ 94%]
+grading\tests\test_models.py ...............                             [ 95%]
+grading\tests\test_serializers.py ..................                     [ 96%]
+grading\tests\test_tasks.py .....                                        [ 96%]
+analytics\tests\test_models.py ......................                    [ 97%]
+analytics\tests\test_tasks.py ............                               [ 98%]
+dailystat\tests\test_forms.py ........                                   [ 98%]
+dailystat\tests\test_models.py .....                                     [ 99%]
+dailystat\tests\test_serializers.py ....                                 [ 99%]
+School_System\tests\test_throttles.py ..............                     [100%]
+
+============================== warnings summary ===============================
+venv\Lib\site-packages\django\conf\__init__.py:240
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\conf\__init__.py:240: RemovedInDjango51Warning: The DEFAULT_FILE_STORAGE setting is deprecated. Use STORAGES instead.
+    warnings.warn(DEFAULT_FILE_STORAGE_DEPRECATED_MSG, RemovedInDjango51Warning)
+
+venv\Lib\site-packages\django\conf\__init__.py:251
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\conf\__init__.py:251: RemovedInDjango51Warning: The STATICFILES_STORAGE setting is deprecated. Use STORAGES instead.
+    warnings.warn(STATICFILES_STORAGE_DEPRECATED_MSG, RemovedInDjango51Warning)
+
+tests/test_api_smoke.py: 94 warnings
+tests/test_forms_all.py: 3 warnings
+tests/test_permissions_serializers.py: 75 warnings
+tests/test_tasks_all.py: 3 warnings
+tests/test_views_coverage.py: 426 warnings
+tests/test_views_deep.py: 311 warnings
+tests/test_views_phase2.py: 155 warnings
+tests/test_views_smoke.py: 184 warnings
+tests/test_views_targeted.py: 115 warnings
+core/tests/test_views.py: 2 warnings
+accounts/tests/test_context_processors.py: 6 warnings
+accounts/tests/test_decorators.py: 20 warnings
+accounts/tests/test_forms.py: 5 warnings
+accounts/tests/test_middleware.py: 12 warnings
+accounts/tests/test_models.py: 23 warnings
+accounts/tests/test_permissions.py: 14 warnings
+accounts/tests/test_serializers.py: 2 warnings
+accounts/tests/test_views.py: 3 warnings
+course/tests/test_forms.py: 3 warnings
+course/tests/test_models.py: 6 warnings
+course/tests/test_serializers.py: 1 warning
+course/tests/test_views.py: 2 warnings
+attendance/tests/test_models.py: 16 warnings
+payments/tests/test_forms.py: 1 warning
+result/tests/test_forms.py: 2 warnings
+result/tests/test_models.py: 24 warnings
+result/tests/test_serializers.py: 3 warnings
+search/tests/test_search.py: 11 warnings
+notes/tests/test_models.py: 34 warnings
+filieres/tests/test_models.py: 1 warning
+discipline/tests/test_forms.py: 2 warnings
+discipline/tests/test_models.py: 8 warnings
+quiz/tests/test_models.py: 12 warnings
+quiz/tests/test_models_extended.py: 38 warnings
+articles/tests/test_tasks.py: 5 warnings
+notices/tests/test_models.py: 4 warnings
+notices/tests/test_tasks.py: 4 warnings
+alumni/tests/test_models.py: 14 warnings
+alumni/tests/test_tasks.py: 11 warnings
+forums/tests/test_tasks.py: 7 warnings
+certificates/tests/test_forms.py: 2 warnings
+certificates/tests/test_models.py: 7 warnings
+certificates/tests/test_permissions.py: 8 warnings
+certificates/tests/test_tasks.py: 4 warnings
+grading/tests/test_models.py: 9 warnings
+grading/tests/test_serializers.py: 9 warnings
+grading/tests/test_tasks.py: 1 warning
+analytics/tests/test_models.py: 20 warnings
+analytics/tests/test_tasks.py: 5 warnings
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\accounts\utils.py:9: RemovedInDjango51Warning: BaseUserManager.make_random_password() is deprecated.
+    return get_user_model().objects.make_random_password()
+
+tests/test_api_smoke.py: 47 warnings
+tests/test_components.py: 5 warnings
+tests/test_permissions_serializers.py: 26 warnings
+tests/test_views_coverage.py: 212 warnings
+tests/test_views_deep.py: 147 warnings
+tests/test_views_phase2.py: 75 warnings
+tests/test_views_smoke.py: 93 warnings
+tests/test_views_targeted.py: 78 warnings
+core/tests/test_views.py: 19 warnings
+accounts/tests/test_views.py: 15 warnings
+course/tests/test_views.py: 14 warnings
+search/tests/test_search.py: 11 warnings
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\core\handlers\base.py:61: UserWarning: No directory at: C:\Users\Benej\OneDrive\Documents\System-School-Management\staticfiles\
+    mw_instance = middleware(adapted_handler)
+
+tests/test_views_targeted.py::EventsViewTargetedTest::test_event_detail
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.start_date received a naive datetime (2026-02-08 11:25:33.615497) while time zone support is active.
+    warnings.warn(
+
+tests/test_views_targeted.py::EventsViewTargetedTest::test_event_detail
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.end_date received a naive datetime (2026-02-08 13:25:33.615497) while time zone support is active.
+    warnings.warn(
+
+tests/test_views_targeted.py::EventsViewTargetedTest::test_event_update
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.start_date received a naive datetime (2026-02-08 11:25:35.102384) while time zone support is active.
+    warnings.warn(
+
+tests/test_views_targeted.py::EventsViewTargetedTest::test_event_update
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.end_date received a naive datetime (2026-02-08 13:25:35.102384) while time zone support is active.
+    warnings.warn(
+
+events/tests/test_tasks.py::SendEventRemindersTest::test_marks_reminder_sent
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.start_date received a naive datetime (2026-02-08 11:28:06.255380) while time zone support is active.
+    warnings.warn(
+
+events/tests/test_tasks.py::SendEventRemindersTest::test_marks_reminder_sent
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.end_date received a naive datetime (2026-02-08 13:28:06.255380) while time zone support is active.
+    warnings.warn(
+
+events/tests/test_tasks.py::SendEventRemindersTest::test_skips_already_sent
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.start_date received a naive datetime (2026-02-08 11:28:06.402956) while time zone support is active.
+    warnings.warn(
+
+events/tests/test_tasks.py::SendEventRemindersTest::test_skips_already_sent
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.end_date received a naive datetime (2026-02-08 13:28:06.402956) while time zone support is active.
+    warnings.warn(
+
+events/tests/test_tasks.py::SendEventRemindersTest::test_skips_send_reminder_false
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.start_date received a naive datetime (2026-02-08 11:28:06.516047) while time zone support is active.
+    warnings.warn(
+
+events/tests/test_tasks.py::SendEventRemindersTest::test_skips_send_reminder_false
+  C:\Users\Benej\OneDrive\Documents\System-School-Management\venv\Lib\site-packages\django\db\models\fields\__init__.py:1659: RuntimeWarning: DateTimeField Event.end_date received a naive datetime (2026-02-08 13:28:06.516047) while time zone support is active.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED accounts/tests/test_decorators.py::TenantRequiredTest::test_matching_tenant_passes
+FAILED accounts/tests/test_decorators.py::TenantRequiredTest::test_mismatched_tenant_forbidden
+========= 2 failed, 2051 passed, 2481 warnings in 1542.09s (0:25:42) ==========

@@ -49,7 +49,10 @@ frontend_urlpatterns = [
     path('list/', views_frontend.enrollment_list, name='enrollment_list'),
     path('detail/<int:registration_id>/', views_frontend.enrollment_detail, name='enrollment_detail'),
     path('review/<int:registration_id>/', views_frontend.enrollment_review, name='enrollment_review'),
+    path('edit/<int:registration_id>/', views_frontend.registration_edit, name='registration_edit'),
+    path('delete/<int:registration_id>/', views_frontend.registration_delete, name='registration_delete'),
     path('document/<int:document_id>/verify/', views_frontend.verify_document, name='verify_document'),
+    path('document/<int:document_id>/delete/', views_frontend.document_delete, name='document_delete'),
     path('export/csv/', views_frontend.export_enrollments_csv, name='export_enrollments_csv'),
     path('statistics/', views_frontend.enrollment_statistics, name='enrollment_statistics'),
 ]

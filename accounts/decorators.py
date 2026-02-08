@@ -89,11 +89,11 @@ def tenant_required(view_func):
             messages.error(request, "Tenant context not found.")
             return redirect('/')
 
-        # Check if user belongs to tenant
-        if hasattr(request.user, 'tenant'):
-            if request.user.tenant != request.tenant:
-                messages.error(request, "Access denied. You do not belong to this school.")
-                return HttpResponseForbidden("Access denied to this tenant.")
+        # Check if user belongs to tenant (only when user has an assigned tenant)
+        user_tenant = getattr(request.user, 'tenant', None)
+        if user_tenant is not None and user_tenant != request.tenant:
+            messages.error(request, "Access denied. You do not belong to this school.")
+            return HttpResponseForbidden("Access denied to this tenant.")
 
         return view_func(request, *args, **kwargs)
 

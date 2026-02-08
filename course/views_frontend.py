@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
@@ -483,6 +483,50 @@ def course_drop(request):
 # ########################################################
 # User Course List View
 # ########################################################
+
+
+@login_required
+def course_list_all(request):
+    """List all courses across all programs with search."""
+    query = request.GET.get("q", "").strip()
+    courses = Course.objects.select_related("program").order_by("title")
+    if query:
+        courses = courses.filter(
+            Q(title__icontains=query) | Q(code__icontains=query)
+        )
+    paginator = Paginator(courses, 20)
+    page = request.GET.get("page")
+    courses = paginator.get_page(page)
+    return render(
+        request,
+        "course/course_list_all.html",
+        {
+            "title": "All Courses",
+            "courses": courses,
+            "q": query,
+        },
+    )
+
+
+@login_required
+def program_search(request):
+    """Search programs by name."""
+    query = request.GET.get("q", "").strip()
+    programs = Program.objects.order_by("title")
+    if query:
+        programs = programs.filter(title__icontains=query)
+    paginator = Paginator(programs, 20)
+    page = request.GET.get("page")
+    programs = paginator.get_page(page)
+    return render(
+        request,
+        "course/program_search.html",
+        {
+            "title": "Search Programs",
+            "programs": programs,
+            "q": query,
+        },
+    )
 
 
 @login_required

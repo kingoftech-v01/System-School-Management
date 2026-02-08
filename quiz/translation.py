@@ -1,5 +1,5 @@
 from modeltranslation.translator import register, TranslationOptions
-from .models import Quiz, Question, Choice, MCQuestion
+from .models import Quiz, Question, Choice, MCQuestion, EssayQuestion, TrueFalseQuestion
 
 
 @register(Quiz)
@@ -28,4 +28,14 @@ class ChoiceTranslationOptions(TranslationOptions):
 
 @register(MCQuestion)
 class MCQuestionTranslationOptions(TranslationOptions):
+    pass
+
+
+@register(EssayQuestion)
+class EssayQuestionTranslationOptions(TranslationOptions):
+    pass
+
+
+@register(TrueFalseQuestion)
+class TrueFalseQuestionTranslationOptions(TranslationOptions):
     pass

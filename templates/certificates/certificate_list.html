@@ -1,0 +1,104 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Certificates - School Management{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'w3crm/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Certificates</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Certificates</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Certificates</h4>
+                    <div class="btn-group" role="group" aria-label="Filter by status">
+                        <a href="{% url 'frontend:certificates:certificate_list' %}" class="btn btn-sm {% if not request.GET.status %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            All
+                        </a>
+                        <a href="?status=pending" class="btn btn-sm {% if request.GET.status == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                            Pending
+                        </a>
+                        <a href="?status=generated" class="btn btn-sm {% if request.GET.status == 'generated' %}btn-info{% else %}btn-outline-info{% endif %}">
+                            Generated
+                        </a>
+                        <a href="?status=issued" class="btn btn-sm {% if request.GET.status == 'issued' %}btn-success{% else %}btn-outline-success{% endif %}">
+                            Issued
+                        </a>
+                        <a href="?status=revoked" class="btn btn-sm {% if request.GET.status == 'revoked' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                            Revoked
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="datatable" class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Certificate Number</th>
+                                    <th>Student</th>
+                                    <th>Course</th>
+                                    <th>Issue Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cert in certificates %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ cert.certificate_number }}</td>
+                                    <td>{{ cert.student }}</td>
+                                    <td>{{ cert.course }}</td>
+                                    <td>{{ cert.issue_date }}</td>
+                                    <td>
+                                        {% if cert.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif cert.status == 'generated' %}
+                                            <span class="badge bg-info">Generated</span>
+                                        {% elif cert.status == 'issued' %}
+                                            <span class="badge bg-success">Issued</span>
+                                        {% elif cert.status == 'revoked' %}
+                                            <span class="badge bg-danger">Revoked</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ cert.get_status_display }}</span>
+                                        {% endif %}
+                                        {% if cert.is_revoked %}
+                                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Revoked</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'frontend:certificates:certificate_detail' pk=cert.pk %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">No certificates found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>$(document).ready(function() { $('#datatable').DataTable(); });</script>
+{% endblock %}

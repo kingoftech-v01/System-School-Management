@@ -11,6 +11,8 @@ frontend_urlpatterns = [
     path('', views_frontend.admission_session_list, name='home'),
     path('apply/', views_frontend.admission_apply, name='apply'),
     path('status/', views_frontend.admission_status, name='check_status'),
+    path('applications/', views_frontend.admission_list, name='admission_list'),
+    path('applications/<int:pk>/', views_frontend.admission_detail, name='admission_detail'),
     path('comment/<int:student_id>/', views_frontend.counseling_comment_create, name='counseling_comment'),
 ]
 

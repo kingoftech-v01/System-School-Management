@@ -53,6 +53,16 @@ frontend_urlpatterns = [
     path("completed/", views_frontend.payment_succeed, name="completed"),  # Alias for completed
     path("create-invoice/", views_frontend.create_invoice, name="create_invoice"),
     path("invoice-detail/<int:id>/", views_frontend.invoice_detail, name="invoice_detail"),
+
+    # Fee Structure CRUD
+    path("fee-structures/", views_frontend.fee_structure_list, name="fee_structure_list"),
+    path("fee-structures/create/", views_frontend.fee_structure_create, name="fee_structure_create"),
+    path("fee-structures/<int:pk>/edit/", views_frontend.fee_structure_edit, name="fee_structure_edit"),
+    path("fee-structures/<int:pk>/delete/", views_frontend.fee_structure_delete, name="fee_structure_delete"),
+
+    # Student views
+    path("my-invoices/", views_frontend.student_invoices, name="student_invoices"),
+    path("my-payments/", views_frontend.student_payment_history, name="student_payment_history"),
 ]
 
 

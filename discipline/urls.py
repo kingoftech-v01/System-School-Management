@@ -64,6 +64,27 @@ frontend_urlpatterns = [
         views_frontend.disciplinary_action_detail,
         name='action_detail'
     ),
+
+    # Edit view
+    path(
+        '<int:pk>/edit/',
+        views_frontend.disciplinary_action_edit,
+        name='action_edit'
+    ),
+
+    # Delete view
+    path(
+        '<int:pk>/delete/',
+        views_frontend.disciplinary_action_delete,
+        name='action_delete'
+    ),
+
+    # Resolve view
+    path(
+        '<int:pk>/resolve/',
+        views_frontend.disciplinary_action_resolve,
+        name='action_resolve'
+    ),
 ]
 
 

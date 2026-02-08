@@ -122,6 +122,7 @@ TENANT_APPS = [
     'certificates',
     'grading',
     'analytics',
+    'dailystat',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -142,10 +143,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django_otp.middleware.OTPMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'accounts.middleware.TenantMiddleware',
     'accounts.middleware.RoleMiddleware',
     'accounts.middleware.Enforce2FAMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',
     'axes.middleware.AxesMiddleware',
@@ -183,12 +184,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'templates',
-            BASE_DIR / 'templates' / 'dashboards',
-            BASE_DIR / 'templates' / 'layouts',
-            BASE_DIR / 'templates' / 'components',
             BASE_DIR / 'templates' / 'emails',
-            BASE_DIR / 'templates' / 'auth',
-            BASE_DIR / 'templates' / 'errors',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -206,6 +202,7 @@ TEMPLATES = [
                 'accounts.context_processors.app_settings_context',
                 'accounts.context_processors.navigation_context',
                 'accounts.context_processors.permissions_context',
+                'custom_context_processor.dz_static',
             ],
         },
     },
@@ -342,6 +339,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@school-system.com')
+EMAIL_FROM_ADDRESS = config('EMAIL_FROM_ADDRESS', default='noreply@school-system.com')
 
 # ==============================================================================
 # DJANGO-ALLAUTH CONFIGURATION
@@ -363,8 +361,8 @@ LOGIN_URL = '/accounts/login/'
 # 2FA Settings - MANDATORY for staff
 MFA_ADAPTER = 'allauth.mfa.adapter.DefaultMFAAdapter'
 MFA_FORMS = {
-    'authenticate': 'allauth.mfa.forms.AuthenticateForm',
-    'reauthenticate': 'allauth.mfa.forms.AuthenticateForm',
+    'authenticate': 'allauth.mfa.base.forms.AuthenticateForm',
+    'reauthenticate': 'allauth.mfa.base.forms.AuthenticateForm',
     'activate_totp': 'allauth.mfa.totp.forms.ActivateTOTPForm',
     'deactivate_totp': 'allauth.mfa.totp.forms.DeactivateTOTPForm',
 }
@@ -692,6 +690,10 @@ MAX_PAGE_SIZE = 50
 
 # Academic year format
 CURRENT_ACADEMIC_YEAR = config('CURRENT_ACADEMIC_YEAR', default='2024-2025')
+
+# ID Prefixes for generated usernames
+STUDENT_ID_PREFIX = config('STUDENT_ID_PREFIX', default='ugr')
+LECTURER_ID_PREFIX = config('LECTURER_ID_PREFIX', default='lec')
 
 # PDF Generation
 PDF_TIMEOUT = 30  # seconds

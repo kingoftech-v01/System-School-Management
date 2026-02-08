@@ -61,6 +61,8 @@ frontend_urlpatterns = [
     path('grades/create/<int:rubric_pk>/', views_frontend.grade_entry_create, name='grade_entry_create_with_rubric'),
     path('grades/create/<int:rubric_pk>/<int:student_id>/', views_frontend.grade_entry_create, name='grade_entry_create_full'),
     path('grades/<int:pk>/', views_frontend.grade_entry_detail, name='grade_entry_detail'),
+    path('grades/<int:pk>/edit/', views_frontend.grade_entry_edit, name='grade_entry_edit'),
+    path('grades/<int:pk>/delete/', views_frontend.grade_entry_delete, name='grade_entry_delete'),
 
     # Student gradebook
     path('gradebook/', views_frontend.student_gradebook, name='student_gradebook'),
@@ -74,6 +76,8 @@ frontend_urlpatterns = [
     path('curves/', views_frontend.grade_curve_list, name='grade_curve_list'),
     path('curves/create/', views_frontend.grade_curve_create, name='grade_curve_create'),
     path('curves/<int:pk>/', views_frontend.grade_curve_detail, name='grade_curve_detail'),
+    path('curves/<int:pk>/edit/', views_frontend.grade_curve_edit, name='grade_curve_edit'),
+    path('curves/<int:pk>/delete/', views_frontend.grade_curve_delete, name='grade_curve_delete'),
 ]
 
 

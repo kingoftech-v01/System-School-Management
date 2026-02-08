@@ -9,7 +9,10 @@ from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 from django.contrib import messages
 from django.conf import settings
-from django_tenants.utils import get_tenant_model
+try:
+    from django_tenants.utils import get_tenant_model
+except ImportError:
+    get_tenant_model = None
 from core.models import ActivityLog
 
 logger = logging.getLogger(__name__)
@@ -20,18 +23,55 @@ class TenantMiddleware(MiddlewareMixin):
     Ensures tenant context is properly set for all requests.
     django-tenants TenantMainMiddleware handles schema switching,
     this middleware adds additional tenant context to request.
+    In development mode (no django-tenants), sets a default tenant.
     """
+
+    _default_tenant = None
 
     def process_request(self, request):
         if hasattr(request, 'tenant') and request.tenant:
-            # Add tenant to request for easy access in views
+            # Production: django-tenants already set the tenant
             request.current_tenant = request.tenant
 
-            # Add tenant info to logging context
             logger.info(
                 f"Request from tenant: {request.tenant.name} (schema: {request.tenant.schema_name})"
             )
+        elif 'django_tenants' not in settings.INSTALLED_APPS:
+            # Development mode: set a default tenant from the School table
+            request.tenant = self._get_default_tenant()
+            request.current_tenant = request.tenant
         return None
+
+    @classmethod
+    def _get_default_tenant(cls):
+        """Get or create a default School for development mode."""
+        if cls._default_tenant is not None:
+            # Verify it still exists in the DB
+            try:
+                cls._default_tenant.refresh_from_db()
+                return cls._default_tenant
+            except Exception:
+                cls._default_tenant = None
+
+        from core.models import School
+        tenant = School.objects.first()
+        if tenant is None:
+            from datetime import date, timedelta
+            tenant = School.objects.create(
+                name='Development School',
+                slug='dev-school',
+                email='dev@school.local',
+                phone='0000000000',
+                address='Dev Address',
+                city='Dev City',
+                postal_code='00000',
+                license_key='DEV-0000',
+                subscription_start=date.today(),
+                subscription_end=date.today() + timedelta(days=365),
+            )
+            logger.info(f"Created default development tenant: {tenant.name}")
+        cls._default_tenant = tenant
+        return tenant
 
 
 class RoleMiddleware(MiddlewareMixin):
@@ -82,8 +122,12 @@ class Enforce2FAMiddleware(MiddlewareMixin):
 
     EXEMPT_PATHS = [
         '/accounts/logout/',
+        '/accounts/login/',
         '/accounts/2fa/',
         '/accounts/mfa/',
+        '/accounts/totp/',
+        '/accounts/reauthenticate/',
+        '/accounts/authenticate/',
         '/admin/logout/',
         '/static/',
         '/media/',

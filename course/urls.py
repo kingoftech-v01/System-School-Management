@@ -70,6 +70,10 @@ frontend_urlpatterns = [
     path('course/<slug>/video_tutorials/<video_slug>/edit/', views_frontend.handle_video_edit, name='upload_video_edit'),
     path('course/<slug>/video_tutorials/<video_slug>/delete/', views_frontend.handle_video_delete, name='upload_video_delete'),
 
+    # Course listing and search
+    path('courses/all/', views_frontend.course_list_all, name='course_list_all'),
+    path('programs/search/', views_frontend.program_search, name='program_search'),
+
     # Course registration
     path('course/registration/', views_frontend.course_registration, name='course_registration'),
     path('course/drop/', views_frontend.course_drop, name='course_drop'),

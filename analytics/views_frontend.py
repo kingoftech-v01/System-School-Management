@@ -13,12 +13,15 @@ All views render HTML templates.
 Frontend URL namespace: frontend:analytics:view_name
 """
 
+import csv
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Avg, Count, Q, Sum
+from django.http import HttpResponse
 from django.utils import timezone
 from datetime import timedelta
 from django_ratelimit.decorators import ratelimit
@@ -173,9 +176,15 @@ def engagement_list(request):
     page_num = request.GET.get('page', 1)
     engagement_page = paginator.get_page(page_num)
 
+    # Get distinct courses for filter dropdown
+    from course.models import Course
+    courses = Course.objects.all().order_by('title')
+
     context = {
         'engagement': engagement_page,
         'total_count': paginator.count,
+        'courses': courses,
+        'selected_course': course_id,
         'title': _('Student Engagement'),
     }
 
@@ -404,6 +413,62 @@ def learning_outcome_detail(request, pk):
     return render(request, 'analytics/learning_outcome_detail.html', context)
 
 
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='100/h')
+def learning_outcome_edit(request, pk):
+    """
+    Edit learning outcome.
+    Direction only.
+    """
+    outcome = get_object_or_404(LearningOutcome, pk=pk)
+
+    if request.method == 'POST':
+        form = LearningOutcomeForm(request.POST, instance=outcome)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Learning outcome updated successfully.'))
+            return redirect('frontend:analytics:learning_outcome_detail', pk=outcome.pk)
+    else:
+        form = LearningOutcomeForm(instance=outcome)
+
+    context = {
+        'form': form,
+        'outcome': outcome,
+        'title': _('Edit Learning Outcome'),
+    }
+
+    return render(request, 'analytics/learning_outcome_form.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='100/h')
+def learning_outcome_delete(request, pk):
+    """
+    Delete learning outcome with GET confirmation and POST action.
+    Direction only.
+    """
+    outcome = get_object_or_404(LearningOutcome, pk=pk)
+
+    if request.method == 'POST':
+        outcome.delete()
+        messages.success(request, _('Learning outcome deleted successfully.'))
+        return redirect('frontend:analytics:learning_outcome_list')
+
+    context = {
+        'object': outcome,
+        'object_name': outcome.outcome_name,
+        'cancel_url': 'frontend:analytics:learning_outcome_detail',
+        'cancel_pk': outcome.pk,
+        'title': _('Delete Learning Outcome'),
+    }
+
+    return render(request, 'analytics/confirm_delete.html', context)
+
+
 # ============================================================================
 # AT-RISK STUDENT VIEWS
 # ============================================================================
@@ -533,6 +598,29 @@ def at_risk_intervene(request, pk):
     return render(request, 'analytics/at_risk_intervention_form.html', context)
 
 
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='100/h')
+def at_risk_resolve(request, pk):
+    """
+    Resolve at-risk student status.
+    POST-only: sets is_active=False and resolved_at=now.
+    Direction only.
+    """
+    at_risk = get_object_or_404(AtRiskStudent, pk=pk)
+
+    if request.method == 'POST':
+        at_risk.is_active = False
+        at_risk.resolved_at = timezone.now()
+        at_risk.save()
+        messages.success(request, _('At-risk student has been marked as resolved.'))
+        return redirect('frontend:analytics:at_risk_detail', pk=at_risk.pk)
+
+    # If not POST, redirect back to detail
+    return redirect('frontend:analytics:at_risk_detail', pk=at_risk.pk)
+
+
 # ============================================================================
 # ACTIVITY LOG VIEWS
 # ============================================================================
@@ -601,3 +689,57 @@ def analytics_reports(request):
     }
 
     return render(request, 'analytics/reports.html', context)
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='20/h')
+def export_engagement_csv(request):
+    """
+    Export engagement data as CSV.
+    Direction only.
+    """
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="engagement_data.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'Student', 'Course', 'Date', 'Login Count', 'Total Time (min)',
+        'Pages Viewed', 'Videos Watched', 'Forum Posts', 'Forum Replies',
+        'Quizzes Completed', 'Assignments Submitted', 'Engagement Score',
+    ])
+
+    engagement = StudentEngagement.objects.select_related(
+        'student', 'course'
+    ).all().order_by('-date')
+
+    # Apply date filters if provided
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    if date_from:
+        engagement = engagement.filter(date__gte=date_from)
+    if date_to:
+        engagement = engagement.filter(date__lte=date_to)
+
+    course_id = request.GET.get('course')
+    if course_id:
+        engagement = engagement.filter(course_id=course_id)
+
+    for entry in engagement:
+        writer.writerow([
+            str(entry.student),
+            str(entry.course) if entry.course else '',
+            entry.date.isoformat(),
+            entry.login_count,
+            entry.total_time_minutes,
+            entry.pages_viewed,
+            entry.videos_watched,
+            entry.forum_posts,
+            entry.forum_replies,
+            entry.quizzes_completed,
+            entry.assignments_submitted,
+            entry.engagement_score,
+        ])
+
+    return response

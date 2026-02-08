@@ -64,6 +64,20 @@ frontend_urlpatterns = [
         views_frontend.event_detail,
         name='event_detail'
     ),
+
+    # Edit view
+    path(
+        '<int:pk>/edit/',
+        views_frontend.event_edit,
+        name='event_edit'
+    ),
+
+    # Delete view
+    path(
+        '<int:pk>/delete/',
+        views_frontend.event_delete,
+        name='event_delete'
+    ),
 ]
 
 

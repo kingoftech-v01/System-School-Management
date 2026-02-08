@@ -1,40 +1,47 @@
-{% extends 'base.html' %}
-{% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
-{% load crispy_forms_tags %}
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Upload Video - School Management{% endblock %}
 
 {% block content %}
-
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<div class="page-titles">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'frontend:core:frontend:home' %}">{% trans 'Home' %}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:programs' %}">{% trans 'Programs' %}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:program_detail' course.program.id %}">{{ course.program }}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:course:frontend:course_detail' course.slug %}">{{ course }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{% trans 'Video upload' %}</li>
+        <li><h5 class="bc-title">Upload Video</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Upload Video</a></li>
     </ol>
-</nav>
-    
-<p class="title-1">{% trans 'Video upload for' %} {{ course|truncatechars:25 }}</p>
-<div class="title-line"></div><br>
-
-{% include 'snippets/messages.html' %}
-
-<div class="row">
-<div class="col-md-8 mx-auto">
-    <div class="card">
-    <p class="form-title">{% trans 'Video Upload Form' %}</p>
-    <div class="card-body">
-        <form action="" method="POST" enctype="multipart/form-data">{% csrf_token %}
-            {{ form|crispy }}
-            
-            <div class="form-group">
-                <button class="btn btn-primary" type="submit">{% trans 'Upload' %}</button>
-                <a class="btn btn-danger" href="{% url 'frontend:course:frontend:course_detail' course.slug %}" style="float: right;">{% trans 'Cancel' %}</a>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Upload Video</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% if form %}
+                        <div class="row">
+                            {% for field in form %}
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                <div class="text-danger">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <a href="javascript:history.back()" class="btn btn-light ms-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
-</div>
-
-{% endblock content %}
+{% endblock %}

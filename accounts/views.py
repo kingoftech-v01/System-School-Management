@@ -283,10 +283,17 @@ def render_lecturer_pdf_list(request):
 @admin_required
 def delete_staff(request, pk):
     lecturer = get_object_or_404(User, is_lecturer=True, pk=pk)
-    full_name = lecturer.get_full_name
-    lecturer.delete()
-    messages.success(request, f"Lecturer {full_name} has been deleted.")
-    return redirect("lecturer_list")
+    if request.method == "POST":
+        full_name = lecturer.get_full_name
+        lecturer.delete()
+        messages.success(request, f"Lecturer {full_name} has been deleted.")
+        return redirect("lecturer_list")
+    return render(request, "accounts/confirm_delete.html", {
+        "title": "Delete Lecturer",
+        "object": lecturer,
+        "object_name": lecturer.get_full_name,
+        "cancel_url": "lecturer_list",
+    })
 
 
 # ########################################################
@@ -369,10 +376,17 @@ def render_student_pdf_list(request):
 @admin_required
 def delete_student(request, pk):
     student = get_object_or_404(Student, pk=pk)
-    full_name = student.student.get_full_name
-    student.delete()
-    messages.success(request, f"Student {full_name} has been deleted.")
-    return redirect("student_list")
+    if request.method == "POST":
+        full_name = student.student.get_full_name
+        student.delete()
+        messages.success(request, f"Student {full_name} has been deleted.")
+        return redirect("student_list")
+    return render(request, "accounts/confirm_delete.html", {
+        "title": "Delete Student",
+        "object": student,
+        "object_name": student.student.get_full_name,
+        "cancel_url": "student_list",
+    })
 
 
 @login_required

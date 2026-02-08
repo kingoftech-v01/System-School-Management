@@ -52,8 +52,10 @@ frontend_urlpatterns = [
     path('certificates/', views_frontend.certificate_list, name='certificate_list'),
     path('certificates/create/', views_frontend.certificate_create, name='certificate_create'),
     path('certificates/<int:pk>/', views_frontend.certificate_detail, name='certificate_detail'),
+    path('certificates/<int:pk>/edit/', views_frontend.certificate_edit, name='certificate_edit'),
     path('certificates/<int:pk>/download/', views_frontend.certificate_download, name='certificate_download'),
     path('certificates/<int:pk>/revoke/', views_frontend.certificate_revoke, name='certificate_revoke'),
+    path('certificates/<int:pk>/reissue/', views_frontend.certificate_reissue, name='certificate_reissue'),
 
     # Public verification (no login required)
     path('verify/', views_frontend.certificate_verify, name='certificate_verify'),

@@ -63,16 +63,27 @@ def filiere_detail(request, pk):
 
     # Group subjects by year and semester
     subjects_by_year = {}
+    total_credits = 0
+    mandatory_count = 0
+    elective_count = 0
     for subject in filiere.subjects.all():
         key = (subject.year, subject.semester)
         if key not in subjects_by_year:
             subjects_by_year[key] = []
         subjects_by_year[key].append(subject)
+        total_credits += subject.credits
+        if subject.is_mandatory:
+            mandatory_count += 1
+        else:
+            elective_count += 1
 
     return render(request, 'filieres/filiere_detail.html', {
         'filiere': filiere,
         'subjects_by_year': subjects_by_year,
         'requirements': filiere.requirements.all(),
+        'total_credits': total_credits,
+        'mandatory_count': mandatory_count,
+        'elective_count': elective_count,
         'title': filiere.name
     })
 
@@ -228,3 +239,92 @@ def add_requirement(request, filiere_pk):
         'filiere': filiere,
         'title': _('Add Requirement')
     })
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def edit_subject(request, filiere_pk, subject_pk):
+    """Edit a subject within a filiere."""
+    filiere_subject = get_object_or_404(
+        FiliereSubject,
+        pk=subject_pk,
+        filiere__pk=filiere_pk,
+        filiere__tenant=request.tenant
+    )
+    filiere = filiere_subject.filiere
+
+    if request.method == 'POST':
+        form = FiliereSubjectForm(request.POST, instance=filiere_subject, filiere=filiere)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Subject updated successfully.'))
+            return redirect('frontend:filieres:filiere_detail', pk=filiere.pk)
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = FiliereSubjectForm(instance=filiere_subject, filiere=filiere)
+
+    return render(request, 'filieres/subject_form.html', {
+        'form': form,
+        'filiere': filiere,
+        'filiere_subject': filiere_subject,
+        'title': _('Edit Subject in %(filiere)s') % {'filiere': filiere.name}
+    })
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def edit_requirement(request, filiere_pk, requirement_pk):
+    """Edit a requirement for a filiere."""
+    requirement = get_object_or_404(
+        FiliereRequirement,
+        pk=requirement_pk,
+        filiere__pk=filiere_pk,
+        filiere__tenant=request.tenant
+    )
+    filiere = requirement.filiere
+
+    if request.method == 'POST':
+        form = FiliereRequirementForm(request.POST, instance=requirement)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Requirement updated successfully.'))
+            return redirect('frontend:filieres:filiere_detail', pk=filiere.pk)
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = FiliereRequirementForm(instance=requirement)
+
+    return render(request, 'filieres/requirement_form.html', {
+        'form': form,
+        'filiere': filiere,
+        'requirement': requirement,
+        'title': _('Edit Requirement')
+    })
+
+
+@login_required
+@direction_only
+@tenant_required
+@ratelimit(key='user', rate='50/h', method='POST')
+def remove_requirement(request, filiere_pk, requirement_pk):
+    """Remove a requirement from a filiere (POST only)."""
+    requirement = get_object_or_404(
+        FiliereRequirement,
+        pk=requirement_pk,
+        filiere__pk=filiere_pk,
+        filiere__tenant=request.tenant
+    )
+
+    if request.method == 'POST':
+        filiere_pk = requirement.filiere.pk
+        requirement.delete()
+        messages.success(request, _('Requirement removed successfully.'))
+        return redirect('frontend:filieres:filiere_detail', pk=filiere_pk)
+
+    # GET requests redirect back to filiere detail
+    return redirect('frontend:filieres:filiere_detail', pk=requirement.filiere.pk)
