@@ -1,25 +1,80 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Enrollment Statistics - School Management{% endblock %}
+{% block title %}{{ title|default:"Enrollment Statistics" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Enrollment Statistics</h5></li>
+        <li><h5 class="bc-title">{{ title|default:"Enrollment Statistics" }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">Monitoring</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Enrollment Statistics</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title">Enrollment Statistics</h4>
+                    {% if stats %}
+                    <span class="badge bg-primary">{{ stats|length }} records</span>
+                    {% endif %}
                 </div>
                 <div class="card-body">
-                    <p>Welcome to the Enrollment Statistics page.</p>
+                    {% if stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Status</th>
+                                    <th>Level</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in stats %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        {% if stat.status == "enrolled" or stat.status == "approved" or stat.status == "active" %}
+                                        <span class="badge bg-success">{{ stat.status|title }}</span>
+                                        {% elif stat.status == "pending" %}
+                                        <span class="badge bg-warning text-dark">{{ stat.status|title }}</span>
+                                        {% elif stat.status == "rejected" or stat.status == "dropped" or stat.status == "expelled" %}
+                                        <span class="badge bg-danger">{{ stat.status|title }}</span>
+                                        {% elif stat.status == "graduated" or stat.status == "completed" %}
+                                        <span class="badge bg-info">{{ stat.status|title }}</span>
+                                        {% elif stat.status == "suspended" %}
+                                        <span class="badge bg-secondary">{{ stat.status|title }}</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark">{{ stat.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ stat.level }}</td>
+                                    <td><strong>{{ stat.count }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-bar-chart fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No enrollment statistics available.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -1,28 +1,100 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Video - School Management{% endblock %}
+{% block title %}{{ video.title|default:"Video" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Video</h5></li>
+        <li><h5 class="bc-title">{{ video.title|default:"Video"|truncatewords:4 }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Video</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if video %}
+    <div class="row">
+        <!-- Video Player -->
+        <div class="col-xl-8">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Video</h4>
+                    <h4 class="card-title">{{ video.title|default:"Video" }}</h4>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    {% if video.video %}
+                    <video controls class="w-100" style="max-height: 500px; background: #000;">
+                        <source src="{{ video.video.url }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    {% else %}
+                    <div class="text-center py-5 bg-light rounded">
+                        <i class="bi bi-camera-video-off fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">Video file not available.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Info -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Video Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Title</th>
+                                <td>{{ video.title|default:"-" }}</td>
+                            </tr>
+                            {% if video.course %}
+                            <tr>
+                                <th>Course</th>
+                                <td>{{ video.course }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if video.updated_date %}
+                            <tr>
+                                <th>Last Updated</th>
+                                <td>{{ video.updated_date|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-camera-video-off fs-1 text-muted"></i>
+                    <p class="text-muted mt-2">Video not available.</p>
+                    <a href="{% url 'frontend:core:home' %}" class="btn btn-primary mt-2">
+                        <i class="bi bi-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

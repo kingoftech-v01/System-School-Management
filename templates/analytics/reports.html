@@ -1,25 +1,87 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Reports - School Management{% endblock %}
+{% block title %}{{ title }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Reports</h5></li>
+        <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Reports</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:analytics:analytics_dashboard' %}">Analytics</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ title }}</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }} alert-dismissible fade show"><i class="bi bi-info-circle me-2"></i>{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    <!-- Export Action -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Analytics Reports Hub</h5>
+            <a href="{% url 'frontend:analytics:export_engagement_csv' %}" class="btn btn-success"><i class="bi bi-download me-1"></i> Export Engagement CSV</a>
+        </div>
+    </div>
+
+    <!-- Report Cards Grid -->
     <div class="row">
-        <div class="col-xl-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Reports</h4>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-speedometer2 display-4 text-primary d-block mb-3"></i>
+                    <h5 class="card-title">Dashboard Overview</h5>
+                    <p class="text-muted">View the main analytics dashboard with key metrics and role-based insights.</p>
+                    <a href="{% url 'frontend:analytics:analytics_dashboard' %}" class="btn btn-primary"><i class="bi bi-arrow-right me-1"></i> Go to Dashboard</a>
                 </div>
-                <div class="card-body">
-                    <p>Welcome to the Reports page.</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-activity display-4 text-info d-block mb-3"></i>
+                    <h5 class="card-title">Engagement Analytics</h5>
+                    <p class="text-muted">Track student engagement scores across courses and time periods.</p>
+                    <a href="{% url 'frontend:analytics:engagement_list' %}" class="btn btn-info text-white"><i class="bi bi-arrow-right me-1"></i> View Engagement</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-exclamation-triangle display-4 text-danger d-block mb-3"></i>
+                    <h5 class="card-title">At-Risk Students</h5>
+                    <p class="text-muted">Identify students who may need additional support or intervention.</p>
+                    <a href="{% url 'frontend:analytics:at_risk_list' %}" class="btn btn-danger"><i class="bi bi-arrow-right me-1"></i> View At-Risk</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-bullseye display-4 text-success d-block mb-3"></i>
+                    <h5 class="card-title">Learning Outcomes</h5>
+                    <p class="text-muted">Review learning outcome achievements and curriculum alignment data.</p>
+                    <a href="{% url 'frontend:analytics:learning_outcome_list' %}" class="btn btn-success"><i class="bi bi-arrow-right me-1"></i> View Outcomes</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-check2-circle display-4 text-warning d-block mb-3"></i>
+                    <h5 class="card-title">Course Completions</h5>
+                    <p class="text-muted">Monitor course completion rates and student progress milestones.</p>
+                    <a href="{% url 'frontend:analytics:completion_list' %}" class="btn btn-warning"><i class="bi bi-arrow-right me-1"></i> View Completions</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-clock-history display-4 text-secondary d-block mb-3"></i>
+                    <h5 class="card-title">Activity Log</h5>
+                    <p class="text-muted">Browse the full activity log to review all student learning events.</p>
+                    <a href="{% url 'frontend:analytics:activity_log_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-right me-1"></i> View Activity Log</a>
                 </div>
             </div>
         </div>

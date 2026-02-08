@@ -1,28 +1,245 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Thread - School Management{% endblock %}
+{% block title %}{{ thread.title|default:"Thread" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Thread</h5></li>
+        <li><h5 class="bc-title">{{ thread.title|truncatewords:6 }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:forums:forum_home' %}">Forums</a></li>
+        {% if thread.category %}
+        <li class="breadcrumb-item"><a href="{% url 'frontend:forums:category_detail' slug=thread.category.slug %}">{{ thread.category.name }}</a></li>
+        {% endif %}
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Thread</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Thread Header -->
+    <div class="row">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Thread</h4>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-1">{{ thread.title }}</h4>
+                        <div class="text-muted small">
+                            Posted by <strong>{{ thread.author.get_full_name|default:thread.author.username }}</strong>
+                            on {{ thread.created_at|date:"M d, Y \a\t H:i" }}
+                            {% if thread.category %}
+                            in <a href="{% url 'frontend:forums:category_detail' slug=thread.category.slug %}">{{ thread.category.name }}</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if thread.is_pinned %}
+                        <span class="badge bg-info"><i class="bi bi-pin-angle"></i> Pinned</span>
+                        {% endif %}
+                        {% if thread.is_locked %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-lock"></i> Locked</span>
+                        {% endif %}
+                        <span class="badge bg-secondary">{{ total_posts }} post{{ total_posts|pluralize }}</span>
+
+                        <!-- Subscribe / Unsubscribe -->
+                        {% if is_subscribed %}
+                        <form method="post" action="{% url 'frontend:forums:thread_unsubscribe' slug=thread.slug %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-bell-slash"></i> Unsubscribe
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{% url 'frontend:forums:thread_subscribe' slug=thread.slug %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-bell"></i> Subscribe
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if thread.content %}
+                <div class="card-body">
+                    {{ thread.content|safe }}
+                </div>
+                {% endif %}
+                {% if thread.tags.all %}
+                <div class="card-footer">
+                    {% for tag in thread.tags.all %}
+                    <a href="{% url 'frontend:forums:tag_threads' slug=tag.slug %}" class="badge bg-light text-dark me-1">{{ tag.name }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts List -->
+    <div class="row">
+        <div class="col-12">
+            {% if posts %}
+            {% for post in posts %}
+            <div class="card mb-3" id="post-{{ post.pk }}">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <div>
+                        <strong>{{ post.author.get_full_name|default:post.author.username }}</strong>
+                        <span class="text-muted ms-2">{{ post.created_at|date:"M d, Y \a\t H:i" }}</span>
+                        {% if post.is_edited %}
+                        <span class="text-muted small ms-2">(edited {{ post.updated_at|date:"M d, Y \a\t H:i" }})</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        {% if post.author == request.user %}
+                        <a href="{% url 'frontend:forums:post_update' pk=post.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'frontend:forums:post_delete' pk=post.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    <div class="mb-3">{{ post.content|safe }}</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Vote buttons -->
+                        {% if not thread.is_locked %}
+                        <form method="post" action="{% url 'frontend:forums:post_vote' pk=post.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="vote_type" value="1">
+                            <button type="submit" class="btn btn-sm {% if user_votes|default_if_none:"" %}{% for vid, vtype in user_votes.items %}{% if vid == post.pk and vtype == 1 %}btn-success{% endif %}{% endfor %}{% endif %} btn-outline-success">
+                                <i class="bi bi-hand-thumbs-up"></i> {{ post.upvotes }}
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'frontend:forums:post_vote' pk=post.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="vote_type" value="-1">
+                            <button type="submit" class="btn btn-sm {% if user_votes|default_if_none:"" %}{% for vid, vtype in user_votes.items %}{% if vid == post.pk and vtype == -1 %}btn-danger{% endif %}{% endfor %}{% endif %} btn-outline-danger">
+                                <i class="bi bi-hand-thumbs-down"></i> {{ post.downvotes }}
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="btn btn-sm btn-outline-success disabled"><i class="bi bi-hand-thumbs-up"></i> {{ post.upvotes }}</span>
+                        <span class="btn btn-sm btn-outline-danger disabled"><i class="bi bi-hand-thumbs-down"></i> {{ post.downvotes }}</span>
+                        {% endif %}
+
+                        {% if not thread.is_locked %}
+                        <a href="{% url 'frontend:forums:post_reply' thread_slug=thread.slug parent_id=post.pk %}" class="btn btn-sm btn-outline-secondary ms-auto">
+                            <i class="bi bi-reply"></i> Reply
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Nested Replies -->
+                {% if post.replies.all %}
+                <div class="card-footer bg-white p-0">
+                    {% for reply in post.replies.all %}
+                    {% if not reply.is_deleted %}
+                    <div class="border-start border-3 border-primary ms-4 p-3" id="post-{{ reply.pk }}">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div>
+                                <strong>{{ reply.author.get_full_name|default:reply.author.username }}</strong>
+                                <span class="text-muted ms-2">{{ reply.created_at|date:"M d, Y \a\t H:i" }}</span>
+                                {% if reply.is_edited %}
+                                <span class="text-muted small ms-2">(edited)</span>
+                                {% endif %}
+                            </div>
+                            {% if reply.author == request.user %}
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'frontend:forums:post_update' pk=reply.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'frontend:forums:post_delete' pk=reply.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>{{ reply.content|safe }}</div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if posts.has_other_pages %}
+            <nav aria-label="Posts pagination">
+                <ul class="pagination justify-content-center">
+                    {% if posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.previous_page_number }}"><i class="bi bi-chevron-left"></i> Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i> Previous</span></li>
+                    {% endif %}
+
+                    {% for num in posts.paginator.page_range %}
+                    {% if posts.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > posts.number|add:'-3' and num < posts.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.next_page_number }}">Next <i class="bi bi-chevron-right"></i></a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next <i class="bi bi-chevron-right"></i></span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-chat-dots fs-1 text-muted"></i>
+                    <p class="text-muted mt-2">No posts yet. Be the first to reply!</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Reply Form -->
+    {% if not thread.is_locked %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Post a Reply</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'frontend:forums:post_create' thread_slug=thread.slug %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea name="content" class="form-control" rows="5" placeholder="Write your reply..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Post Reply</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+    {% else %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <i class="bi bi-lock"></i> This thread is locked. No new replies can be posted.
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -1,25 +1,206 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Certificate Detail - School Management{% endblock %}
+{% block title %}{{ title }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Certificate Detail</h5></li>
+        <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Certificate Detail</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:certificates:certificate_list' %}">Certificates</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ certificate.certificate_number }}</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Certificate Info Card -->
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h4 class="card-title mb-0">Certificate Information</h4>
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% if certificate.pdf_file %}
+                        <a href="{% url 'frontend:certificates:certificate_download' pk=certificate.pk %}" class="btn btn-sm btn-success">
+                            <i class="bi bi-download"></i> Download PDF
+                        </a>
+                        {% endif %}
+                        {% if is_direction or is_admin %}
+                        <a href="{% url 'frontend:certificates:certificate_edit' pk=certificate.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        {% if certificate.is_revoked %}
+                        <form method="post" action="{% url 'frontend:certificates:certificate_reissue' pk=certificate.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-info" onclick="return confirm('Reissue this certificate?')">
+                                <i class="bi bi-arrow-repeat"></i> Reissue
+                            </button>
+                        </form>
+                        {% else %}
+                        <a href="{% url 'frontend:certificates:certificate_revoke' pk=certificate.pk %}" class="btn btn-sm btn-danger">
+                            <i class="bi bi-x-circle"></i> Revoke
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Status Badge -->
+                    <div class="mb-4">
+                        {% if certificate.is_revoked %}
+                        <span class="badge bg-danger fs-6"><i class="bi bi-x-circle"></i> Revoked</span>
+                        {% elif certificate.status == 'issued' %}
+                        <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> Issued</span>
+                        {% elif certificate.status == 'pending' %}
+                        <span class="badge bg-warning text-dark fs-6"><i class="bi bi-clock"></i> Pending</span>
+                        {% elif certificate.status == 'generated' %}
+                        <span class="badge bg-info fs-6"><i class="bi bi-file-earmark-check"></i> Generated</span>
+                        {% else %}
+                        <span class="badge bg-secondary fs-6">{{ certificate.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Certificate Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th class="text-muted" width="40%">Certificate Number</th>
+                                    <td><code>{{ certificate.certificate_number }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Student</th>
+                                    <td>{{ certificate.student }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Course</th>
+                                    <td>{{ certificate.course }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Template</th>
+                                    <td>{{ certificate.template|default:"--" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th class="text-muted" width="40%">Issue Date</th>
+                                    <td>{{ certificate.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Issued By</th>
+                                    <td>{{ certificate.issued_by.get_full_name|default:certificate.issued_by.username|default:"--" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Revocation Info -->
+                    {% if certificate.is_revoked %}
+                    <hr>
+                    <div class="alert alert-danger mb-0">
+                        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Certificate Revoked</h6>
+                        <table class="table table-sm table-borderless mb-0">
+                            {% if certificate.revoked_at %}
+                            <tr>
+                                <th class="text-muted" width="30%">Revoked At</th>
+                                <td>{{ certificate.revoked_at|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if certificate.revocation_reason %}
+                            <tr>
+                                <th class="text-muted">Reason</th>
+                                <td>{{ certificate.revocation_reason }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Sidebar -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Quick Actions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if certificate.pdf_file %}
+                        <a href="{% url 'frontend:certificates:certificate_download' pk=certificate.pk %}" class="btn btn-outline-success">
+                            <i class="bi bi-file-earmark-pdf"></i> Download PDF
+                        </a>
+                        {% else %}
+                        <button class="btn btn-outline-secondary" disabled>
+                            <i class="bi bi-file-earmark-pdf"></i> PDF Not Available
+                        </button>
+                        {% endif %}
+                        <a href="{% url 'frontend:certificates:certificate_list' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification History -->
     <div class="row">
         <div class="col-xl-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Certificate Detail</h4>
+                    <h4 class="card-title">Verification History</h4>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Verified At</th>
+                                    <th>Method</th>
+                                    <th>Result</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for v in verifications %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ v.verified_at|date:"M d, Y H:i" }}</td>
+                                    <td>{{ v.verification_method|default:"--" }}</td>
+                                    <td>
+                                        {% if v.is_valid %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Valid</span>
+                                        {% else %}
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Invalid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small class="text-muted">{{ v.ip_address|default:"--" }}</small></td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-shield-check fs-4 d-block mb-2"></i>
+                                        No verification attempts recorded.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

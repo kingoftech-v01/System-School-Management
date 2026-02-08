@@ -162,3 +162,12 @@ nul
 # OS files
 Thumbs.db
 desktop.ini
+
+# Test output files
+full_*.txt
+*_test_output.txt
+*_coverage_*.txt
+
+# Temporary files
+cookies*.txt
+*.tmp

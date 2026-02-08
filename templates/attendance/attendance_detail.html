@@ -79,7 +79,11 @@
                     <p class="text-muted">No attendance reports recorded for this session.</p>
                     {% endif %}
                     {% else %}
-                    <p>Detail content goes here.</p>
+                    <div class="text-center py-4">
+                        <i class="bi bi-exclamation-triangle display-4 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">Attendance session not found.</p>
+                        <a href="{% url 'frontend:attendance:dashboard' %}" class="btn btn-sm btn-primary mt-3">Back to Attendance</a>
+                    </div>
                     {% endif %}
                 </div>
             </div>

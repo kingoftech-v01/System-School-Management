@@ -1,27 +1,78 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Admin Panel - School Management{% endblock %}
+{% block title %}{{ title|default:"Admin Panel" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Admin Panel</h5></li>
+        <li><h5 class="bc-title">{{ title|default:"Admin Panel" }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Admin Panel</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Settings Grid -->
     <div class="row">
-        <div class="col-xl-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Admin Panel</h4>
+        <!-- Sessions -->
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'frontend:core:session_list' %}" class="card text-decoration-none h-100">
+                <div class="card-body text-center py-4">
+                    <div class="icon-box bg-primary-light rounded-circle mx-auto mb-3" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-calendar3 fs-2 text-primary"></i>
+                    </div>
+                    <h5 class="card-title mb-1">Sessions</h5>
+                    <p class="text-muted mb-0 small">Manage academic sessions</p>
                 </div>
-                <div class="card-body">
-                    <p>Welcome to the Admin Panel page.</p>
+            </a>
+        </div>
+
+        <!-- Semesters -->
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'frontend:core:semester_list' %}" class="card text-decoration-none h-100">
+                <div class="card-body text-center py-4">
+                    <div class="icon-box bg-success-light rounded-circle mx-auto mb-3" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-calendar-range fs-2 text-success"></i>
+                    </div>
+                    <h5 class="card-title mb-1">Semesters</h5>
+                    <p class="text-muted mb-0 small">Manage semesters</p>
                 </div>
-            </div>
+            </a>
+        </div>
+
+        <!-- Students -->
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'frontend:accounts:student_list' %}" class="card text-decoration-none h-100">
+                <div class="card-body text-center py-4">
+                    <div class="icon-box bg-info-light rounded-circle mx-auto mb-3" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-mortarboard fs-2 text-info"></i>
+                    </div>
+                    <h5 class="card-title mb-1">Students</h5>
+                    <p class="text-muted mb-0 small">Manage student accounts</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Lecturers -->
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'frontend:accounts:lecturer_list' %}" class="card text-decoration-none h-100">
+                <div class="card-body text-center py-4">
+                    <div class="icon-box bg-warning-light rounded-circle mx-auto mb-3" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-person-workspace fs-2 text-warning"></i>
+                    </div>
+                    <h5 class="card-title mb-1">Lecturers</h5>
+                    <p class="text-muted mb-0 small">Manage lecturer accounts</p>
+                </div>
+            </a>
         </div>
     </div>
 </div>

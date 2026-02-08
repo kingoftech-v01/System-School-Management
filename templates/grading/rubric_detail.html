@@ -1,26 +1,192 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Rubric Detail - School Management{% endblock %}
+{% block title %}{{ rubric.name|default:"Rubric Detail" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
         <li><h5 class="bc-title">Rubric Detail</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Rubric Detail</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:grading:rubric_list' %}">Rubrics</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ rubric.name|truncatewords:4 }}</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rubric Info Card -->
+    <div class="row">
+        <div class="col-xl-8">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Rubric Detail</h4>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">{{ rubric.name }}</h4>
+                    <div>
+                        <a href="{% url 'frontend:grading:rubric_update' pk=rubric.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th class="w-25">Course</th>
+                                <td>{{ rubric.course|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Max Score</th>
+                                <td>{{ rubric.max_score }}</td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td>
+                                    {% if rubric.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Created By</th>
+                                <td>{{ rubric.created_by.get_full_name|default:rubric.created_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <th>Created At</th>
+                                <td>{{ rubric.created_at|date:"M d, Y \a\t H:i" }}</td>
+                            </tr>
+                            {% if rubric.description %}
+                            <tr>
+                                <th>Description</th>
+                                <td>{{ rubric.description }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="col-xl-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-journal-check text-primary fs-4"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Total Grades</h6>
+                            <h3 class="mb-0">{{ total_grades|default:"0" }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-graph-up text-success fs-4"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Average Score</h6>
+                            <h3 class="mb-0">{{ avg_score|floatformat:1|default:"0.0" }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Criteria Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Criteria</h4>
+                    <a href="{% url 'frontend:grading:criterion_create' rubric_pk=rubric.pk %}" class="btn btn-sm btn-success">
+                        <i class="bi bi-plus-circle"></i> Add Criterion
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if rubric.criteria.all %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Max Points</th>
+                                    <th>Weight (%)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for criterion in rubric.criteria.all %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ criterion.name }}</td>
+                                    <td>{{ criterion.description|default:"-"|truncatewords:10 }}</td>
+                                    <td>{{ criterion.max_points }}</td>
+                                    <td>{{ criterion.weight }}%</td>
+                                    <td>
+                                        <a href="{% url 'frontend:grading:criterion_update' pk=criterion.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                        <a href="{% url 'frontend:grading:criterion_delete' pk=criterion.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-list-check fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No criteria defined yet. Add criteria to start grading.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the rubric <strong>{{ rubric.name }}</strong>? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'frontend:grading:rubric_delete' pk=rubric.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Delete</button>
+                </form>
             </div>
         </div>
     </div>

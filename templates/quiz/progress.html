@@ -1,25 +1,119 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Quiz Progress - School Management{% endblock %}
+{% block title %}My Quiz Progress - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Quiz Progress</h5></li>
+        <li><h5 class="bc-title">My Quiz Progress</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Quiz Progress</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Quiz Progress</h4>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">My Quiz Progress</h4>
+                    <a href="{% url 'frontend:core:home' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-house"></i> Back to Home
+                    </a>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    {% if progress %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Quiz</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in progress %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.quiz.title|default:item.quiz|default:item.title|default:"-" }}</td>
+                                    <td>{{ item.score|default:"-" }}{% if item.total %} / {{ item.total }}{% endif %}</td>
+                                    <td>
+                                        {% if item.percentage is not None %}
+                                        <div class="progress" style="min-width: 80px; height: 20px;">
+                                            <div class="progress-bar {% if item.percentage >= 70 %}bg-success{% elif item.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                                 role="progressbar"
+                                                 style="width: {{ item.percentage|floatformat:0 }}%">
+                                                {{ item.percentage|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.passed %}
+                                        <span class="badge bg-success">Passed</span>
+                                        {% elif item.passed == False %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ item.status|default:"Completed" }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.date|default:item.completed_at|default:item.created_at|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% elif quizzes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Quiz</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quiz in quizzes %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ quiz.title|default:quiz }}</td>
+                                    <td><span class="badge bg-secondary">Available</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-bar-chart-line fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No quiz progress data available.</p>
+                        <a href="{% url 'frontend:core:home' %}" class="btn btn-primary mt-2">
+                            <i class="bi bi-book"></i> Go to Courses
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

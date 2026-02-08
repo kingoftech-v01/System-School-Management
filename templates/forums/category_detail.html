@@ -1,25 +1,167 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Category - School Management{% endblock %}
+{% block title %}{{ title }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Category</h5></li>
+        <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Category</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:forums:home' %}">Forums</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ category.name }}</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Category Header -->
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div>
+                            <h4 class="mb-2">{{ category.name }}</h4>
+                            {% if category.description %}
+                            <p class="text-muted mb-2">{{ category.description }}</p>
+                            {% endif %}
+
+                            <!-- Tags -->
+                            {% if category_tags %}
+                            <div class="mb-0">
+                                {% for tag in category_tags %}
+                                <a href="?tag={{ tag.slug }}" class="badge bg-light text-dark text-decoration-none me-1 {% if request.GET.tag == tag.slug %}border border-primary{% endif %}">
+                                    <i class="bi bi-tag"></i> {{ tag.name }}
+                                </a>
+                                {% endfor %}
+                                {% if request.GET.tag %}
+                                <a href="{% url 'frontend:forums:category_detail' slug=category.slug %}" class="badge bg-secondary text-decoration-none">
+                                    <i class="bi bi-x"></i> Clear filter
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-center">
+                                <h5 class="mb-0">{{ total_count }}</h5>
+                                <small class="text-muted">Threads</small>
+                            </div>
+                            <a href="{% url 'frontend:forums:thread_create_in_category' category_slug=category.slug %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> New Thread
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Threads Table -->
     <div class="row">
         <div class="col-xl-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Category</h4>
+                    <h4 class="card-title">Threads</h4>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Replies</th>
+                                    <th>Last Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for thread in threads %}
+                                <tr>
+                                    <td>
+                                        {% if thread.is_pinned %}
+                                        <i class="bi bi-pin-angle-fill text-success me-1" title="Pinned"></i>
+                                        {% endif %}
+                                        {% if thread.is_locked %}
+                                        <i class="bi bi-lock-fill text-danger me-1" title="Locked"></i>
+                                        {% endif %}
+                                        <a href="{% url 'frontend:forums:thread_detail' slug=thread.slug %}" class="fw-semibold">
+                                            {{ thread.title }}
+                                        </a>
+                                        {% if thread.tags.all %}
+                                        <div class="mt-1">
+                                            {% for tag in thread.tags.all %}
+                                            <span class="badge bg-light text-muted small">{{ tag.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ thread.author.get_full_name|default:thread.author.username }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ thread.post_count }}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ thread.last_activity_at|date:"M d, Y H:i" }}</small>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="bi bi-chat-square-text fs-4 d-block mb-2"></i>
+                                        No threads in this category yet. Be the first to start a discussion!
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if threads.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-3">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if threads.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ threads.previous_page_number }}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}" aria-label="Previous">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                            {% endif %}
+
+                            {% for num in threads.paginator.page_range %}
+                            {% if threads.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > threads.number|add:'-3' and num < threads.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if threads.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ threads.next_page_number }}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}" aria-label="Next">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
                 </div>
             </div>
         </div>

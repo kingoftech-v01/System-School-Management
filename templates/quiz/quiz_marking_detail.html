@@ -1,27 +1,132 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Marking Detail - School Management{% endblock %}
+{% block title %}Quiz Marking - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Marking Detail</h5></li>
+        <li><h5 class="bc-title">Quiz Marking</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Marking Detail</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Quiz Marking</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quiz Info -->
+    {% if quiz %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h4 class="card-title">{{ quiz.title|default:"Quiz" }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th class="w-25">Quiz</th>
+                                <td>{{ quiz.title|default:quiz }}</td>
+                            </tr>
+                            {% if sitting %}
+                            <tr>
+                                <th>Student</th>
+                                <td>{{ sitting.user.get_full_name|default:sitting.user.username|default:"-" }}</td>
+                            </tr>
+                            {% if sitting.start %}
+                            <tr>
+                                <th>Started</th>
+                                <td>{{ sitting.start|date:"M d, Y \a\t H:i" }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if sitting.end %}
+                            <tr>
+                                <th>Completed</th>
+                                <td>{{ sitting.end|date:"M d, Y \a\t H:i" }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if sitting.current_score is not None %}
+                            <tr>
+                                <th>Score</th>
+                                <td>{{ sitting.current_score }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Questions / Marking Detail -->
+    <div class="row">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h4 class="card-title">Marking Detail</h4>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    {% if questions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Question</th>
+                                    <th>Answer Given</th>
+                                    <th>Correct Answer</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for q in questions %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ q.question|default:q.content|default:q }}</td>
+                                    <td>{{ q.user_answer|default:q.answer_given|default:"-" }}</td>
+                                    <td>{{ q.correct_answer|default:"-" }}</td>
+                                    <td>
+                                        {% if q.is_correct %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Correct</span>
+                                        {% elif q.is_correct == False %}
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Incorrect</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-pencil-square fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No marking data available.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <a href="{% url 'frontend:core:home' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
         </div>
     </div>
 </div>

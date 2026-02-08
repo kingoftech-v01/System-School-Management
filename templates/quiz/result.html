@@ -1,25 +1,120 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Quiz Result - School Management{% endblock %}
+{% block title %}Quiz Results - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Quiz Result</h5></li>
+        <li><h5 class="bc-title">Quiz Results</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Quiz Result</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Quiz Results</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Quiz Result</h4>
+                <div class="card-header text-center">
+                    <h4 class="card-title">
+                        <i class="bi bi-clipboard-check me-2"></i>
+                        {% if quiz %}{{ quiz.title|default:"Quiz" }} - {% endif %}Results
+                    </h4>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    {% if score is not None and total is not None %}
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            {% if percentage is not None %}
+                            {% if percentage >= 70 %}
+                            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                <div>
+                                    <i class="bi bi-trophy text-success fs-1"></i>
+                                    <div class="fw-bold text-success">Passed</div>
+                                </div>
+                            </div>
+                            {% elif percentage >= 50 %}
+                            <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                <div>
+                                    <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
+                                    <div class="fw-bold text-warning">Fair</div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                <div>
+                                    <i class="bi bi-x-circle text-danger fs-1"></i>
+                                    <div class="fw-bold text-danger">Needs Work</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <h2 class="mb-1">{{ score }} / {{ total }}</h2>
+                        {% if percentage is not None %}
+                        <p class="text-muted fs-5">{{ percentage|floatformat:1 }}%</p>
+                        {% endif %}
+                    </div>
+
+                    {% if percentage is not None %}
+                    <div class="mb-4">
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {% if percentage >= 70 %}bg-success{% elif percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                 role="progressbar"
+                                 style="width: {{ percentage|floatformat:0 }}%"
+                                 aria-valuenow="{{ percentage|floatformat:0 }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {{ percentage|floatformat:1 }}%
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            {% if quiz %}
+                            <tr>
+                                <th class="w-25">Quiz</th>
+                                <td>{{ quiz.title|default:quiz }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th class="w-25">Score</th>
+                                <td>{{ score }} out of {{ total }}</td>
+                            </tr>
+                            {% if percentage is not None %}
+                            <tr>
+                                <th>Percentage</th>
+                                <td>{{ percentage|floatformat:1 }}%</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-hourglass-split fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">Results will be available once graded.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'frontend:core:home' %}" class="btn btn-primary"><i class="bi bi-house"></i> Back to Home</a>
                 </div>
             </div>
         </div>

@@ -1,28 +1,250 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Grading Dashboard - School Management{% endblock %}
+{% block title %}{{ title }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Grading Dashboard</h5></li>
+        <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Grading Dashboard</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ title }}</a></li>
     </ol>
 </div>
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-xl-12">
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }} alert-dismissible fade show"><i class="bi bi-info-circle me-2"></i>{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    <!-- Quick Links -->
+    <div class="row mb-4">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Grading Dashboard</h4>
-                </div>
                 <div class="card-body">
-                    <p>Welcome to the Grading Dashboard page.</p>
+                    <a href="{% url 'frontend:grading:rubric_list' %}" class="btn btn-outline-primary me-2 mb-2"><i class="bi bi-list-check me-1"></i> Rubrics</a>
+                    <a href="{% url 'frontend:grading:grade_entry_list' %}" class="btn btn-outline-success me-2 mb-2"><i class="bi bi-pencil-square me-1"></i> Grade Entries</a>
+                    <a href="{% url 'frontend:grading:peer_review_list' %}" class="btn btn-outline-info me-2 mb-2"><i class="bi bi-people me-1"></i> Peer Reviews</a>
+                    <a href="{% url 'frontend:grading:grade_curve_list' %}" class="btn btn-outline-warning me-2 mb-2"><i class="bi bi-graph-up-arrow me-1"></i> Grade Curves</a>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Student View -->
+    {% if request.user.role == 'student' %}
+
+    <div class="row">
+        <!-- Recent Grades -->
+        <div class="col-xl-7 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">My Recent Grades</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Rubric</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for grade in recent_grades %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ grade.rubric }}</td>
+                                    <td><span class="badge bg-primary">{{ grade.total_score }}</span></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if grade.percentage >= 70 %}bg-success{% elif grade.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ grade.percentage }}%">{{ grade.percentage|floatformat:1 }}%</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ grade.graded_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted py-4">No grades recorded yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Pending Peer Reviews -->
+        <div class="col-xl-5 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Pending Peer Reviews</h4>
+                    <span class="badge bg-warning">{{ pending_reviews|length }} pending</span>
+                </div>
+                <div class="card-body">
+                    {% if pending_reviews %}
+                    <div class="list-group list-group-flush">
+                        {% for review in pending_reviews %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ review }}</h6>
+                            </div>
+                            <span class="badge bg-warning">Pending</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-check-circle display-4 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No pending peer reviews.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lecturer View -->
+    {% elif request.user.role == 'lecturer' %}
+
+    <div class="row">
+        <!-- Recent Grades -->
+        <div class="col-xl-7 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Recent Grades</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Rubric</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for grade in recent_grades %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ grade.rubric }}</td>
+                                    <td><span class="badge bg-primary">{{ grade.total_score }}</span></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if grade.percentage >= 70 %}bg-success{% elif grade.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ grade.percentage }}%">{{ grade.percentage|floatformat:1 }}%</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ grade.graded_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted py-4">No grades recorded yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Active Rubrics -->
+        <div class="col-xl-5 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Active Rubrics</h4>
+                    <a href="{% url 'frontend:grading:rubric_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if active_rubrics %}
+                    <div class="list-group list-group-flush">
+                        {% for rubric in active_rubrics %}
+                        <div class="list-group-item">
+                            <h6 class="mb-1">{{ rubric.name }}</h6>
+                            <small class="text-muted">{{ rubric.course }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-clipboard display-4 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No active rubrics.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direction/Admin View -->
+    {% else %}
+
+    <!-- Stat Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-primary d-block mb-1">TOTAL RUBRICS</span>
+                        <h2 class="mb-0">{{ total_rubrics|default:"0" }}</h2>
+                    </div>
+                    <div class="icon-box bg-primary-light rounded-circle">
+                        <i class="bi bi-list-check text-primary fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-success d-block mb-1">TOTAL GRADES</span>
+                        <h2 class="mb-0">{{ total_grades|default:"0" }}</h2>
+                    </div>
+                    <div class="icon-box bg-success-light rounded-circle">
+                        <i class="bi bi-pencil-square text-success fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-warning d-block mb-1">PENDING REVIEWS</span>
+                        <h2 class="mb-0">{{ pending_peer_reviews|default:"0" }}</h2>
+                    </div>
+                    <div class="icon-box bg-warning-light rounded-circle">
+                        <i class="bi bi-hourglass-split text-warning fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-info d-block mb-1">APPLIED CURVES</span>
+                        <h2 class="mb-0">{{ applied_curves|default:"0" }}</h2>
+                    </div>
+                    <div class="icon-box bg-info-light rounded-circle">
+                        <i class="bi bi-graph-up-arrow text-info fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-12 mb-4">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-bar-chart-line display-4 text-primary d-block mb-3"></i>
+                    <h5>Grading System Overview</h5>
+                    <p class="text-muted">Use the links above to manage rubrics, grade entries, peer reviews, and grade curves across the system.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
 </div>
 {% endblock %}

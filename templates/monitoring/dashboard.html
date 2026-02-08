@@ -1,25 +1,292 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Monitoring Dashboard - School Management{% endblock %}
+{% block title %}{{ title }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Monitoring Dashboard</h5></li>
+        <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Monitoring Dashboard</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ title }}</a></li>
     </ol>
 </div>
 <div class="container-fluid">
-    <div class="row">
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }} alert-dismissible fade show"><i class="bi bi-info-circle me-2"></i>{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endif %}
+
+    <!-- Filter Form -->
+    <div class="row mb-4">
         <div class="col-xl-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Monitoring Dashboard</h4>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title"><i class="bi bi-funnel me-2"></i>Date Range Filter</h4>
+                    <a href="{% url 'frontend:monitoring:export_dashboard_csv' %}" class="btn btn-success btn-sm"><i class="bi bi-download me-1"></i> Export CSV</a>
                 </div>
                 <div class="card-body">
-                    <p>Welcome to the Monitoring Dashboard page.</p>
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">From Date</label>
+                            {{ filter_form.date_from }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">To Date</label>
+                            {{ filter_form.date_to }}
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i> Apply Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row">
+        <div class="col-xl-4 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-primary d-block mb-1">TOTAL STUDENTS</span>
+                        <h2 class="mb-0">{{ total_students|default:"0" }}</h2>
+                    </div>
+                    <div class="icon-box bg-primary-light rounded-circle">
+                        <i class="bi bi-people text-primary fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-success d-block mb-1">TOTAL PROFESSORS</span>
+                        <h2 class="mb-0">{{ total_professors|default:"0" }}</h2>
+                    </div>
+                    <div class="icon-box bg-success-light rounded-circle">
+                        <i class="bi bi-person-workspace text-success fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-info d-block mb-1">TOTAL PARENTS</span>
+                        <h2 class="mb-0">{{ total_parents|default:"0" }}</h2>
+                    </div>
+                    <div class="icon-box bg-info-light rounded-circle">
+                        <i class="bi bi-person-hearts text-info fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Enrollment by Status -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title"><i class="bi bi-person-plus me-2"></i>Enrollment by Status</h4>
+                    <a href="{% url 'frontend:monitoring:enrollment_statistics' %}" class="btn btn-sm btn-outline-primary">Details</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in enrollment_stats %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        {% if stat.status == 'active' or stat.status == 'enrolled' %}
+                                        <span class="badge bg-success">{{ stat.status|title }}</span>
+                                        {% elif stat.status == 'pending' %}
+                                        <span class="badge bg-warning">{{ stat.status|title }}</span>
+                                        {% elif stat.status == 'dropped' or stat.status == 'expelled' %}
+                                        <span class="badge bg-danger">{{ stat.status|title }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ stat.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ stat.count }}</strong></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted py-4">No enrollment data.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gender Distribution -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title"><i class="bi bi-gender-ambiguous me-2"></i>Gender Distribution</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Gender</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in gender_stats %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ stat.gender|title }}</td>
+                                    <td><strong>{{ stat.count }}</strong></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted py-4">No gender data available.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Library Statistics -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title"><i class="bi bi-book me-2"></i>Library Statistics</h4>
+                    <a href="{% url 'frontend:monitoring:library_statistics' %}" class="btn btn-sm btn-outline-primary">Details</a>
+                </div>
+                <div class="card-body">
+                    {% if library_stats %}
+                    <div class="row text-center">
+                        <div class="col-4 mb-3">
+                            <h5 class="text-muted mb-1">Total Books</h5>
+                            <h3 class="text-primary">{{ library_stats.total_books|default:"0" }}</h3>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <h5 class="text-muted mb-1">Borrowed</h5>
+                            <h3 class="text-warning">{{ library_stats.borrowed|default:"0" }}</h3>
+                        </div>
+                        <div class="col-4 mb-3">
+                            <h5 class="text-muted mb-1">Overdue</h5>
+                            <h3 class="text-danger">{{ library_stats.overdue|default:"0" }}</h3>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-book display-4 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No library data available.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Discipline Statistics -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title"><i class="bi bi-shield-exclamation me-2"></i>Discipline Statistics</h4>
+                </div>
+                <div class="card-body">
+                    {% if discipline_stats %}
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h5 class="text-muted mb-1">Total Incidents</h5>
+                            <h3 class="text-primary">{{ discipline_stats.total|default:"0" }}</h3>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h5 class="text-muted mb-1">Unresolved</h5>
+                            <h3 class="text-danger">{{ discipline_stats.unresolved|default:"0" }}</h3>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-shield-exclamation display-4 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No discipline data available.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Attendance Statistics -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title"><i class="bi bi-calendar-check me-2"></i>Attendance Statistics</h4>
+                </div>
+                <div class="card-body">
+                    {% if attendance_stats %}
+                    <div class="row text-center">
+                        <div class="col-3 mb-3">
+                            <h6 class="text-muted mb-1">Total</h6>
+                            <h4 class="text-primary">{{ attendance_stats.total_records|default:"0" }}</h4>
+                        </div>
+                        <div class="col-3 mb-3">
+                            <h6 class="text-muted mb-1">Present</h6>
+                            <h4 class="text-success">{{ attendance_stats.present|default:"0" }}</h4>
+                        </div>
+                        <div class="col-3 mb-3">
+                            <h6 class="text-muted mb-1">Absent</h6>
+                            <h4 class="text-danger">{{ attendance_stats.absent|default:"0" }}</h4>
+                        </div>
+                        <div class="col-3 mb-3">
+                            <h6 class="text-muted mb-1">Late</h6>
+                            <h4 class="text-warning">{{ attendance_stats.late|default:"0" }}</h4>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-check display-4 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No attendance data available.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade Statistics -->
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title"><i class="bi bi-mortarboard me-2"></i>Grade Statistics</h4>
+                </div>
+                <div class="card-body">
+                    {% if grade_stats %}
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h5 class="text-muted mb-1">Total Entries</h5>
+                            <h3 class="text-primary">{{ grade_stats.total_entries|default:"0" }}</h3>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h5 class="text-muted mb-1">Avg Percentage</h5>
+                            <h3 class="text-success">{{ grade_stats.avg_percentage|floatformat:1|default:"0" }}%</h3>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-mortarboard display-4 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No grade data available.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

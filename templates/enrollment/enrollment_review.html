@@ -1,25 +1,168 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Enrollment Review - School Management{% endblock %}
+{% block title %}{{ title }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Enrollment Review</h5></li>
+        <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Enrollment Review</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:enrollment:registration_list' %}">Registrations</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Review</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
     <div class="row">
-        <div class="col-xl-12">
+        <!-- Registration Info -->
+        <div class="col-xl-8">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Enrollment Review</h4>
+                    <h4 class="card-title">Registration Information</h4>
                 </div>
                 <div class="card-body">
-                    <p>Detail content goes here.</p>
+                    <!-- Status Badge -->
+                    <div class="mb-4">
+                        {% if registration.status == 'pending' %}
+                        <span class="badge bg-warning text-dark fs-6">Pending Review</span>
+                        {% elif registration.status == 'under_review' %}
+                        <span class="badge bg-info text-dark fs-6">Under Review</span>
+                        {% elif registration.status == 'approved' %}
+                        <span class="badge bg-success fs-6">Approved</span>
+                        {% elif registration.status == 'rejected' %}
+                        <span class="badge bg-danger fs-6">Rejected</span>
+                        {% elif registration.status == 'enrolled' %}
+                        <span class="badge bg-primary fs-6">Enrolled</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Student Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Student Details</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th class="text-muted">Full Name</th>
+                                    <td>{{ registration.student_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Level</th>
+                                    <td>{{ registration.get_level_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Submitted</th>
+                                    <td>{{ registration.submitted_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Contact</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th class="text-muted">Email</th>
+                                    <td>{{ registration.email|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Phone</th>
+                                    <td>{{ registration.phone|default:"--" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    {% with documents=registration.documents.all %}
+                    {% if documents %}
+                    <hr>
+                    <h6 class="text-muted mb-3">Uploaded Documents</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Document Type</th>
+                                    <th>Description</th>
+                                    <th>Uploaded</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in documents %}
+                                <tr>
+                                    <td>{{ doc.get_document_type_display }}</td>
+                                    <td>{{ doc.description|default:"--" }}</td>
+                                    <td>{{ doc.uploaded_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if doc.is_verified %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.file %}
+                                        <a href="{{ doc.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Download">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Form -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Review Decision</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                            {% for error in field.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-clipboard-check"></i> Submit Review
+                            </button>
+                            <a href="{% url 'frontend:enrollment:registration_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to List
+                            </a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

@@ -1,25 +1,110 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Library Statistics - School Management{% endblock %}
+{% block title %}{{ title|default:"Library Statistics" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Library Statistics</h5></li>
+        <li><h5 class="bc-title">{{ title|default:"Library Statistics" }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">Monitoring</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Library Statistics</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
     <div class="row">
-        <div class="col-xl-12">
+        <!-- Books by Category -->
+        <div class="col-xl-6 col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Library Statistics</h4>
+                    <h4 class="card-title"><i class="bi bi-book me-2"></i>Books by Category</h4>
                 </div>
                 <div class="card-body">
-                    <p>Welcome to the Library Statistics page.</p>
+                    {% if books_by_category %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Category</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in books_by_category %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.category|default:"Uncategorized" }}</td>
+                                    <td><strong>{{ item.count }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-book fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No book categories available.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Borrow Statistics -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title"><i class="bi bi-arrow-left-right me-2"></i>Borrow Statistics</h4>
+                </div>
+                <div class="card-body">
+                    {% if borrow_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in borrow_stats %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        {% if item.status == "borrowed" %}
+                                        <span class="badge bg-info">{{ item.status|title }}</span>
+                                        {% elif item.status == "overdue" %}
+                                        <span class="badge bg-danger">{{ item.status|title }}</span>
+                                        {% elif item.status == "returned" %}
+                                        <span class="badge bg-success">{{ item.status|title }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ item.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ item.count }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-arrow-left-right fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No borrow statistics available.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

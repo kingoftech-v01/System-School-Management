@@ -1,25 +1,234 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Professor Dashboard - School Management{% endblock %}
+{% block title %}{{ title|default:"Professor Dashboard" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Professor Dashboard</h5></li>
+        <li><h5 class="bc-title">{{ title|default:"Professor Dashboard" }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Professor Dashboard</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Stat Cards -->
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-xl-3 col-sm-6">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Professor Dashboard</h4>
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 text-muted">My Courses</p>
+                        <h3 class="mb-0">{{ my_courses|length|default:"0" }}</h3>
+                    </div>
+                    <div class="icon-box bg-primary-light rounded-circle">
+                        <i class="bi bi-journal-bookmark fs-3 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 text-muted">Students</p>
+                        <h3 class="mb-0">{{ student_count|default:"0" }}</h3>
+                    </div>
+                    <div class="icon-box bg-success-light rounded-circle">
+                        <i class="bi bi-people fs-3 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 text-muted">Pending Grades</p>
+                        <h3 class="mb-0">{{ pending_grades|default:"0" }}</h3>
+                    </div>
+                    <div class="icon-box bg-warning-light rounded-circle">
+                        <i class="bi bi-pencil-square fs-3 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 text-muted">Pending Notes</p>
+                        <h3 class="mb-0">{{ pending_notes|default:"0" }}</h3>
+                    </div>
+                    <div class="icon-box bg-info-light rounded-circle">
+                        <i class="bi bi-file-earmark-text fs-3 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- My Courses -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">My Courses</h4>
+                    <span class="text-muted">{{ current_session }} - {{ current_semester }}</span>
                 </div>
                 <div class="card-body">
-                    <p>Welcome to the Professor Dashboard page.</p>
+                    {% if my_courses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Code</th>
+                                    <th>Title</th>
+                                    <th>Program</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in my_courses %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ course.code }}</strong></td>
+                                    <td>{{ course.title }}</td>
+                                    <td>{{ course.program|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'frontend:course:course_detail' course.slug %}" class="btn btn-sm btn-outline-primary" title="View Course">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'frontend:result:add_score' course.slug %}" class="btn btn-sm btn-outline-success" title="Add Scores">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-journal-x fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No courses assigned this semester.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Today's Schedule -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title"><i class="bi bi-clock me-2"></i>Today's Schedule</h4>
+                </div>
+                <div class="card-body">
+                    {% if today_classes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Course</th>
+                                    <th>Room</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cls in today_classes %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ cls.start_time|time:"H:i" }} - {{ cls.end_time|time:"H:i" }}
+                                        </span>
+                                    </td>
+                                    <td>{{ cls.course.title }}</td>
+                                    <td><i class="bi bi-geo-alt me-1"></i>{{ cls.room|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No classes scheduled for today.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-xl-4 col-lg-5">
+            <!-- Quick Links -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Quick Links</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'frontend:attendance:dashboard' %}" class="btn btn-outline-primary text-start">
+                            <i class="bi bi-calendar-check me-2"></i>Attendance Dashboard
+                        </a>
+                        <a href="{% url 'frontend:accounts:profile' %}" class="btn btn-outline-secondary text-start">
+                            <i class="bi bi-person me-2"></i>My Profile
+                        </a>
+                        {% for course in my_courses|slice:":3" %}
+                        <a href="{% url 'frontend:result:add_score' course.slug %}" class="btn btn-outline-success text-start">
+                            <i class="bi bi-pencil-square me-2"></i>Grade: {{ course.code }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Attendance -->
+            {% if today_attendance %}
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Today's Attendance</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-success mb-1">{{ today_attendance.present|default:"0" }}</h4>
+                            <small class="text-muted">Present</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-danger mb-1">{{ today_attendance.absent|default:"0" }}</h4>
+                            <small class="text-muted">Absent</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Session Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Current Period</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Session</span>
+                            <strong>{{ current_session|default:"N/A" }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Semester</span>
+                            <strong>{{ current_semester|default:"N/A" }}</strong>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>

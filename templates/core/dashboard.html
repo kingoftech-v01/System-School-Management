@@ -1,25 +1,215 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
 
-{% block title %}Dashboard - School Management{% endblock %}
+{% block title %}{{ title|default:"Dashboard" }} - School Management{% endblock %}
 
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
-        <li><h5 class="bc-title">Dashboard</h5></li>
+        <li><h5 class="bc-title">{{ title|default:"Dashboard" }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Dashboard</a></li>
     </ol>
 </div>
 <div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Welcome -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="text-white mb-1">Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h4>
+                            <p class="mb-0 opacity-75">School Management System</p>
+                        </div>
+                        <div>
+                            <i class="bi bi-building fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session & Semester Info -->
     <div class="row">
-        <div class="col-xl-12">
+        <div class="col-xl-6 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 text-muted">Current Session</p>
+                        <h3 class="mb-0 fs-5">{{ current_session|default:"Not Set" }}</h3>
+                    </div>
+                    <div class="icon-box bg-primary-light rounded-circle">
+                        <i class="bi bi-calendar3 fs-3 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 text-muted">Current Semester</p>
+                        <h3 class="mb-0 fs-5">{{ current_semester|default:"Not Set" }}</h3>
+                    </div>
+                    <div class="icon-box bg-success-light rounded-circle">
+                        <i class="bi bi-calendar-range fs-3 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links based on role -->
+    <div class="row">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Dashboard</h4>
+                    <h4 class="card-title">Quick Links</h4>
                 </div>
                 <div class="card-body">
-                    <p>Welcome to the Dashboard page.</p>
+                    <div class="row g-3">
+                        {% if request.user.role == 'student' %}
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:course:course_registration' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-journal-plus fs-1 text-primary"></i>
+                                    <h6 class="mt-2 mb-0">Course Registration</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:result:grade_results' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-clipboard-data fs-1 text-success"></i>
+                                    <h6 class="mt-2 mb-0">My Grades</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:course:user_course_list' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-journal-bookmark fs-1 text-info"></i>
+                                    <h6 class="mt-2 mb-0">My Courses</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:accounts:profile' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person fs-1 text-secondary"></i>
+                                    <h6 class="mt-2 mb-0">My Profile</h6>
+                                </div>
+                            </a>
+                        </div>
+
+                        {% elif request.user.role == 'lecturer' %}
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:attendance:dashboard' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-calendar-check fs-1 text-primary"></i>
+                                    <h6 class="mt-2 mb-0">Attendance</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:course:user_course_list' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-journal-bookmark fs-1 text-success"></i>
+                                    <h6 class="mt-2 mb-0">My Courses</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:accounts:profile' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person fs-1 text-info"></i>
+                                    <h6 class="mt-2 mb-0">My Profile</h6>
+                                </div>
+                            </a>
+                        </div>
+
+                        {% elif request.user.role == 'admin' or request.user.role == 'direction' %}
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:accounts:student_list' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-mortarboard fs-1 text-primary"></i>
+                                    <h6 class="mt-2 mb-0">Students</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:accounts:lecturer_list' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person-workspace fs-1 text-success"></i>
+                                    <h6 class="mt-2 mb-0">Lecturers</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:course:programs' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-diagram-3 fs-1 text-info"></i>
+                                    <h6 class="mt-2 mb-0">Programs</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:core:session_list' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-gear fs-1 text-secondary"></i>
+                                    <h6 class="mt-2 mb-0">Settings</h6>
+                                </div>
+                            </a>
+                        </div>
+
+                        {% elif request.user.role == 'parent' %}
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:result:grade_results' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-clipboard-data fs-1 text-primary"></i>
+                                    <h6 class="mt-2 mb-0">Child's Grades</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:attendance:dashboard' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-calendar-check fs-1 text-success"></i>
+                                    <h6 class="mt-2 mb-0">Attendance</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:accounts:profile' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person fs-1 text-info"></i>
+                                    <h6 class="mt-2 mb-0">My Profile</h6>
+                                </div>
+                            </a>
+                        </div>
+
+                        {% else %}
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'frontend:accounts:profile' %}" class="card text-decoration-none h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person fs-1 text-primary"></i>
+                                    <h6 class="mt-2 mb-0">My Profile</h6>
+                                </div>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
