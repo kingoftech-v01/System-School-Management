@@ -1,0 +1,241 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">{{ title }}</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:forums:forum_home' %}">Forums</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Moderation</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <!-- Statistics Summary -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <span class="bg-warning-subtle p-3 rounded-circle">
+                            <i class="bi bi-clock-history text-warning fs-4"></i>
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">{{ total_pending_threads }}</h4>
+                        <span class="text-muted">Pending Threads</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <span class="bg-danger-subtle p-3 rounded-circle">
+                            <i class="bi bi-flag text-danger fs-4"></i>
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">{{ total_pending_reports }}</h4>
+                        <span class="text-muted">Pending Reports</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-sm-6">
+            <div class="card">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <span class="bg-secondary-subtle p-3 rounded-circle">
+                            <i class="bi bi-trash text-secondary fs-4"></i>
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">{{ total_flagged_posts }}</h4>
+                        <span class="text-muted">Flagged Posts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Threads -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-clock-history me-2 text-warning"></i> Pending Threads
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Category</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for thread in pending_threads %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'frontend:forums:thread_detail' thread.slug %}">{{ thread.title }}</a>
+                                    </td>
+                                    <td>{{ thread.author.get_full_name|default:thread.author.username }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ thread.category.name }}</span>
+                                    </td>
+                                    <td>{{ thread.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'frontend:forums:thread_detail' thread.slug %}" class="btn btn-sm btn-outline-primary" title="Review">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-check-circle fs-3 d-block mb-2"></i>
+                                        No pending threads to review.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Reports -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-flag me-2 text-danger"></i> Reported Content
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Reported By</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Reviewed By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in pending_reports %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ report.reported_by.get_full_name|default:report.reported_by.username }}</td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">{{ report.get_report_type_display }}</span>
+                                    </td>
+                                    <td>{{ report.description|truncatewords:20 }}</td>
+                                    <td>
+                                        {% if report.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif report.status == 'reviewing' %}
+                                            <span class="badge bg-info">Under Review</span>
+                                        {% elif report.status == 'resolved' %}
+                                            <span class="badge bg-success">Resolved</span>
+                                        {% elif report.status == 'dismissed' %}
+                                            <span class="badge bg-secondary">Dismissed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ report.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if report.reviewed_by %}
+                                            {{ report.reviewed_by.get_full_name|default:report.reviewed_by.username }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        <i class="bi bi-check-circle fs-3 d-block mb-2"></i>
+                                        No pending reports.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flagged Posts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-trash me-2 text-secondary"></i> Flagged / Deleted Posts
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Author</th>
+                                    <th>Thread</th>
+                                    <th>Content Preview</th>
+                                    <th>Deleted At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for post in flagged_posts %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ post.author.get_full_name|default:post.author.username|default:"Deleted User" }}</td>
+                                    <td>
+                                        <a href="{% url 'frontend:forums:thread_detail' post.thread.slug %}">{{ post.thread.title|truncatewords:8 }}</a>
+                                    </td>
+                                    <td>{{ post.content|striptags|truncatewords:15 }}</td>
+                                    <td>{{ post.updated_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'frontend:forums:thread_detail' post.thread.slug %}" class="btn btn-sm btn-outline-primary" title="View Thread">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="bi bi-check-circle fs-3 d-block mb-2"></i>
+                                        No flagged posts.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

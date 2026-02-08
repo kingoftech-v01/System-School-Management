@@ -12,17 +12,142 @@
     </ol>
 </div>
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-xl-12">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    {% if student %}
+    <!-- Child Information Card -->
+    <div class="row mb-4">
+        <div class="col-xl-8">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Parent Dashboard</h4>
+                    <h4 class="card-title">Child Information</h4>
                 </div>
                 <div class="card-body">
-                    <p>Welcome to the Parent Dashboard page.</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted fw-semibold" style="width: 40%;">Full Name</td>
+                                        <td>{{ student.student.get_full_name|default:"N/A" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted fw-semibold">Registration No.</td>
+                                        <td>{{ student.registration_number|default:"N/A" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted fw-semibold">Program</td>
+                                        <td>{{ student.program.title|default:"N/A" }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted fw-semibold" style="width: 40%;">Level</td>
+                                        <td>{{ student.level|default:"N/A" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted fw-semibold">Session</td>
+                                        <td>{{ current_session|default:"N/A" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted fw-semibold">Semester</td>
+                                        <td>{{ current_semester|default:"N/A" }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parent Info Card -->
+        <div class="col-xl-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title">Your Details</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted fw-semibold">Name</td>
+                                <td>{{ parent.user.get_full_name|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Relationship</td>
+                                <td>{{ parent.relation_ship|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Email</td>
+                                <td>{{ parent.email|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Phone</td>
+                                <td>{{ parent.phone|default:"N/A" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Quick Links for Monitoring Child -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Quick Links</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <a href="{% url 'frontend:result:grade_results' %}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-bar-chart d-block fs-3 mb-1"></i>
+                                View Grades
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <a href="{% url 'frontend:attendance:dashboard' %}" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-calendar-check d-block fs-3 mb-1"></i>
+                                View Attendance
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <a href="{% url 'frontend:accounts:profile' %}" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-person d-block fs-3 mb-1"></i>
+                                My Profile
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <a href="{% url 'frontend:core:home' %}" class="btn btn-outline-secondary w-100 py-3">
+                                <i class="bi bi-newspaper d-block fs-3 mb-1"></i>
+                                News & Events
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

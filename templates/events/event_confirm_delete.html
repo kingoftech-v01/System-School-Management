@@ -1,0 +1,71 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">{{ title }}</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:events:event_list' %}">Events</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Delete</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-6 col-lg-8 mx-auto">
+            <div class="card border-danger">
+                <div class="card-header bg-danger-subtle">
+                    <h4 class="card-title text-danger mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i> Confirm Deletion
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to delete the following event?</p>
+
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th class="text-muted" style="width: 35%;">Title</th>
+                            <td>{{ event.title }}</td>
+                        </tr>
+                        {% if event.start_date %}
+                        <tr>
+                            <th class="text-muted">Start Date</th>
+                            <td>{{ event.start_date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if event.end_date %}
+                        <tr>
+                            <th class="text-muted">End Date</th>
+                            <td>{{ event.end_date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if event.location %}
+                        <tr>
+                            <th class="text-muted">Location</th>
+                            <td>{{ event.location }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        This action cannot be undone. The event and all associated data will be permanently removed.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i> Delete Event
+                            </button>
+                            <a href="{% url 'frontend:events:event_list' %}" class="btn btn-light">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
