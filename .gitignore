@@ -148,4 +148,17 @@ media/result_sheet/*
 
 # Custom
 dump.rdb
-*.DS_Storenul
+*.DS_Store
+nul
+
+# IDE
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# OS files
+Thumbs.db
+desktop.ini
