@@ -396,7 +396,7 @@ SESSION_COOKIE_AGE = 1209600  # 2 weeks
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Strict'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
@@ -406,7 +406,7 @@ SESSION_CACHE_ALIAS = 'default'
 
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Strict'
 CSRF_USE_SESSIONS = False
 
 # ==============================================================================
@@ -445,13 +445,14 @@ AXES_IP_WHITELIST = []
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
-        'script-src': ("'self'", "'unsafe-inline'"),
+        'script-src': ("'self'",),  # Removed unsafe-inline; use nonce for inline scripts
         'style-src': ("'self'", "'unsafe-inline'"),
         'img-src': ("'self'", "data:", "https:"),
         'font-src': ("'self'",),
         'connect-src': ("'self'",),
         'frame-ancestors': ("'none'",),
-    }
+    },
+    'EXCLUDE_URL_PREFIXES': ('/admin/',),  # Admin uses inline scripts
 }
 
 # ==============================================================================
@@ -689,12 +690,14 @@ ROLE_CHOICES = (
     ('prefet', 'Discipline Officer'),
     ('accountant', 'Accountant'),
     ('secretary', 'Secretary'),
+    ('librarian', 'Librarian'),
+    ('registrar', 'Registrar'),
     ('direction', 'Direction Member'),
     ('admin', 'System Administrator'),
 )
 
 # Roles requiring 2FA
-ROLES_REQUIRING_2FA = ['professor', 'prefet', 'accountant', 'secretary', 'direction', 'admin']
+ROLES_REQUIRING_2FA = ['professor', 'prefet', 'accountant', 'secretary', 'librarian', 'registrar', 'direction', 'admin']
 
 # Pagination settings
 DEFAULT_PAGE_SIZE = 25
@@ -718,6 +721,8 @@ RATE_LIMITS = {
     'parent': '300/hour',
     'student': '300/hour',
     'professor': '500/hour',
+    'librarian': '500/hour',
+    'registrar': '500/hour',
     'secretary': '1000/hour',
     'direction': '1000/hour',
     'admin': '2000/hour',
@@ -740,7 +745,17 @@ CKEDITOR_CONFIGS = {
             'image2',
         ]),
         'removePlugins': 'stylesheetparser',
-        'allowedContent': True,
+        'allowedContent': (
+            'h1 h2 h3 h4 h5 h6 p blockquote pre;'
+            'a[!href,target];'
+            'img[!src,alt,width,height];'
+            'strong em u s sub sup;'
+            'ul ol li;'
+            'table thead tbody tr th td[colspan,rowspan];'
+            'br hr;'
+            'span{color,background-color,font-size};'
+            'div{text-align};'
+        ),
         'forcePasteAsPlainText': False,
     },
 }

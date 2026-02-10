@@ -133,7 +133,7 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         '/media/',
     ]
 
-    ROLES_REQUIRING_2FA = getattr(settings, 'ROLES_REQUIRING_2FA', ['professor', 'prefet', 'secretary', 'direction', 'admin'])
+    ROLES_REQUIRING_2FA = getattr(settings, 'ROLES_REQUIRING_2FA', ['professor', 'prefet', 'secretary', 'librarian', 'registrar', 'direction', 'admin'])
 
     def process_request(self, request):
         # Skip if user not authenticated
@@ -231,14 +231,29 @@ class AuditLogMiddleware(MiddlewareMixin):
         '/monitoring/',
     ]
 
+    # Paths where even GET requests should be logged
+    SENSITIVE_GET_PATHS = [
+        '/admin/',
+        '/payments/',
+        '/results/',
+        '/grades/',
+        '/export',
+        '/download',
+        '/monitoring/',
+    ]
+
     def process_response(self, request, response):
         # Only log for authenticated users
         if not request.user.is_authenticated:
             return response
 
-        # Only log POST, PUT, PATCH, DELETE requests
-        if request.method not in ['POST', 'PUT', 'PATCH', 'DELETE']:
-            return response
+        is_mutating = request.method in ['POST', 'PUT', 'PATCH', 'DELETE']
+
+        # Also log GET requests to highly sensitive paths
+        is_sensitive_get = (
+            request.method == 'GET' and
+            any(request.path.startswith(path) for path in self.SENSITIVE_GET_PATHS)
+        )
 
         # Check if path is sensitive
         is_sensitive_path = any(request.path.startswith(path) for path in self.SENSITIVE_PATHS)
@@ -246,7 +261,7 @@ class AuditLogMiddleware(MiddlewareMixin):
         # Check if action is sensitive (from URL parameters or path)
         is_sensitive_action = any(action in request.path.lower() for action in self.SENSITIVE_ACTIONS)
 
-        if is_sensitive_path or is_sensitive_action:
+        if (is_mutating and (is_sensitive_path or is_sensitive_action)) or is_sensitive_get:
             # Log the action
             try:
                 tenant_name = request.tenant.name if hasattr(request, 'tenant') else 'Unknown'
@@ -332,7 +347,7 @@ class Require2FAMiddleware(MiddlewareMixin):
         # Check if user needs 2FA
         user_role = getattr(request.user, 'role', None) or RoleMiddleware.get_user_role(request.user)
 
-        if user_role in ['professor', 'prefet', 'secretary', 'direction', 'admin']:
+        if user_role in ['professor', 'prefet', 'secretary', 'librarian', 'registrar', 'direction', 'admin']:
             # Check if 2FA is enabled
             has_2fa = False
 

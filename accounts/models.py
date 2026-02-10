@@ -51,6 +51,8 @@ ROLE_CHOICES = (
     ('prefet', _('Discipline Officer')),
     ('accountant', _('Accountant')),
     ('secretary', _('Secretary')),
+    ('librarian', _('Librarian')),
+    ('registrar', _('Registrar')),
     ('direction', _('Direction')),
     ('admin', _('Administrator')),
 )
@@ -402,6 +404,8 @@ INVITATION_ROLE_CHOICES = (
     ('prefet', _('Discipline Officer')),
     ('accountant', _('Accountant')),
     ('secretary', _('Secretary')),
+    ('librarian', _('Librarian')),
+    ('registrar', _('Registrar')),
     ('direction', _('Direction')),
 )
 
@@ -515,6 +519,27 @@ class ParentTeacherMessage(models.Model):
 
     def __str__(self):
         return f"{self.sender} → {self.recipient}: {self.subject}"
+
+    def clean(self):
+        """Validate sender/recipient relationship to the student."""
+        super().clean()
+        from django.core.exceptions import ValidationError
+        if self.parent_initiated:
+            # Sender must be a parent of the student
+            if not Parent.objects.filter(user=self.sender, student=self.student).exists():
+                raise ValidationError(
+                    _('Sender must be a parent/guardian of the referenced student.')
+                )
+        else:
+            # Recipient must be a parent of the student
+            if not Parent.objects.filter(user=self.recipient, student=self.student).exists():
+                raise ValidationError(
+                    _('Recipient must be a parent/guardian of the referenced student.')
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def mark_read(self):
         if not self.is_read:

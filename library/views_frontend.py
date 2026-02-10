@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator
 from django.db.models import Q
-from accounts.decorators import direction_only, tenant_required, role_required
+from accounts.decorators import direction_only, librarian_only, tenant_required, role_required
 from django_ratelimit.decorators import ratelimit
 from datetime import date, timedelta
 from .models import Book, BorrowRecord, BookCategory
@@ -130,7 +130,7 @@ def book_detail(request, pk):
 
     # Get recent borrow records for this book (direction only)
     borrow_records = None
-    if request.user.role in ('direction', 'admin') or request.user.is_superuser:
+    if request.user.role in ('librarian', 'secretary', 'direction', 'admin') or request.user.is_superuser:
         borrow_records = BorrowRecord.objects.filter(
             book=book,
             tenant=request.tenant
@@ -144,7 +144,7 @@ def book_detail(request, pk):
 
 
 @login_required
-@direction_only
+@librarian_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def book_create(request):
@@ -169,7 +169,7 @@ def book_create(request):
 
 
 @login_required
-@direction_only
+@librarian_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def book_edit(request, pk):
@@ -195,7 +195,7 @@ def book_edit(request, pk):
 
 
 @login_required
-@direction_only
+@librarian_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def book_delete(request, pk):
@@ -229,7 +229,7 @@ def book_delete(request, pk):
 
 
 @login_required
-@direction_only
+@librarian_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def overdue_books(request):

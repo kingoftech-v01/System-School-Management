@@ -58,6 +58,10 @@ def unified_dashboard(request):
         return render_accountant_dashboard(request, base_context)
     elif user_role == 'secretary':
         return render_secretary_dashboard(request, base_context)
+    elif user_role == 'librarian':
+        return render_librarian_dashboard(request, base_context)
+    elif user_role == 'registrar':
+        return render_registrar_dashboard(request, base_context)
     elif user_role == 'direction':
         return render_direction_dashboard(request, base_context)
     elif user_role == 'admin':
@@ -416,6 +420,90 @@ def render_accountant_dashboard(request, base_context):
     }
 
     return render(request, 'dashboards/accountant_dashboard.html', context)
+
+
+def render_librarian_dashboard(request, base_context):
+    """Render librarian dashboard with library management data."""
+    from library.models import Book, BorrowRecord
+
+    total_books = Book.objects.count()
+    total_available = Book.objects.filter(available__gt=0).count()
+    currently_borrowed = BorrowRecord.objects.filter(status='borrowed').count()
+    overdue_count = BorrowRecord.objects.filter(status='overdue').count()
+
+    # Recent borrow activity
+    recent_borrows = BorrowRecord.objects.select_related(
+        'book', 'student'
+    ).order_by('-borrowed_at')[:10]
+
+    # Books with low stock (fewer than 3 available)
+    low_stock_books = Book.objects.filter(
+        available__lt=3, available__gt=0
+    ).order_by('available')[:5]
+
+    # Out of stock
+    out_of_stock = Book.objects.filter(available=0).count()
+
+    context = {
+        **base_context,
+        'title': 'Librarian Dashboard',
+        'total_books': total_books,
+        'total_available': total_available,
+        'currently_borrowed': currently_borrowed,
+        'overdue_count': overdue_count,
+        'out_of_stock': out_of_stock,
+        'recent_borrows': recent_borrows,
+        'low_stock_books': low_stock_books,
+    }
+
+    return render(request, 'dashboards/librarian_dashboard.html', context)
+
+
+def render_registrar_dashboard(request, base_context):
+    """Render registrar dashboard with enrollment and certificate data."""
+    from enrollment.models import RegistrationForm, EnrollmentDocument
+    from certificates.models import Certificate
+
+    # Enrollment stats
+    pending_applications = RegistrationForm.objects.filter(status='pending').count()
+    under_review = RegistrationForm.objects.filter(status='under_review').count()
+    approved = RegistrationForm.objects.filter(
+        status='approved', enrolled_user__isnull=True
+    ).count()
+    total_enrolled = RegistrationForm.objects.filter(status='enrolled').count()
+
+    # Documents pending verification
+    documents_pending = EnrollmentDocument.objects.filter(is_verified=False).count()
+
+    # Certificate stats
+    certificates_issued = Certificate.objects.filter(status='issued').count()
+    certificates_pending = Certificate.objects.filter(status='pending').count()
+
+    # Recent applications
+    recent_applications = RegistrationForm.objects.order_by(
+        '-submitted_at'
+    )[:10]
+
+    # Recent certificates
+    recent_certificates = Certificate.objects.select_related(
+        'student', 'template'
+    ).order_by('-issue_date')[:10]
+
+    context = {
+        **base_context,
+        'title': 'Registrar Dashboard',
+        'pending_applications': pending_applications,
+        'under_review': under_review,
+        'approved': approved,
+        'total_enrolled': total_enrolled,
+        'documents_pending': documents_pending,
+        'certificates_issued': certificates_issued,
+        'certificates_pending': certificates_pending,
+        'recent_applications': recent_applications,
+        'recent_certificates': recent_certificates,
+    }
+
+    return render(request, 'dashboards/registrar_dashboard.html', context)
 
 
 def render_admin_dashboard(request, base_context):

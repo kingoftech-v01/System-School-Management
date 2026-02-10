@@ -10,8 +10,9 @@ from django.db.models import Q, Count
 from django.http import HttpResponse, JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.core.signing import Signer, BadSignature
 from django_ratelimit.decorators import ratelimit
-from accounts.decorators import direction_only, tenant_required, role_required
+from accounts.decorators import registrar_only, tenant_required, role_required
 from .models import RegistrationForm, EnrollmentDocument, EnrollmentStatusHistory
 from .forms import (
     RegistrationFormStep1, RegistrationFormStep2, RegistrationFormStep3,
@@ -281,7 +282,9 @@ def register_step4(request):
                 'You will receive an email confirmation shortly. '
                 'Our admissions team will review your application.'
             ))
-            return redirect('frontend:enrollment:register_complete', registration_id=registration.id)
+            signer = Signer()
+            signed_id = signer.sign(str(registration.id))
+            return redirect('frontend:enrollment:register_complete', signed_id=signed_id)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -295,8 +298,15 @@ def register_step4(request):
     })
 
 
-def register_complete(request, registration_id):
-    """Registration completion page."""
+def register_complete(request, signed_id):
+    """Registration completion page - verified via signed token."""
+    signer = Signer()
+    try:
+        registration_id = signer.unsign(signed_id)
+    except BadSignature:
+        messages.error(request, _('Invalid or expired registration link.'))
+        return redirect('frontend:enrollment:register_step1')
+
     registration = get_object_or_404(RegistrationForm, id=registration_id)
 
     return render(request, 'enrollment/register_complete.html', {
@@ -338,7 +348,7 @@ def upload_document(request, registration_id):
 # ########################################################
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def enrollment_list(request):
@@ -398,7 +408,7 @@ def enrollment_list(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def enrollment_detail(request, registration_id):
@@ -421,7 +431,7 @@ def enrollment_detail(request, registration_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def enrollment_review(request, registration_id):
@@ -449,6 +459,24 @@ def enrollment_review(request, registration_id):
                 changed_by=request.user,
                 notes=registration.review_notes
             )
+
+            # Check enrollment capacity before approving
+            if registration.status == 'approved' and old_status != 'approved':
+                if registration.filiere and registration.filiere.capacity:
+                    current_count = RegistrationForm.objects.filter(
+                        filiere=registration.filiere,
+                        academic_year=registration.academic_year,
+                        status__in=['approved', 'enrolled'],
+                    ).exclude(pk=registration.pk).count()
+                    if current_count >= registration.filiere.capacity:
+                        registration.status = old_status
+                        registration.save()
+                        messages.error(request, _(
+                            'Cannot approve: program capacity reached '
+                            f'({registration.filiere.capacity} students).'
+                        ))
+                        return redirect('frontend:enrollment:enrollment_review',
+                                       registration_id=registration.id)
 
             # Auto-create accounts when approved
             if registration.status == 'approved' and old_status != 'approved':
@@ -485,7 +513,7 @@ def enrollment_review(request, registration_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def verify_document(request, document_id):
@@ -509,7 +537,7 @@ def verify_document(request, document_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='20/h')
 def export_enrollments_csv(request):
@@ -557,11 +585,26 @@ def export_enrollments_csv(request):
             reg.reviewed_at.strftime('%Y-%m-%d %H:%M') if reg.reviewed_at else ''
         ])
 
+    # Audit log the export
+    try:
+        from core.models import ActivityLog
+        tenant_name = request.tenant.name if hasattr(request, 'tenant') else 'Unknown'
+        ActivityLog.objects.create(
+            message=(
+                f"CSV EXPORT: User {request.user.username} ({getattr(request.user, 'role', 'unknown')}) "
+                f"exported {registrations.count()} enrollment records "
+                f"from tenant {tenant_name} | IP: {request.META.get('REMOTE_ADDR')}"
+            )
+        )
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to log CSV export: {e}")
+
     return response
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h')
 def enrollment_statistics(request):
@@ -601,7 +644,7 @@ def enrollment_statistics(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def registration_edit(request, registration_id):
@@ -636,7 +679,7 @@ def registration_edit(request, registration_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 def registration_delete(request, registration_id):
     """Delete a registration. GET shows confirm page, POST deletes."""
@@ -662,7 +705,7 @@ def registration_delete(request, registration_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 def document_delete(request, document_id):
     """Delete an enrollment document (POST-only, direction only)."""

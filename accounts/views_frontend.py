@@ -9,6 +9,7 @@ from django.template.loader import get_template, render_to_string
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django_filters.views import FilterView
+from django_ratelimit.decorators import ratelimit
 from xhtml2pdf import pisa
 
 from accounts.decorators import admin_required, role_required
@@ -931,6 +932,7 @@ def dashboard_direction(request):
 
 
 @login_required
+@ratelimit(key='user', rate='5/m', method='POST')
 def setup_2fa(request):
     """
     Setup TOTP-based Two-Factor Authentication for users.
@@ -1072,6 +1074,7 @@ def signup_hub(request):
     return render(request, "account/signup.html", {"title": "Create Your Account"})
 
 
+@ratelimit(key='ip', rate='5/h', method='POST')
 def student_activate(request):
     """Step 1: Student enters registration number + name."""
     if request.user.is_authenticated:
@@ -1082,8 +1085,8 @@ def student_activate(request):
         if form.is_valid():
             student = form.student
 
-            # Generate 6-digit verification code
-            code = f"{random.randint(0, 999999):06d}"
+            # Generate 8-digit verification code (10^8 = 100M combinations)
+            code = f"{random.randint(0, 99999999):08d}"
 
             # Store in session with timestamp for expiry
             request.session["activation_student_id"] = student.pk
@@ -1150,6 +1153,7 @@ def student_activate(request):
     })
 
 
+@ratelimit(key='ip', rate='10/h', method='POST')
 def student_verify_parent(request):
     """Step 2: Student enters verification code sent to parent's email."""
     if request.user.is_authenticated:
@@ -1409,7 +1413,7 @@ def staff_invitation_step1(request):
         form = InvitationCodeForm(request.POST)
         if form.is_valid():
             invitation = form.invitation
-            if invitation.role not in ("professor", "direction", "prefet", "accountant", "secretary"):
+            if invitation.role not in ("professor", "direction", "prefet", "accountant", "secretary", "librarian", "registrar"):
                 messages.error(request, "This is not a staff invitation code.")
                 return render(request, "account/staff_invitation_step1.html", {
                     "form": form, "title": "Staff Registration",
@@ -1472,7 +1476,7 @@ def staff_invitation_step2(request):
                     pass
 
             request.session.pop("invitation_code", None)
-            role_displays = {"professor": "Professor", "prefet": "Discipline Officer", "accountant": "Accountant", "secretary": "Secretary", "direction": "Direction Staff"}
+            role_displays = {"professor": "Professor", "prefet": "Discipline Officer", "accountant": "Accountant", "secretary": "Secretary", "librarian": "Librarian", "registrar": "Registrar", "direction": "Direction Staff"}
             role_display = role_displays.get(invitation.role, "Staff")
             messages.success(
                 request,

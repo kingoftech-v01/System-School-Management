@@ -290,6 +290,48 @@ class Secretary(AbstractUserRole):
     }
 
 
+class Librarian(AbstractUserRole):
+    """Librarian role with library management permissions."""
+    available_permissions = {
+        # Library Management
+        'manage_library': True,
+        'manage_books': True,
+        'manage_borrow_records': True,
+        'view_overdue_books': True,
+        'view_library_stats': True,
+        'add_books': True,
+        'view_borrow_records': True,
+        'view_library_catalog': True,
+
+        # Profile
+        'update_own_profile': True,
+        'view_own_profile': True,
+    }
+
+
+class Registrar(AbstractUserRole):
+    """Registrar role with enrollment and certificate management permissions."""
+    available_permissions = {
+        # Enrollment Management
+        'manage_enrollments': True,
+        'review_enrollments': True,
+        'verify_documents': True,
+        'export_enrollment_data': True,
+        'approve_registrations': True,
+        'view_enrollment_statistics': True,
+
+        # Certificate Management
+        'manage_certificates': True,
+        'generate_certificates': True,
+        'batch_generate_certificates': True,
+        'manage_certificate_templates': True,
+
+        # Profile
+        'update_own_profile': True,
+        'view_own_profile': True,
+    }
+
+
 class Admin(AbstractUserRole):
     """System administrator with full access."""
     available_permissions = {

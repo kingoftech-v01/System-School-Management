@@ -241,11 +241,11 @@
 				<span class="nav-text">Enrollment</span>
 			</a>
 				<ul aria-expanded="false">
-					{% if is_direction or is_secretary or is_admin %}
+					{% if is_registrar or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:enrollment:enrollment_list' %}">Enrollments</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:enrollment:register_step1' %}">New Registration</a></li>
-					{% if is_direction or is_secretary or is_admin %}
+					{% if is_registrar or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:enrollment:enrollment_statistics' %}">Statistics</a></li>
 					<li><a href="{% url 'frontend:enrollment:export_enrollments_csv' %}">Export CSV</a></li>
 					{% endif %}
@@ -398,6 +398,10 @@
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:library:book_list' %}">Browse Books</a></li>
 					<li><a href="{% url 'frontend:library:my_borrowed_books' %}">My Books</a></li>
+					{% if is_librarian or is_direction or is_secretary or is_admin %}
+					<li><a href="{% url 'frontend:library:book_create' %}">Add Book</a></li>
+					<li><a href="{% url 'frontend:library:overdue_books' %}">Overdue Books</a></li>
+					{% endif %}
 				</ul>
 			</li>
 			<!-- Events -->
@@ -440,7 +444,7 @@
 			</li>
 			{% endif %}
 			<!-- Certificates -->
-			{% if is_direction or is_secretary or is_admin %}
+			{% if is_registrar or is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">

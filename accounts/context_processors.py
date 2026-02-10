@@ -39,6 +39,8 @@ def user_role_context(request):
         'is_prefet': False,
         'is_accountant': False,
         'is_secretary': False,
+        'is_librarian': False,
+        'is_registrar': False,
         'is_direction': False,
         'is_admin': False,
     }
@@ -159,6 +161,20 @@ def navigation_context(request):
             {'name': 'Filieres', 'url': '/filieres/', 'icon': 'fas fa-graduation-cap'},
         ])
 
+    elif user_role == 'librarian':
+        nav_items.extend([
+            {'name': 'Library', 'url': '/library/', 'icon': 'fas fa-book-reader'},
+            {'name': 'Add Book', 'url': '/library/create/', 'icon': 'fas fa-plus'},
+            {'name': 'Overdue Books', 'url': '/library/overdue/', 'icon': 'fas fa-exclamation-triangle'},
+        ])
+
+    elif user_role == 'registrar':
+        nav_items.extend([
+            {'name': 'Enrollment', 'url': '/enrollment/', 'icon': 'fas fa-user-plus'},
+            {'name': 'Certificates', 'url': '/certificates/', 'icon': 'fas fa-certificate'},
+            {'name': 'Statistics', 'url': '/enrollment/statistics/', 'icon': 'fas fa-chart-bar'},
+        ])
+
     elif user_role in ['direction', 'admin']:
         nav_items.extend([
             {'name': 'Monitoring', 'url': '/monitoring/', 'icon': 'fas fa-chart-bar'},
@@ -235,5 +251,12 @@ def permissions_context(request):
         # Accountants can view students (read-only) and manage payments
         context['can_view_all_students'] = True
         context['can_manage_payments'] = True
+    elif user_role == 'librarian':
+        # Librarians can manage library only
+        context['can_manage_library'] = True
+    elif user_role == 'registrar':
+        # Registrars can manage enrollment and certificates
+        context['can_manage_enrollment'] = True
+        context['can_export_data'] = True
 
     return context

@@ -28,7 +28,7 @@ class Command(BaseCommand):
             '--role',
             type=str,
             required=True,
-            choices=['parent', 'professor', 'direction', 'secretary'],
+            choices=['parent', 'professor', 'direction', 'secretary', 'librarian', 'registrar'],
             help='Role for the invitation code',
         )
         parser.add_argument(
