@@ -345,7 +345,7 @@ def edit_student(request, pk):
     )
 
 
-@method_decorator([login_required, role_required('admin', 'direction', 'prefet')], name="dispatch")
+@method_decorator([login_required, role_required('admin', 'direction', 'prefet', 'accountant')], name="dispatch")
 class StudentListView(FilterView):
     queryset = Student.objects.all()
     filterset_class = StudentFilter
@@ -1409,7 +1409,7 @@ def staff_invitation_step1(request):
         form = InvitationCodeForm(request.POST)
         if form.is_valid():
             invitation = form.invitation
-            if invitation.role not in ("professor", "direction", "prefet"):
+            if invitation.role not in ("professor", "direction", "prefet", "accountant"):
                 messages.error(request, "This is not a staff invitation code.")
                 return render(request, "account/staff_invitation_step1.html", {
                     "form": form, "title": "Staff Registration",
@@ -1472,7 +1472,7 @@ def staff_invitation_step2(request):
                     pass
 
             request.session.pop("invitation_code", None)
-            role_displays = {"professor": "Professor", "prefet": "Discipline Officer", "direction": "Direction Staff"}
+            role_displays = {"professor": "Professor", "prefet": "Discipline Officer", "accountant": "Accountant", "direction": "Direction Staff"}
             role_display = role_displays.get(invitation.role, "Staff")
             messages.success(
                 request,

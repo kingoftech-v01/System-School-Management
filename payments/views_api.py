@@ -14,13 +14,13 @@ from .serializers import (
     FeeStructureSerializer, InvoiceSerializer, PaymentPlanSerializer,
     InstallmentSerializer, PaymentSerializer, PaymentVerificationSerializer, ReceiptSerializer
 )
-from accounts.permissions import IsDirectionUser, IsStudentOrParent
+from accounts.permissions import IsDirectionUser, IsAccountantOrDirectionUser, IsStudentOrParent
 
 
 class FeeStructureViewSet(viewsets.ModelViewSet):
     queryset = FeeStructure.objects.all()
     serializer_class = FeeStructureSerializer
-    permission_classes = [IsAuthenticated, IsDirectionUser]
+    permission_classes = [IsAuthenticated, IsAccountantOrDirectionUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['program', 'level', 'academic_year', 'is_active']
     ordering = ['-academic_year']
@@ -29,7 +29,7 @@ class FeeStructureViewSet(viewsets.ModelViewSet):
 class InvoiceViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAuthenticated, IsStudentOrParent]
+    permission_classes = [IsAuthenticated, IsStudentOrParent | IsAccountantOrDirectionUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['student', 'payment_complete', 'semester']
     ordering = ['-created_at']
@@ -37,6 +37,9 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff or user.is_superuser:
+            return Invoice.objects.all()
+        # Accountants and direction can see all invoices
+        if getattr(user, 'role', '') in ('accountant', 'direction', 'admin'):
             return Invoice.objects.all()
         if getattr(user, 'is_parent', False):
             from accounts.models import Parent
@@ -48,13 +51,13 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 class PaymentPlanViewSet(viewsets.ModelViewSet):
     queryset = PaymentPlan.objects.all()
     serializer_class = PaymentPlanSerializer
-    permission_classes = [IsAuthenticated, IsDirectionUser]
+    permission_classes = [IsAuthenticated, IsAccountantOrDirectionUser]
 
 
 class InstallmentViewSet(viewsets.ModelViewSet):
     queryset = Installment.objects.all()
     serializer_class = InstallmentSerializer
-    permission_classes = [IsAuthenticated, IsDirectionUser]
+    permission_classes = [IsAuthenticated, IsAccountantOrDirectionUser]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['payment_plan', 'paid']
     ordering = ['installment_number']
@@ -63,7 +66,7 @@ class InstallmentViewSet(viewsets.ModelViewSet):
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-    permission_classes = [IsAuthenticated, IsDirectionUser]
+    permission_classes = [IsAuthenticated, IsAccountantOrDirectionUser]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['invoice', 'status', 'payment_gateway']
     ordering = ['-payment_date']
@@ -72,7 +75,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 class PaymentVerificationViewSet(viewsets.ModelViewSet):
     queryset = PaymentVerification.objects.all()
     serializer_class = PaymentVerificationSerializer
-    permission_classes = [IsAuthenticated, IsDirectionUser]
+    permission_classes = [IsAuthenticated, IsAccountantOrDirectionUser]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['verification_status']
     ordering = ['-created_at']

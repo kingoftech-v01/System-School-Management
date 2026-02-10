@@ -37,6 +37,7 @@ def user_role_context(request):
         'is_professor': False,
         'is_parent': False,
         'is_prefet': False,
+        'is_accountant': False,
         'is_direction': False,
         'is_admin': False,
     }
@@ -135,6 +136,14 @@ def navigation_context(request):
             {'name': 'Students', 'url': '/search/students/', 'icon': 'fas fa-user-graduate'},
         ])
 
+    elif user_role == 'accountant':
+        nav_items.extend([
+            {'name': 'Students', 'url': '/search/students/', 'icon': 'fas fa-user-graduate'},
+            {'name': 'Fee Structures', 'url': '/payments/fee-structures/', 'icon': 'fas fa-list-alt'},
+            {'name': 'Payments', 'url': '/payments/', 'icon': 'fas fa-credit-card'},
+            {'name': 'Analytics', 'url': '/analytics/', 'icon': 'fas fa-chart-line'},
+        ])
+
     elif user_role in ['direction', 'admin']:
         nav_items.extend([
             {'name': 'Monitoring', 'url': '/monitoring/', 'icon': 'fas fa-chart-bar'},
@@ -197,5 +206,9 @@ def permissions_context(request):
         # Discipline officers can manage discipline and view students
         context['can_view_all_students'] = True
         context['can_manage_discipline'] = True
+    elif user_role == 'accountant':
+        # Accountants can view students (read-only) and manage payments
+        context['can_view_all_students'] = True
+        context['can_manage_payments'] = True
 
     return context

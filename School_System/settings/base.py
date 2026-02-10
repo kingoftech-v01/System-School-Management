@@ -686,12 +686,14 @@ ROLE_CHOICES = (
     ('parent', 'Parent'),
     ('student', 'Student'),
     ('professor', 'Professor'),
+    ('prefet', 'Discipline Officer'),
+    ('accountant', 'Accountant'),
     ('direction', 'Direction Member'),
     ('admin', 'System Administrator'),
 )
 
 # Roles requiring 2FA
-ROLES_REQUIRING_2FA = ['professor', 'direction', 'admin']
+ROLES_REQUIRING_2FA = ['professor', 'prefet', 'accountant', 'direction', 'admin']
 
 # Pagination settings
 DEFAULT_PAGE_SIZE = 25

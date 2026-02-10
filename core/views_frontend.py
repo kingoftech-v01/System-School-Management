@@ -54,6 +54,8 @@ def unified_dashboard(request):
         return render_professor_dashboard(request, base_context)
     elif user_role == 'prefet':
         return render_prefet_dashboard(request, base_context)
+    elif user_role == 'accountant':
+        return render_accountant_dashboard(request, base_context)
     elif user_role == 'direction':
         return render_direction_dashboard(request, base_context)
     elif user_role == 'admin':
@@ -287,6 +289,73 @@ def render_prefet_dashboard(request, base_context):
     }
 
     return render(request, 'dashboards/prefet_dashboard.html', context)
+
+
+def render_accountant_dashboard(request, base_context):
+    """Render accountant dashboard with financial data focus."""
+    from payments.models import Invoice, Payment, FeeStructure
+    from django.db.models import Sum, Q
+
+    # Invoice stats
+    all_invoices = Invoice.objects.all()
+    total_invoices = all_invoices.count()
+    paid_invoices = all_invoices.filter(payment_complete=True).count()
+    unpaid_invoices = all_invoices.filter(payment_complete=False).count()
+
+    # Overdue invoices
+    today = timezone.now().date()
+    overdue_invoices = all_invoices.filter(
+        payment_complete=False,
+        due_date__lt=today
+    ).count()
+
+    # Collection rate
+    collection_rate = round((paid_invoices / total_invoices * 100), 2) if total_invoices > 0 else 0
+
+    # Financial totals
+    amount_stats = all_invoices.aggregate(
+        total_billed=Sum('amount'),
+        total_collected=Sum('amount', filter=Q(payment_complete=True)),
+    )
+    total_billed = amount_stats['total_billed'] or 0
+    total_collected = amount_stats['total_collected'] or 0
+    total_outstanding = total_billed - total_collected
+
+    # Recent payments (last 10)
+    recent_payments = Payment.objects.select_related(
+        'invoice', 'invoice__user'
+    ).order_by('-payment_date')[:10]
+
+    # Overdue invoices list (last 10)
+    overdue_invoice_list = all_invoices.filter(
+        payment_complete=False,
+        due_date__lt=today
+    ).select_related('user', 'student').order_by('due_date')[:10]
+
+    # Active fee structures count
+    active_fee_structures = FeeStructure.objects.filter(is_active=True).count()
+
+    # Student count
+    total_students = Student.objects.count()
+
+    context = {
+        **base_context,
+        'title': 'Accountant Dashboard',
+        'total_invoices': total_invoices,
+        'paid_invoices': paid_invoices,
+        'unpaid_invoices': unpaid_invoices,
+        'overdue_invoices': overdue_invoices,
+        'collection_rate': collection_rate,
+        'total_billed': total_billed,
+        'total_collected': total_collected,
+        'total_outstanding': total_outstanding,
+        'recent_payments': recent_payments,
+        'overdue_invoice_list': overdue_invoice_list,
+        'active_fee_structures': active_fee_structures,
+        'total_students': total_students,
+    }
+
+    return render(request, 'dashboards/accountant_dashboard.html', context)
 
 
 def render_admin_dashboard(request, base_context):

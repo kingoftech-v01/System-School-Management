@@ -140,7 +140,7 @@
 		{% if not is_parent %}
 		<li class="menu-title">ACADEMIC</li>
 			<!-- Students -->
-			{% if is_professor or is_direction or is_admin or is_prefet %}
+			{% if is_professor or is_direction or is_admin or is_prefet or is_accountant %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -158,7 +158,7 @@
 				</ul>
 			</li>
 			{% endif %}
-			{% if not is_prefet %}
+			{% if not is_prefet and not is_accountant %}
 			<!-- Lecturers -->
 			{% if is_direction or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
@@ -251,8 +251,9 @@
 					{% endif %}
 				</ul>
 			</li>
-			{% endif %}{# end if not is_prefet for courses/filieres/enrollment #}
+			{% endif %}{# end if not is_prefet and not is_accountant for courses/filieres/enrollment #}
 
+			{% if not is_accountant %}
 			<li class="menu-title">EVALUATION</li>
 			<!-- Attendance -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
@@ -274,7 +275,8 @@
 					{% endif %}
 				</ul>
 			</li>
-			{% if not is_prefet %}
+			{% endif %}{# end if not is_accountant for evaluation #}
+			{% if not is_prefet and not is_accountant %}
 			<!-- Results -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -338,8 +340,11 @@
 					{% endif %}
 				</ul>
 			</li>
+			{% endif %}{# end if not is_prefet and not is_accountant for results/grading/quiz #}
 
+			{% if not is_prefet %}
 			<li class="menu-title">MANAGEMENT</li>
+			{% if not is_accountant %}
 			<!-- Admissions -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -360,6 +365,7 @@
 					<li><a href="{% url 'frontend:admissions:check_status' %}">Check Status</a></li>
 				</ul>
 			</li>
+			{% endif %}{# end if not is_accountant for admissions #}
 			<!-- Payments -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -373,11 +379,12 @@
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:payments:payment_gateways' %}">Payment Gateway</a></li>
 					<li><a href="{% url 'frontend:payments:create_invoice' %}">My Invoices</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_admin or is_accountant %}
 					<li><a href="{% url 'frontend:payments:fee_structure_list' %}">Fee Structure</a></li>
 					{% endif %}
 				</ul>
 			</li>
+			{% if not is_accountant %}
 			<!-- Library -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -412,7 +419,8 @@
 					{% endif %}
 				</ul>
 			</li>
-			{% endif %}{# end if not is_prefet for results/grading/quiz/management #}
+			{% endif %}{# end if not is_accountant for library/events #}
+			{% endif %}{# end if not is_prefet for management #}
 			<!-- Discipline -->
 			{% if is_professor or is_direction or is_admin or is_prefet %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
@@ -454,7 +462,7 @@
 			</li>
 			{% endif %}
 
-			{% if not is_prefet %}
+			{% if not is_prefet and not is_accountant %}
 			<li class="menu-title">COMMUNITY</li>
 			<!-- Notes -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
@@ -547,14 +555,14 @@
 					<li><a href="{% url 'frontend:articles:newsletter' %}">Newsletter</a></li>
 				</ul>
 			</li>
-			{% endif %}{# end if not is_prefet for community #}
+			{% endif %}{# end if not is_prefet and not is_accountant for community #}
 
 			{% endif %}{# end if not is_parent #}
 
 			{% if not is_parent and not is_prefet %}
 			<li class="menu-title">ANALYTICS</li>
 			<!-- Analytics -->
-			{% if is_professor or is_direction or is_admin %}
+			{% if is_professor or is_direction or is_admin or is_accountant %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">

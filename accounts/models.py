@@ -49,6 +49,7 @@ ROLE_CHOICES = (
     ('student', _('Student')),
     ('professor', _('Professor')),
     ('prefet', _('Discipline Officer')),
+    ('accountant', _('Accountant')),
     ('direction', _('Direction')),
     ('admin', _('Administrator')),
 )
@@ -398,6 +399,7 @@ INVITATION_ROLE_CHOICES = (
     ('parent', _('Parent')),
     ('professor', _('Professor')),
     ('prefet', _('Discipline Officer')),
+    ('accountant', _('Accountant')),
     ('direction', _('Direction')),
 )
 

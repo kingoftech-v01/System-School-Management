@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator
 
-from accounts.decorators import direction_only, student_required
+from accounts.decorators import direction_only, accountant_allowed, student_required
 
 try:
     import gopay
@@ -189,7 +189,7 @@ def paymentComplete(request):
 
 
 @login_required
-@direction_only
+@accountant_allowed
 def create_invoice(request):
     if request.method == "POST":
         amount = request.POST.get("amount", 0)
@@ -237,7 +237,7 @@ from .forms import FeeStructureForm
 
 
 @login_required
-@direction_only
+@accountant_allowed
 def fee_structure_list(request):
     """List all fee structures (direction only)."""
     fee_structures = FeeStructure.objects.all().select_related('program').order_by(
@@ -274,7 +274,7 @@ def fee_structure_list(request):
 
 
 @login_required
-@direction_only
+@accountant_allowed
 def fee_structure_create(request):
     """Create a new fee structure (direction only)."""
     if request.method == 'POST':
@@ -294,7 +294,7 @@ def fee_structure_create(request):
 
 
 @login_required
-@direction_only
+@accountant_allowed
 def fee_structure_edit(request, pk):
     """Edit an existing fee structure (direction only)."""
     fee_structure = get_object_or_404(FeeStructure, pk=pk)
@@ -317,7 +317,7 @@ def fee_structure_edit(request, pk):
 
 
 @login_required
-@direction_only
+@accountant_allowed
 def fee_structure_delete(request, pk):
     """Delete a fee structure (direction only). GET shows confirm, POST deletes."""
     fee_structure = get_object_or_404(FeeStructure, pk=pk)

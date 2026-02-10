@@ -174,6 +174,31 @@ def prefet_only(view_func):
     return role_required('prefet', 'direction', 'admin')(view_func)
 
 
+def accountant_allowed(view_func):
+    """
+    Shortcut decorator for views accessible to accountants, direction, and admin.
+    Use this for payment and financial views that the accountant should access.
+
+    Usage:
+        @accountant_allowed
+        def payment_view(request):
+            ...
+    """
+    return role_required('direction', 'admin', 'accountant')(view_func)
+
+
+def accountant_only(view_func):
+    """
+    Shortcut decorator for accountant views. Also allows direction and admin.
+
+    Usage:
+        @accountant_only
+        def accountant_dashboard_view(request):
+            ...
+    """
+    return role_required('accountant', 'direction', 'admin')(view_func)
+
+
 def professor_only(view_func):
     """
     Shortcut decorator for professor-only views.
