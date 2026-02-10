@@ -4,10 +4,16 @@ Security hardened for production deployment.
 """
 
 from .base import *
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
+
+# Sentry is optional - only import if available
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    SENTRY_AVAILABLE = True
+except ImportError:
+    SENTRY_AVAILABLE = False
 
 # SECURITY
 DEBUG = False
@@ -16,7 +22,8 @@ DEBUG = False
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Security settings
-SECURE_SSL_REDIRECT = True
+# Allow SSL redirect to be disabled for Docker behind host reverse proxy
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -28,7 +35,11 @@ SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
 # Email backend for production
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Use console backend if SMTP is not configured
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+
+# Override email verification to optional if email is not configured
+ACCOUNT_EMAIL_VERIFICATION = config('ACCOUNT_EMAIL_VERIFICATION', default='optional')
 
 # Production logging - ship to external service
 LOGGING = {
@@ -39,8 +50,7 @@ LOGGING = {
             'format': '[{levelname}] {asctime} {name} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
-        'json': {
-            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+        'simple': {
             'format': '%(asctime)s %(name)s %(levelname)s %(message)s',
         },
     },
@@ -48,7 +58,7 @@ LOGGING = {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'json',
+            'formatter': 'simple',
         },
         'file': {
             'level': 'WARNING',
@@ -115,7 +125,7 @@ LOGGING = {
 
 # Sentry configuration for error tracking
 SENTRY_DSN = config('SENTRY_DSN', default='')
-if SENTRY_DSN:
+if SENTRY_DSN and SENTRY_AVAILABLE:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[

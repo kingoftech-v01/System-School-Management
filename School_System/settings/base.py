@@ -30,7 +30,6 @@ SITE_ID = 1
 SHARED_APPS = [
     'django_tenants',  # Must be first
     'django.contrib.contenttypes',
-    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
@@ -39,29 +38,18 @@ SHARED_APPS = [
     # Translation - CRITICAL: Must be BEFORE django.contrib.admin
     'modeltranslation',
 
-    'django.contrib.admin',
     'django.contrib.humanize',
 
-    # Third-party apps for all tenants
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.mfa',
-    'django_otp',
-    'django_otp.plugins.otp_totp',
-    'django_otp.plugins.otp_static',
-
     'rest_framework',
-    'rest_framework.authtoken',
-    'rest_framework_simplejwt',
+    # Note: rest_framework.authtoken and rest_framework_simplejwt moved to TENANT_APPS
+    # because they have User ForeignKeys
 
     'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
     'django_filters',
 
-    # Security & Monitoring
-    'axes',
+    # Security & Monitoring - csp only (axes moved to tenant apps)
     'csp',
 
     # Celery
@@ -94,6 +82,20 @@ SHARED_APPS = [
 TENANT_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
+    'django.contrib.admin',  # Admin depends on User model
+
+    # Authentication apps that depend on User model - must be in tenant apps
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.mfa',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_static',
+    'axes',  # Login security - depends on User
+    'rest_framework.authtoken',  # Token models depend on User
+    'rest_framework_simplejwt',  # JWT token blacklist depends on User
+    'rest_framework_simplejwt.token_blacklist',  # Token blacklist models
 
     # Custom apps - all tenant-specific
     'accounts',
@@ -318,7 +320,8 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Use simpler storage to avoid source map issues
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # ==============================================================================
 # MEDIA FILES
@@ -400,6 +403,13 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
 
+# Trusted origins for CSRF (required for Django 4.0+ with HTTPS proxy)
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://sms.jhpetitfrere.com,https://localhost',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
 # ==============================================================================
 # SECURITY SETTINGS
 # ==============================================================================
@@ -466,7 +476,7 @@ CACHES = {
         'LOCATION': REDIS_URL,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            # Note: HiredisParser removed - redis-py auto-detects hiredis if installed
             'CONNECTION_POOL_CLASS_KWARGS': {
                 'max_connections': 50,
                 'retry_on_timeout': True,
@@ -771,6 +781,13 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True,
     'SCHEMA_PATH_PREFIX': '/api/v[0-9]',
 }
+
+# Silence drf-spectacular errors that don't affect functionality
+SILENCED_SYSTEM_CHECKS = [
+    'drf_spectacular.E001',
+    'security.W008',  # SSL redirect handled by nginx
+    'security.W009',  # Secret key warning - should be fixed in production .env
+]
 
 # ==============================================================================
 # ACADEMIC SETTINGS

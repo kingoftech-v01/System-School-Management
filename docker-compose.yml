@@ -1,0 +1,160 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sms_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-school_management}
+      POSTGRES_USER: ${DB_USER:-school_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - sms_postgres_data:/var/lib/postgresql/data
+    networks:
+      - sms_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-school_admin} -d ${DB_NAME:-school_management}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: sms_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - sms_redis_data:/data
+    networks:
+      - sms_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/production/Dockerfile
+    container_name: sms_web
+    command: gunicorn --bind 0.0.0.0:8000 --workers 4 --threads 2 --timeout 120 --access-logfile - --error-logfile - School_System.wsgi:application
+    volumes:
+      - sms_static_volume:/app/staticfiles
+      - sms_media_volume:/app/media
+      - sms_logs_volume:/app/logs
+    expose:
+      - "8000"
+    environment:
+      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=School_System.settings.production
+      - DATABASE_URL=postgresql://${DB_USER:-school_admin}:${DB_PASSWORD}@db:5432/${DB_NAME:-school_management}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - SECURE_SSL_REDIRECT=False
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-school_management}
+      - DB_USER=${DB_USER:-school_admin}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sms_network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: sms_nginx
+    volumes:
+      - ./docker/production/nginx-local.conf:/etc/nginx/nginx.conf:ro
+      - sms_static_volume:/app/staticfiles:ro
+      - sms_media_volume:/app/media:ro
+    ports:
+      - "8081:80"
+    depends_on:
+      - web
+    networks:
+      - sms_network
+    restart: unless-stopped
+
+  celery:
+    build:
+      context: .
+      dockerfile: docker/production/Dockerfile
+    container_name: sms_celery
+    command: celery -A School_System worker -l info --concurrency=4
+    volumes:
+      - sms_logs_volume:/app/logs
+    environment:
+      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=School_System.settings.production
+      - DATABASE_URL=postgresql://${DB_USER:-school_admin}:${DB_PASSWORD}@db:5432/${DB_NAME:-school_management}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-school_management}
+      - DB_USER=${DB_USER:-school_admin}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sms_network
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: docker/production/Dockerfile
+    container_name: sms_celery_beat
+    command: celery -A School_System beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - sms_logs_volume:/app/logs
+    environment:
+      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=School_System.settings.production
+      - DATABASE_URL=postgresql://${DB_USER:-school_admin}:${DB_PASSWORD}@db:5432/${DB_NAME:-school_management}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-school_management}
+      - DB_USER=${DB_USER:-school_admin}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sms_network
+    restart: unless-stopped
+
+networks:
+  sms_network:
+    driver: bridge
+
+volumes:
+  sms_postgres_data:
+  sms_redis_data:
+  sms_static_volume:
+  sms_media_volume:
+  sms_logs_volume:
