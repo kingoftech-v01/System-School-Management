@@ -1,3 +1,6 @@
+import random
+import string
+
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import AbstractUser, UserManager
@@ -138,6 +141,12 @@ class User(AbstractUser):
     approval_extra_note = models.TextField(
         blank=True,
         help_text=_('Additional notes for approval/rejection')
+    )
+
+    # Force password change on first login (for temp passwords)
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text=_('Force password change on next login')
     )
 
     # NEW: Additional profile fields
@@ -352,7 +361,9 @@ class Parent(models.Model):
     """
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    student = models.OneToOneField(Student, null=True, on_delete=models.SET_NULL)
+    student = models.ForeignKey(
+        Student, null=True, on_delete=models.SET_NULL, related_name='parents'
+    )
     first_name = models.CharField(max_length=120)
     last_name = models.CharField(max_length=120)
     phone = models.CharField(max_length=60, blank=True, null=True)
@@ -378,3 +389,70 @@ class DepartmentHead(models.Model):
 
     def __str__(self):
         return "{}".format(self.user)
+
+
+INVITATION_ROLE_CHOICES = (
+    ('parent', _('Parent')),
+    ('professor', _('Professor')),
+    ('direction', _('Direction')),
+)
+
+
+class InvitationCode(models.Model):
+    """One-time-use invitation codes for parent and staff account creation."""
+
+    code = models.CharField(
+        max_length=20, unique=True, db_index=True,
+        help_text=_('Unique invitation code (format: XXXX-XXXX)')
+    )
+    role = models.CharField(
+        max_length=20, choices=INVITATION_ROLE_CHOICES,
+        help_text=_('Role assigned when this code is redeemed')
+    )
+    linked_student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='invitation_codes',
+        help_text=_('Student this parent invitation is linked to')
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, related_name='created_invitations'
+    )
+    used_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='used_invitation'
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(help_text=_('Code expiration date/time'))
+    used_at = models.DateTimeField(null=True, blank=True)
+    sent_to_email = models.EmailField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Invitation Code')
+        verbose_name_plural = _('Invitation Codes')
+
+    def __str__(self):
+        status = 'Used' if self.used_at else ('Expired' if not self.is_valid else 'Active')
+        return f"{self.code} ({self.get_role_display()}) - {status}"
+
+    @property
+    def is_valid(self):
+        return self.is_active and self.used_at is None and self.expires_at > timezone.now()
+
+    def redeem(self, user):
+        self.used_by = user
+        self.used_at = timezone.now()
+        self.is_active = False
+        self.save(update_fields=['used_by', 'used_at', 'is_active'])
+
+    @classmethod
+    def generate_code(cls):
+        """Generate a unique 8-character code formatted as XXXX-XXXX."""
+        while True:
+            chars = string.ascii_uppercase + string.digits
+            raw = ''.join(random.choices(chars, k=8))
+            code = f"{raw[:4]}-{raw[4:]}"
+            if not cls.objects.filter(code=code).exists():
+                return code

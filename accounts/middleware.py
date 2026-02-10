@@ -177,6 +177,32 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         return None
 
 
+class ForcePasswordResetMiddleware(MiddlewareMixin):
+    """
+    Redirects users with must_change_password=True to the force password reset page.
+    This handles accounts created with temporary passwords (e.g., from enrollment approval).
+    """
+
+    EXEMPT_PATHS = [
+        '/accounts/password/force-reset/',
+        '/accounts/logout/',
+        '/static/',
+        '/media/',
+    ]
+
+    def process_request(self, request):
+        if not request.user.is_authenticated:
+            return None
+
+        if not getattr(request.user, 'must_change_password', False):
+            return None
+
+        if any(request.path.startswith(path) for path in self.EXEMPT_PATHS):
+            return None
+
+        return redirect('frontend:accounts:force_password_reset')
+
+
 class AuditLogMiddleware(MiddlewareMixin):
     """
     Logs sensitive actions for audit trail.

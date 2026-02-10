@@ -1,6 +1,6 @@
 {% load static custom_tags %}
 <!DOCTYPE html>
-<html lang="en" class="h-100">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -11,16 +11,47 @@
     {% for cssurl in dz_array.global.css %}
     <link rel="stylesheet" href="{% static cssurl %}">
     {% endfor %}
+    <style>
+        .role-card {
+            border: 2px solid #e6e6e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+        .role-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            color: inherit;
+        }
+        .role-card .icon-wrap {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+        .role-card h5 { margin-bottom: 0.3rem; }
+        .role-card p { font-size: 0.85rem; color: #888; margin-bottom: 0; }
+    </style>
 </head>
 <body class="vh-100">
     <div class="authincation h-100">
         <div class="container-fluid h-100">
             <div class="row h-100">
-                <div class="col-lg-6 col-md-7 col-sm-12 mx-auto align-self-center">
+                <div class="col-lg-6 col-md-8 col-sm-12 mx-auto align-self-center">
                     <div class="login-form">
-                        <div class="text-center">
-                            <h3 class="title">Sign Up</h3>
-                            <p>Create your account to access School Management System</p>
+                        <div class="text-center mb-4">
+                            <h3 class="title">Create Your Account</h3>
+                            <p>Choose your role to get started</p>
                         </div>
                         {% if messages %}
                         {% for message in messages %}
@@ -30,37 +61,47 @@
                         </div>
                         {% endfor %}
                         {% endif %}
-                        {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}
-                            <p>{{ error }}</p>
-                            {% endfor %}
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <a href="{% url 'frontend:accounts:student_activate' %}" class="role-card">
+                                    <div class="icon-wrap bg-primary-light">
+                                        <i class="bi bi-mortarboard text-primary"></i>
+                                    </div>
+                                    <h5>Student</h5>
+                                    <p>Already registered? Activate your account with your student number.</p>
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'frontend:enrollment:register_step1' %}" class="role-card">
+                                    <div class="icon-wrap bg-success-light">
+                                        <i class="bi bi-person-plus text-success"></i>
+                                    </div>
+                                    <h5>Parent - Enroll</h5>
+                                    <p>New to our school? Start the enrollment process for your child.</p>
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'frontend:accounts:parent_invitation_step1' %}" class="role-card">
+                                    <div class="icon-wrap bg-info-light">
+                                        <i class="bi bi-envelope-open text-info"></i>
+                                    </div>
+                                    <h5>Parent - Invitation</h5>
+                                    <p>Have an invitation code? Create your parent account.</p>
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'frontend:accounts:staff_invitation_step1' %}" class="role-card">
+                                    <div class="icon-wrap bg-warning-light">
+                                        <i class="bi bi-briefcase text-warning"></i>
+                                    </div>
+                                    <h5>Staff / Direction</h5>
+                                    <p>Have a staff invitation code? Create your account.</p>
+                                </a>
+                            </div>
                         </div>
-                        {% endif %}
-                        <form method="POST" action="{% url 'account_signup' %}">
-                            {% csrf_token %}
-                            {% for field in form %}
-                            <div class="mb-4">
-                                <label class="mb-1 text-dark">{{ field.label }}</label>
-                                <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.html_name }}" class="form-control{% if field.errors %} is-invalid{% endif %}" placeholder="{{ field.label }}" value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif %}>
-                                {% if field.errors %}
-                                <div class="invalid-feedback">{{ field.errors.0 }}</div>
-                                {% endif %}
-                                {% if field.help_text %}
-                                <small class="form-text text-muted">{{ field.help_text }}</small>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                            {% if redirect_field_value %}
-                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-                            {% endif %}
-                            <div class="text-center mb-4">
-                                <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
-                            </div>
-                            <p class="text-center">Already have an account?
-                                <a class="btn-link text-primary" href="{% url 'account_login' %}">Sign In</a>
-                            </p>
-                        </form>
+                        <p class="text-center">Already have an account?
+                            <a class="btn-link text-primary" href="{% url 'account_login' %}">Sign In</a>
+                        </p>
                     </div>
                 </div>
                 <div class="col-xl-6 col-lg-6">

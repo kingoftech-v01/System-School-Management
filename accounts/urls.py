@@ -74,8 +74,19 @@ frontend_urlpatterns = [
     path('parents/<int:pk>/edit/', views_frontend.parent_edit, name='parent_edit'),
     path('parents/<int:pk>/delete/', views_frontend.parent_delete, name='parent_delete'),
 
-    # Registration
+    # Registration (legacy)
     path('register/', views_frontend.register, name='register'),
+
+    # Signup flow (role-based)
+    path('signup/', views_frontend.signup_hub, name='signup_hub'),
+    path('signup/student/', views_frontend.student_activate, name='student_activate'),
+    path('signup/student/verify/', views_frontend.student_verify_parent, name='student_verify_parent'),
+    path('signup/student/password/', views_frontend.student_set_password, name='student_set_password'),
+    path('signup/parent/', views_frontend.parent_invitation_step1, name='parent_invitation_step1'),
+    path('signup/parent/complete/', views_frontend.parent_invitation_step2, name='parent_invitation_step2'),
+    path('signup/staff/', views_frontend.staff_invitation_step1, name='staff_invitation_step1'),
+    path('signup/staff/complete/', views_frontend.staff_invitation_step2, name='staff_invitation_step2'),
+    path('password/force-reset/', views_frontend.force_password_reset, name='force_password_reset'),
 
     # AJAX endpoints
     path('ajax/validate-username/', views_frontend.validate_username, name='validate_username'),

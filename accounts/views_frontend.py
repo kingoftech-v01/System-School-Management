@@ -14,13 +14,20 @@ from xhtml2pdf import pisa
 from accounts.decorators import admin_required
 from accounts.filters import LecturerFilter, StudentFilter
 from accounts.forms import (
+    ForcePasswordResetForm,
+    InvitationCodeForm,
     ParentAddForm,
+    ParentInvitationSignupForm,
     ProfileUpdateForm,
     ProgramUpdateForm,
     StaffAddForm,
+    StaffInvitationSignupForm,
+    StudentActivationForm,
     StudentAddForm,
+    StudentSetPasswordForm,
+    StudentVerifyParentForm,
 )
-from accounts.models import Parent, Student, User
+from accounts.models import InvitationCode, Parent, Student, User
 from core.models import Semester, Session
 from course.models import Course
 from result.models import TakenCourse
@@ -1042,6 +1049,426 @@ def manage_2fa(request):
     }
 
     return render(request, 'auth/2fa/manage.html', context)
+
+
+# ########################################################
+# Signup Flow Views
+# ########################################################
+
+import random
+import logging
+from django.conf import settings as django_settings
+from django.core.mail import send_mail
+from django.db import transaction
+
+logger = logging.getLogger(__name__)
+
+
+def signup_hub(request):
+    """Main signup page with role selection cards."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+    return render(request, "account/signup.html", {"title": "Create Your Account"})
+
+
+def student_activate(request):
+    """Step 1: Student enters registration number + name."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = StudentActivationForm(request.POST)
+        if form.is_valid():
+            student = form.student
+
+            # Generate 6-digit verification code
+            code = f"{random.randint(0, 999999):06d}"
+
+            # Store in session
+            request.session["activation_student_id"] = student.pk
+            request.session["activation_code"] = code
+            request.session["activation_attempts"] = 0
+
+            # Send code to parent(s) email
+            parents = Parent.objects.filter(student=student)
+            parent_emails = [p.email for p in parents if p.email]
+            parent_emails += [p.user.email for p in parents if p.user and p.user.email]
+            parent_emails = list(set(filter(None, parent_emails)))
+
+            if not parent_emails:
+                messages.error(
+                    request,
+                    "No parent/guardian email on file. "
+                    "Please contact the school administration to complete your registration.",
+                )
+                return render(request, "account/student_activate.html", {
+                    "form": form, "title": "Activate Student Account",
+                })
+
+            try:
+                student_name = student.student.get_full_name
+                from_email = getattr(
+                    django_settings, "EMAIL_FROM_ADDRESS",
+                    getattr(django_settings, "DEFAULT_FROM_EMAIL", "noreply@school.local"),
+                )
+                send_mail(
+                    subject="Student Account Verification Code",
+                    message=(
+                        f"Dear Parent/Guardian,\n\n"
+                        f"Your child {student_name} is activating their school account.\n\n"
+                        f"Verification Code: {code}\n\n"
+                        f"If you did not expect this request, please contact the school "
+                        f"administration immediately.\n\n"
+                        f"This code expires in 15 minutes."
+                    ),
+                    from_email=from_email,
+                    recipient_list=parent_emails,
+                    fail_silently=False,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send verification email: {e}")
+                messages.error(
+                    request,
+                    "Failed to send the verification code. Please try again later.",
+                )
+                return render(request, "account/student_activate.html", {
+                    "form": form, "title": "Activate Student Account",
+                })
+
+            messages.success(
+                request,
+                "A verification code has been sent to your parent/guardian's email.",
+            )
+            return redirect("frontend:accounts:student_verify_parent")
+    else:
+        form = StudentActivationForm()
+
+    return render(request, "account/student_activate.html", {
+        "form": form, "title": "Activate Student Account",
+    })
+
+
+def student_verify_parent(request):
+    """Step 2: Student enters verification code sent to parent's email."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    student_id = request.session.get("activation_student_id")
+    stored_code = request.session.get("activation_code")
+
+    if not student_id or not stored_code:
+        messages.error(request, "Please start the activation process from the beginning.")
+        return redirect("frontend:accounts:student_activate")
+
+    if request.method == "POST":
+        form = StudentVerifyParentForm(request.POST)
+        if form.is_valid():
+            entered_code = form.cleaned_data["verification_code"]
+            attempts = request.session.get("activation_attempts", 0)
+            max_attempts = getattr(django_settings, "STUDENT_VERIFICATION_MAX_ATTEMPTS", 3)
+
+            if entered_code == stored_code:
+                request.session["activation_verified"] = True
+                return redirect("frontend:accounts:student_set_password")
+            else:
+                attempts += 1
+                request.session["activation_attempts"] = attempts
+
+                if attempts >= max_attempts:
+                    for key in [
+                        "activation_student_id", "activation_code",
+                        "activation_attempts", "activation_verified",
+                    ]:
+                        request.session.pop(key, None)
+                    messages.error(
+                        request,
+                        "Too many incorrect attempts. Please start the activation process again.",
+                    )
+                    return redirect("frontend:accounts:student_activate")
+
+                remaining = max_attempts - attempts
+                messages.error(
+                    request,
+                    f"Incorrect verification code. {remaining} attempt(s) remaining.",
+                )
+    else:
+        form = StudentVerifyParentForm()
+
+    return render(request, "account/student_verify_parent.html", {
+        "form": form, "title": "Verify Your Identity",
+    })
+
+
+def student_set_password(request):
+    """Step 3: Student sets email and password to complete activation."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    student_id = request.session.get("activation_student_id")
+    verified = request.session.get("activation_verified")
+
+    if not student_id or not verified:
+        messages.error(request, "Please complete the verification step first.")
+        return redirect("frontend:accounts:student_activate")
+
+    student = get_object_or_404(Student, pk=student_id)
+    user = student.student
+
+    if request.method == "POST":
+        form = StudentSetPasswordForm(request.POST, user_pk=user.pk)
+        if form.is_valid():
+            user.email = form.cleaned_data["email"]
+            user.set_password(form.cleaned_data["password1"])
+            user.is_active = True
+            user.must_change_password = False
+            user.save()
+
+            # Create allauth EmailAddress if allauth is installed
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.get_or_create(
+                    user=user,
+                    email=form.cleaned_data["email"],
+                    defaults={"verified": True, "primary": True},
+                )
+            except ImportError:
+                pass
+
+            # Clean session
+            for key in [
+                "activation_student_id", "activation_code",
+                "activation_attempts", "activation_verified",
+            ]:
+                request.session.pop(key, None)
+
+            messages.success(
+                request,
+                "Your account has been activated successfully! You can now sign in.",
+            )
+            return redirect("account_login")
+    else:
+        form = StudentSetPasswordForm(user_pk=user.pk)
+
+    return render(request, "account/student_set_password.html", {
+        "form": form,
+        "title": "Set Your Password",
+        "student": student,
+        "student_user": user,
+    })
+
+
+def parent_invitation_step1(request):
+    """Step 1: Parent enters invitation code."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = InvitationCodeForm(request.POST)
+        if form.is_valid():
+            invitation = form.invitation
+            if invitation.role != "parent":
+                messages.error(request, "This is not a parent invitation code.")
+                return render(request, "account/parent_invitation_step1.html", {
+                    "form": form, "title": "Parent Registration",
+                })
+            request.session["invitation_code"] = invitation.code
+            return redirect("frontend:accounts:parent_invitation_step2")
+    else:
+        form = InvitationCodeForm()
+
+    return render(request, "account/parent_invitation_step1.html", {
+        "form": form, "title": "Parent Registration",
+    })
+
+
+def parent_invitation_step2(request):
+    """Step 2: Parent fills in details after code validation."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    code = request.session.get("invitation_code")
+    if not code:
+        messages.error(request, "Please enter your invitation code first.")
+        return redirect("frontend:accounts:parent_invitation_step1")
+
+    try:
+        invitation = InvitationCode.objects.get(code=code)
+        if not invitation.is_valid:
+            raise InvitationCode.DoesNotExist
+    except InvitationCode.DoesNotExist:
+        request.session.pop("invitation_code", None)
+        messages.error(request, "Invalid or expired invitation code. Please try again.")
+        return redirect("frontend:accounts:parent_invitation_step1")
+
+    if request.method == "POST":
+        form = ParentInvitationSignupForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                username = f"parent_{form.cleaned_data['first_name'].lower()}_{User.objects.count()}"
+                user = User.objects.create_user(
+                    username=username,
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password1"],
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    is_parent=True,
+                    role="parent",
+                )
+
+                Parent.objects.create(
+                    user=user,
+                    student=invitation.linked_student,
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    email=form.cleaned_data["email"],
+                    relation_ship=form.cleaned_data["relation_ship"],
+                )
+
+                invitation.redeem(user)
+
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=user,
+                        email=form.cleaned_data["email"],
+                        defaults={"verified": True, "primary": True},
+                    )
+                except ImportError:
+                    pass
+
+            request.session.pop("invitation_code", None)
+            messages.success(
+                request,
+                "Your parent account has been created! You can now sign in.",
+            )
+            return redirect("account_login")
+    else:
+        form = ParentInvitationSignupForm()
+
+    context = {
+        "form": form,
+        "title": "Complete Your Registration",
+        "invitation": invitation,
+    }
+    if invitation.linked_student:
+        context["linked_student"] = invitation.linked_student
+
+    return render(request, "account/parent_invitation_step2.html", context)
+
+
+def staff_invitation_step1(request):
+    """Step 1: Staff enters invitation code."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = InvitationCodeForm(request.POST)
+        if form.is_valid():
+            invitation = form.invitation
+            if invitation.role not in ("professor", "direction"):
+                messages.error(request, "This is not a staff invitation code.")
+                return render(request, "account/staff_invitation_step1.html", {
+                    "form": form, "title": "Staff Registration",
+                })
+            request.session["invitation_code"] = invitation.code
+            return redirect("frontend:accounts:staff_invitation_step2")
+    else:
+        form = InvitationCodeForm()
+
+    return render(request, "account/staff_invitation_step1.html", {
+        "form": form, "title": "Staff Registration",
+    })
+
+
+def staff_invitation_step2(request):
+    """Step 2: Staff fills in details after code validation."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    code = request.session.get("invitation_code")
+    if not code:
+        messages.error(request, "Please enter your invitation code first.")
+        return redirect("frontend:accounts:staff_invitation_step1")
+
+    try:
+        invitation = InvitationCode.objects.get(code=code)
+        if not invitation.is_valid:
+            raise InvitationCode.DoesNotExist
+    except InvitationCode.DoesNotExist:
+        request.session.pop("invitation_code", None)
+        messages.error(request, "Invalid or expired invitation code. Please try again.")
+        return redirect("frontend:accounts:staff_invitation_step1")
+
+    if request.method == "POST":
+        form = StaffInvitationSignupForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                username = f"staff_{form.cleaned_data['first_name'].lower()}_{User.objects.count()}"
+                user = User.objects.create_user(
+                    username=username,
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password1"],
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    role=invitation.role,
+                    is_lecturer=(invitation.role == "professor"),
+                )
+
+                invitation.redeem(user)
+
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=user,
+                        email=form.cleaned_data["email"],
+                        defaults={"verified": True, "primary": True},
+                    )
+                except ImportError:
+                    pass
+
+            request.session.pop("invitation_code", None)
+            role_display = "Professor" if invitation.role == "professor" else "Staff"
+            messages.success(
+                request,
+                f"Your {role_display} account has been created! You can now sign in.",
+            )
+            return redirect("account_login")
+    else:
+        form = StaffInvitationSignupForm()
+
+    return render(request, "account/staff_invitation_step2.html", {
+        "form": form,
+        "title": "Complete Your Registration",
+        "invitation": invitation,
+    })
+
+
+def force_password_reset(request):
+    """Force password reset for users with temporary passwords."""
+    if not request.user.is_authenticated:
+        return redirect("account_login")
+
+    if not request.user.must_change_password:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = ForcePasswordResetForm(request.POST)
+        if form.is_valid():
+            request.user.set_password(form.cleaned_data["password1"])
+            request.user.must_change_password = False
+            request.user.save()
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "Your password has been updated successfully!")
+            return redirect("frontend:accounts:profile")
+    else:
+        form = ForcePasswordResetForm()
+
+    return render(request, "account/force_password_reset.html", {
+        "form": form, "title": "Change Your Password",
+    })
 
 
 # ########################################################

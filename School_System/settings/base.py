@@ -146,6 +146,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'accounts.middleware.TenantMiddleware',
     'accounts.middleware.RoleMiddleware',
+    'accounts.middleware.ForcePasswordResetMiddleware',
     'accounts.middleware.Enforce2FAMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',
@@ -340,6 +341,14 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@school-system.com')
 EMAIL_FROM_ADDRESS = config('EMAIL_FROM_ADDRESS', default='noreply@school-system.com')
+
+# ==============================================================================
+# SIGNUP / INVITATION SETTINGS
+# ==============================================================================
+
+INVITATION_CODE_EXPIRY_DAYS = 7
+STUDENT_VERIFICATION_CODE_EXPIRY_MINUTES = 15
+STUDENT_VERIFICATION_MAX_ATTEMPTS = 3
 
 # ==============================================================================
 # DJANGO-ALLAUTH CONFIGURATION

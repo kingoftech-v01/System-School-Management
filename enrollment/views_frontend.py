@@ -20,7 +20,145 @@ from .forms import (
 )
 from .tasks import send_enrollment_status_email
 import csv
+import logging
+import string
+import random
 from datetime import datetime
+from django.db import transaction
+
+logger = logging.getLogger(__name__)
+
+
+def _generate_temp_password(length=10):
+    """Generate a random temporary password."""
+    chars = string.ascii_letters + string.digits + "!@#$%"
+    return ''.join(random.choices(chars, k=length))
+
+
+def _create_accounts_for_enrollment(registration, tenant):
+    """
+    Auto-create Student + Parent User accounts when an enrollment is approved.
+    Both accounts get temporary passwords with must_change_password=True.
+    """
+    from accounts.models import User, Student, Parent
+    from course.models import Program
+
+    with transaction.atomic():
+        # Parse student name (first + last)
+        name_parts = registration.student_name.strip().split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        # Generate student username
+        base_username = f"student_{first_name.lower()}"
+        username = base_username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}_{counter}"
+            counter += 1
+
+        temp_password = _generate_temp_password()
+
+        # Create student user
+        student_user = User.objects.create_user(
+            username=username,
+            email=registration.email or None,
+            password=temp_password,
+            first_name=first_name,
+            last_name=last_name,
+            phone=registration.phone,
+            gender=registration.gender,
+            date_of_birth=registration.date_of_birth,
+            is_student=True,
+            role='student',
+            tenant=tenant,
+            must_change_password=True,
+        )
+
+        # Try to find a matching Program from the filiere
+        program = None
+        if registration.filiere:
+            program = Program.objects.filter(
+                title__icontains=registration.filiere.name
+            ).first()
+
+        # Create Student profile
+        student = Student.objects.create(
+            student=student_user,
+            level=registration.level,
+            program=program,
+        )
+
+        # Link enrollment to created user
+        registration.enrolled_user = student_user
+        registration.save(update_fields=['enrolled_user'])
+
+        # Create allauth EmailAddress if email provided
+        if registration.email:
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.get_or_create(
+                    user=student_user,
+                    email=registration.email,
+                    defaults={'verified': True, 'primary': True},
+                )
+            except ImportError:
+                pass
+
+        # Create parent account
+        parent_name_parts = registration.parent_name.strip().split(' ', 1)
+        parent_first = parent_name_parts[0]
+        parent_last = parent_name_parts[1] if len(parent_name_parts) > 1 else ''
+
+        parent_base_username = f"parent_{parent_first.lower()}"
+        parent_username = parent_base_username
+        counter = 1
+        while User.objects.filter(username=parent_username).exists():
+            parent_username = f"{parent_base_username}_{counter}"
+            counter += 1
+
+        parent_temp_password = _generate_temp_password()
+
+        parent_user = User.objects.create_user(
+            username=parent_username,
+            email=registration.parent_email or None,
+            password=parent_temp_password,
+            first_name=parent_first,
+            last_name=parent_last,
+            phone=registration.parent_phone,
+            is_parent=True,
+            role='parent',
+            tenant=tenant,
+            must_change_password=True,
+        )
+
+        Parent.objects.create(
+            user=parent_user,
+            student=student,
+            first_name=parent_first,
+            last_name=parent_last,
+            phone=registration.parent_phone,
+            email=registration.parent_email,
+            relation_ship=registration.parent_relationship or 'Other',
+        )
+
+        if registration.parent_email:
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.get_or_create(
+                    user=parent_user,
+                    email=registration.parent_email,
+                    defaults={'verified': True, 'primary': True},
+                )
+            except ImportError:
+                pass
+
+        logger.info(
+            f"Created accounts for enrollment {registration.id}: "
+            f"student={student_user.username}, parent={parent_user.username}"
+        )
+
+    return student_user, parent_user
 
 
 # ########################################################
@@ -311,6 +449,20 @@ def enrollment_review(request, registration_id):
                 changed_by=request.user,
                 notes=registration.review_notes
             )
+
+            # Auto-create accounts when approved
+            if registration.status == 'approved' and old_status != 'approved':
+                try:
+                    _create_accounts_for_enrollment(registration, request.tenant)
+                    messages.info(request, _(
+                        'Student and parent accounts have been created with temporary passwords.'
+                    ))
+                except Exception as e:
+                    logger.error(f"Failed to create accounts for registration {registration.id}: {e}")
+                    messages.warning(request, _(
+                        'Registration approved, but account creation failed. '
+                        'Please create accounts manually.'
+                    ))
 
             # Send notification email
             send_enrollment_status_email.delay(

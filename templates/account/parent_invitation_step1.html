@@ -1,0 +1,80 @@
+{% load static custom_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ dz_array.public.description }}" />
+    <title>{{ title }} - {{ dz_array.public.title }}</title>
+    <link rel="shortcut icon" type="image/png" href="{% static dz_array.public.favicon %}" />
+    {% for cssurl in dz_array.global.css %}
+    <link rel="stylesheet" href="{% static cssurl %}">
+    {% endfor %}
+</head>
+<body class="vh-100">
+    <div class="authincation h-100">
+        <div class="container-fluid h-100">
+            <div class="row h-100">
+                <div class="col-lg-6 col-md-7 col-sm-12 mx-auto align-self-center">
+                    <div class="login-form">
+                        <div class="text-center">
+                            <h3 class="title">Parent Registration</h3>
+                            <p>Enter the invitation code you received from the school</p>
+                        </div>
+                        {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="mb-1 text-dark">Invitation Code</label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                <div class="invalid-feedback d-block">{{ form.code.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Format: XXXX-XXXX</small>
+                            </div>
+                            <div class="text-center mb-4">
+                                <button type="submit" class="btn btn-primary btn-block">Verify Code</button>
+                            </div>
+                            <p class="text-center">
+                                <a class="btn-link text-primary" href="{% url 'frontend:accounts:signup_hub' %}">Back to Sign Up</a>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-xl-6 col-lg-6">
+                    <div class="pages-left h-100">
+                        <div class="login-content">
+                            <span class="brand-title" style="font-size:28px;font-weight:700;color:#fff">SchoolMS</span>
+                            <p>Use the invitation code provided by the school to create your parent account.</p>
+                        </div>
+                        <div class="login-media text-center">
+                            <img src="{% static 'w3crm/images/login.png' %}" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% for jsurl in dz_array.global.js.top %}
+<script src="{% static jsurl %}"></script>
+{% endfor %}
+{% for jsurl in dz_array.global.js.bottom %}
+<script src="{% static jsurl %}"></script>
+{% endfor %}
+</body>
+</html>
