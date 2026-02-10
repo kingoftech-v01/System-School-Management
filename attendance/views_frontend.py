@@ -30,7 +30,7 @@ from .forms import AttendanceForm, AttendanceReportForm, StudentForm, GroupForm,
 # ============================================================================
 
 @login_required
-@role_required('professor', 'prefet', 'direction', 'admin')
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def attendance_dashboard(request):
@@ -72,7 +72,7 @@ def attendance_dashboard(request):
 
 
 @login_required
-@role_required('professor', 'prefet', 'direction', 'admin')
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def take_attendance(request):
@@ -96,7 +96,7 @@ def take_attendance(request):
 
 
 @login_required
-@role_required('professor', 'prefet', 'direction', 'admin')
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def mark_attendance(request, pk):
@@ -309,7 +309,7 @@ def subject_list(request):
 # ============================================================================
 
 @login_required
-@role_required('professor', 'prefet', 'direction', 'admin')
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def attendance_edit(request, pk):
@@ -335,7 +335,7 @@ def attendance_edit(request, pk):
 
 
 @login_required
-@role_required('professor', 'prefet', 'direction', 'admin')
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def attendance_delete(request, pk):

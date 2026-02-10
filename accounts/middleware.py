@@ -133,7 +133,7 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         '/media/',
     ]
 
-    ROLES_REQUIRING_2FA = getattr(settings, 'ROLES_REQUIRING_2FA', ['professor', 'prefet', 'direction', 'admin'])
+    ROLES_REQUIRING_2FA = getattr(settings, 'ROLES_REQUIRING_2FA', ['professor', 'prefet', 'secretary', 'direction', 'admin'])
 
     def process_request(self, request):
         # Skip if user not authenticated
@@ -332,7 +332,7 @@ class Require2FAMiddleware(MiddlewareMixin):
         # Check if user needs 2FA
         user_role = getattr(request.user, 'role', None) or RoleMiddleware.get_user_role(request.user)
 
-        if user_role in ['professor', 'prefet', 'direction', 'admin']:
+        if user_role in ['professor', 'prefet', 'secretary', 'direction', 'admin']:
             # Check if 2FA is enabled
             has_2fa = False
 

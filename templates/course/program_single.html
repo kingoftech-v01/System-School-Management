@@ -32,7 +32,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h4 class="card-title mb-0">{{ program.title }}</h4>
-                    {% if is_direction or is_admin or is_professor %}
+                    {% if is_direction or is_secretary or is_admin or is_professor %}
                     <div class="d-flex gap-2">
                         <a href="{% url 'frontend:course:edit_program' pk=program.pk %}" class="btn btn-sm btn-primary">
                             <i class="bi bi-pencil"></i> Edit
@@ -88,7 +88,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title">Courses</h4>
-                    {% if is_direction or is_admin or is_professor %}
+                    {% if is_direction or is_secretary or is_admin or is_professor %}
                     <a href="{% url 'frontend:course:course_add' pk=program.pk %}" class="btn btn-sm btn-primary">
                         <i class="bi bi-plus-circle"></i> Add Course
                     </a>

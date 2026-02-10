@@ -208,6 +208,88 @@ class Direction(AbstractUserRole):
     }
 
 
+class Secretary(AbstractUserRole):
+    """Secretary role with direction-level access except financial features."""
+    available_permissions = {
+        # Academic Administration
+        'manage_departments': True,
+        'manage_programs': True,
+        'manage_courses': True,
+        'assign_courses_to_professors': True,
+        'view_all_courses': True,
+
+        # Student Administration
+        'view_all_students': True,
+        'approve_registrations': True,
+        'manage_enrollments': True,
+        'transfer_students': True,
+        'mark_students_as_alumni': True,
+        'manage_admissions': True,
+        'assign_student_ids': True,
+
+        # Faculty Management
+        'view_all_faculty': True,
+        'manage_faculty_assignments': True,
+
+        # Reports & Analytics (no financial reports)
+        'view_all_reports': True,
+        'generate_academic_reports': True,
+        'view_dashboards': True,
+        'export_data': True,
+
+        # Grading & Results
+        'view_all_grades': True,
+        'approve_grades': True,
+        'resolve_grade_appeals': True,
+        'generate_transcripts': True,
+
+        # Attendance
+        'view_all_attendance': True,
+        'generate_attendance_reports': True,
+
+        # Library Management
+        'manage_library': True,
+        'add_books': True,
+        'view_borrow_records': True,
+
+        # Content Management
+        'create_articles': True,
+        'edit_all_articles': True,
+        'publish_articles': True,
+        'moderate_comments': True,
+        'manage_categories': True,
+
+        # Notice Management
+        'create_notices': True,
+        'edit_all_notices': True,
+        'delete_notices': True,
+        'view_notice_acknowledgments': True,
+
+        # Admissions
+        'manage_admissions': True,
+        'review_applications': True,
+        'assign_counselors': True,
+        'approve_admissions': True,
+
+        # Alumni Management
+        'manage_alumni': True,
+        'create_alumni_events': True,
+        'track_alumni_donations': True,
+
+        # Discipline
+        'view_disciplinary_records': True,
+        'create_disciplinary_actions': True,
+
+        # Events
+        'manage_events': True,
+
+        # Profile
+        'update_own_profile': True,
+        'view_own_profile': True,
+        'view_all_profiles': True,
+    }
+
+
 class Admin(AbstractUserRole):
     """System administrator with full access."""
     available_permissions = {

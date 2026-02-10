@@ -50,6 +50,7 @@ ROLE_CHOICES = (
     ('professor', _('Professor')),
     ('prefet', _('Discipline Officer')),
     ('accountant', _('Accountant')),
+    ('secretary', _('Secretary')),
     ('direction', _('Direction')),
     ('admin', _('Administrator')),
 )
@@ -400,6 +401,7 @@ INVITATION_ROLE_CHOICES = (
     ('professor', _('Professor')),
     ('prefet', _('Discipline Officer')),
     ('accountant', _('Accountant')),
+    ('secretary', _('Secretary')),
     ('direction', _('Direction')),
 )
 

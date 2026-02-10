@@ -688,12 +688,13 @@ ROLE_CHOICES = (
     ('professor', 'Professor'),
     ('prefet', 'Discipline Officer'),
     ('accountant', 'Accountant'),
+    ('secretary', 'Secretary'),
     ('direction', 'Direction Member'),
     ('admin', 'System Administrator'),
 )
 
 # Roles requiring 2FA
-ROLES_REQUIRING_2FA = ['professor', 'prefet', 'accountant', 'direction', 'admin']
+ROLES_REQUIRING_2FA = ['professor', 'prefet', 'accountant', 'secretary', 'direction', 'admin']
 
 # Pagination settings
 DEFAULT_PAGE_SIZE = 25
@@ -717,6 +718,7 @@ RATE_LIMITS = {
     'parent': '300/hour',
     'student': '300/hour',
     'professor': '500/hour',
+    'secretary': '1000/hour',
     'direction': '1000/hour',
     'admin': '2000/hour',
 }

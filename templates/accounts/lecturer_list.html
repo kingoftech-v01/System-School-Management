@@ -21,7 +21,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title">Lecturers <span class="badge bg-primary">{{ page_obj.paginator.count|default:"0" }}</span></h4>
-                    {% if is_admin or is_direction %}
+                    {% if is_admin or is_direction or is_secretary %}
                     <a href="{% url 'frontend:accounts:add_lecturer' %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle"></i> Add Lecturer</a>
                     {% endif %}
                 </div>
@@ -54,7 +54,7 @@
                                     </td>
                                     <td>
                                         <a href="{% url 'frontend:accounts:staff_edit' lecturer.pk %}" class="btn btn-sm btn-primary" title="Edit {{ lecturer.get_full_name }}"><i class="bi bi-pencil"></i></a>
-                                        {% if is_admin or is_direction %}
+                                        {% if is_admin or is_direction or is_secretary %}
                                         <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ lecturer.pk }}" title="Delete {{ lecturer.get_full_name }}"><i class="bi bi-trash"></i></button>
                                         {% endif %}
                                     </td>
@@ -74,7 +74,7 @@
 </div>
 
 {% for lecturer in object_list %}
-{% if is_admin or is_direction %}
+{% if is_admin or is_direction or is_secretary %}
 <!-- Delete Confirmation Modal for {{ lecturer.get_full_name }} -->
 <div class="modal fade" id="deleteModal{{ lecturer.pk }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ lecturer.pk }}" aria-hidden="true">
     <div class="modal-dialog">

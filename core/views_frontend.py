@@ -56,6 +56,8 @@ def unified_dashboard(request):
         return render_prefet_dashboard(request, base_context)
     elif user_role == 'accountant':
         return render_accountant_dashboard(request, base_context)
+    elif user_role == 'secretary':
+        return render_secretary_dashboard(request, base_context)
     elif user_role == 'direction':
         return render_direction_dashboard(request, base_context)
     elif user_role == 'admin':
@@ -201,6 +203,64 @@ def render_professor_dashboard(request, base_context):
     }
 
     return render(request, 'dashboards/professor_dashboard.html', context)
+
+
+def render_secretary_dashboard(request, base_context):
+    """Render secretary dashboard with academic management focus (no financial data)."""
+    total_students = Student.objects.filter(student__tenant=request.tenant).count()
+    total_professors = User.objects.filter(
+        tenant=request.tenant,
+        role='professor'
+    ).count()
+
+    # Enrollment stats
+    pending_enrollments = 0
+    try:
+        from enrollment.models import EnrollmentApplication
+        pending_enrollments = EnrollmentApplication.objects.filter(
+            status='pending'
+        ).count()
+    except Exception:
+        pass
+
+    # Upcoming events
+    upcoming_events = []
+    try:
+        from events.models import Event
+        upcoming_events = Event.objects.filter(
+            start_date__gte=timezone.now()
+        ).order_by('start_date')[:5]
+    except Exception:
+        pass
+
+    # Recent notices
+    recent_notices = []
+    try:
+        from notices.models import Notice
+        recent_notices = Notice.objects.order_by('-created_at')[:5]
+    except Exception:
+        pass
+
+    # Certificate stats
+    certificate_count = 0
+    try:
+        from certificates.models import Certificate
+        certificate_count = Certificate.objects.count()
+    except Exception:
+        pass
+
+    context = {
+        **base_context,
+        'title': 'Secretary Dashboard',
+        'total_students': total_students,
+        'total_professors': total_professors,
+        'pending_enrollments': pending_enrollments,
+        'upcoming_events': upcoming_events,
+        'recent_notices': recent_notices,
+        'certificate_count': certificate_count,
+    }
+
+    return render(request, 'dashboards/secretary_dashboard.html', context)
 
 
 def render_direction_dashboard(request, base_context):

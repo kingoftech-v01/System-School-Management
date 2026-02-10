@@ -54,7 +54,7 @@ class InvitationCodeAdmin(admin.ModelAdmin):
     search_fields = ["code", "sent_to_email"]
     readonly_fields = ["code", "created_at", "used_at", "used_by"]
     raw_id_fields = ["linked_student", "created_by"]
-    actions = ["generate_parent_codes", "generate_staff_codes", "generate_prefet_codes", "generate_accountant_codes", "deactivate_codes"]
+    actions = ["generate_parent_codes", "generate_staff_codes", "generate_prefet_codes", "generate_accountant_codes", "generate_secretary_codes", "deactivate_codes"]
 
     def generate_parent_codes(self, request, queryset):
         """Generate 5 new parent invitation codes."""
@@ -115,6 +115,21 @@ class InvitationCodeAdmin(admin.ModelAdmin):
             created += 1
         self.message_user(request, f"{created} accountant invitation codes created.")
     generate_accountant_codes.short_description = "Generate 5 accountant invitation codes"
+
+    def generate_secretary_codes(self, request, queryset):
+        """Generate 5 new secretary invitation codes."""
+        expiry_days = getattr(settings, 'INVITATION_CODE_EXPIRY_DAYS', 7)
+        created = 0
+        for _ in range(5):
+            InvitationCode.objects.create(
+                code=InvitationCode.generate_code(),
+                role='secretary',
+                created_by=request.user,
+                expires_at=timezone.now() + timedelta(days=expiry_days),
+            )
+            created += 1
+        self.message_user(request, f"{created} secretary invitation codes created.")
+    generate_secretary_codes.short_description = "Generate 5 secretary invitation codes"
 
     def deactivate_codes(self, request, queryset):
         """Deactivate selected invitation codes."""

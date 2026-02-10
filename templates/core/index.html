@@ -28,7 +28,7 @@
                 <a href="{% url 'frontend:core:news_search' %}" class="btn btn-outline-secondary me-2">
                     <i class="bi bi-search me-1"></i>Search
                 </a>
-                {% if is_professor or is_direction or is_admin %}
+                {% if is_professor or is_direction or is_secretary or is_admin %}
                 <a href="{% url 'frontend:core:add_item' %}" class="btn btn-primary">
                     <i class="bi bi-plus-lg me-1"></i>Add Post
                 </a>
@@ -59,7 +59,7 @@
                         </a>
                     </div>
                 </div>
-                {% if is_professor or is_direction or is_admin %}
+                {% if is_professor or is_direction or is_secretary or is_admin %}
                 <div class="card-footer bg-transparent border-top-0 pt-0">
                     <div class="d-flex justify-content-end gap-2">
                         <a href="{% url 'frontend:core:edit_post' pk=item.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
@@ -83,7 +83,7 @@
                 <div class="card-body text-center py-5">
                     <i class="bi bi-newspaper display-4 text-muted mb-3 d-block"></i>
                     <h5 class="text-muted">No news or events posted yet.</h5>
-                    {% if is_professor or is_direction or is_admin %}
+                    {% if is_professor or is_direction or is_secretary or is_admin %}
                     <p class="text-muted">Get started by adding the first post.</p>
                     <a href="{% url 'frontend:core:add_item' %}" class="btn btn-primary mt-2">
                         <i class="bi bi-plus-lg me-1"></i>Add Post

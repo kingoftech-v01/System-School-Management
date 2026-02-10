@@ -38,6 +38,7 @@ def user_role_context(request):
         'is_parent': False,
         'is_prefet': False,
         'is_accountant': False,
+        'is_secretary': False,
         'is_direction': False,
         'is_admin': False,
     }
@@ -144,6 +145,20 @@ def navigation_context(request):
             {'name': 'Analytics', 'url': '/analytics/', 'icon': 'fas fa-chart-line'},
         ])
 
+    elif user_role == 'secretary':
+        nav_items.extend([
+            {'name': 'Monitoring', 'url': '/monitoring/', 'icon': 'fas fa-chart-bar'},
+            {'name': 'Search', 'url': '/search/', 'icon': 'fas fa-search'},
+            {'name': 'Enrollment', 'url': '/enrollment/', 'icon': 'fas fa-user-plus'},
+            {'name': 'Courses', 'url': '/courses/', 'icon': 'fas fa-book'},
+            {'name': 'Attendance', 'url': '/attendance/', 'icon': 'fas fa-calendar-check'},
+            {'name': 'Results', 'url': '/results/', 'icon': 'fas fa-chart-line'},
+            {'name': 'Library', 'url': '/library/', 'icon': 'fas fa-book-reader'},
+            {'name': 'Events', 'url': '/events/', 'icon': 'fas fa-calendar-alt'},
+            {'name': 'Discipline', 'url': '/discipline/', 'icon': 'fas fa-gavel'},
+            {'name': 'Filieres', 'url': '/filieres/', 'icon': 'fas fa-graduation-cap'},
+        ])
+
     elif user_role in ['direction', 'admin']:
         nav_items.extend([
             {'name': 'Monitoring', 'url': '/monitoring/', 'icon': 'fas fa-chart-bar'},
@@ -193,6 +208,16 @@ def permissions_context(request):
         context = {
             'can_view_all_students': True,
             'can_manage_payments': True,
+            'can_manage_enrollment': True,
+            'can_view_monitoring': True,
+            'can_manage_discipline': True,
+            'can_export_data': True,
+        }
+    elif user_role == 'secretary':
+        # Secretary has all direction permissions EXCEPT financial
+        context = {
+            'can_view_all_students': True,
+            'can_manage_payments': False,
             'can_manage_enrollment': True,
             'can_view_monitoring': True,
             'can_manage_discipline': True,

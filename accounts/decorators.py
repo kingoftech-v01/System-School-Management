@@ -139,11 +139,25 @@ def rate_limit_by_role(group='default', key='user', rate='100/h', method='ALL'):
 
 def direction_only(view_func):
     """
-    Shortcut decorator for direction-only views.
+    Shortcut decorator for direction-level views.
+    Allows secretary, direction, and admin roles.
 
     Usage:
         @direction_only
         def monitoring_view(request):
+            ...
+    """
+    return role_required('secretary', 'direction', 'admin')(view_func)
+
+
+def financial_only(view_func):
+    """
+    Shortcut decorator for financial/payment views.
+    Only direction and admin — excludes secretary.
+
+    Usage:
+        @financial_only
+        def fee_structure_view(request):
             ...
     """
     return role_required('direction', 'admin')(view_func)
@@ -159,19 +173,19 @@ def prefet_allowed(view_func):
         def discipline_view(request):
             ...
     """
-    return role_required('direction', 'admin', 'prefet')(view_func)
+    return role_required('secretary', 'direction', 'admin', 'prefet')(view_func)
 
 
 def prefet_only(view_func):
     """
-    Shortcut decorator for discipline officer views. Also allows direction and admin.
+    Shortcut decorator for discipline officer views. Also allows secretary, direction, and admin.
 
     Usage:
         @prefet_only
         def prefet_dashboard_view(request):
             ...
     """
-    return role_required('prefet', 'direction', 'admin')(view_func)
+    return role_required('prefet', 'secretary', 'direction', 'admin')(view_func)
 
 
 def accountant_allowed(view_func):

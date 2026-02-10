@@ -48,7 +48,7 @@ def rubric_list(request):
     Lecturers can see their own rubrics.
     Direction can see all rubrics.
     """
-    if request.user.role == 'direction':
+    if request.user.role in ('secretary', 'direction', 'admin'):
         rubrics = GradingRubric.objects.select_related('course', 'created_by').prefetch_related('criteria').all()
     else:
         rubrics = GradingRubric.objects.filter(created_by=request.user).select_related('course').prefetch_related('criteria')
@@ -314,7 +314,7 @@ def grade_entry_list(request):
     List all grade entries.
     Lecturers see their own grades.
     """
-    if request.user.role == 'direction':
+    if request.user.role in ('secretary', 'direction', 'admin'):
         grades = RubricGrade.objects.select_related('rubric', 'student', 'graded_by').prefetch_related('criterion_grades').all()
     else:
         grades = RubricGrade.objects.filter(graded_by=request.user).select_related('rubric', 'student').prefetch_related('criterion_grades')

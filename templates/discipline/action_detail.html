@@ -18,7 +18,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h4 class="card-title mb-0">Disciplinary Action Detail</h4>
-                    {% if is_direction or is_professor or is_admin or is_prefet %}
+                    {% if is_direction or is_secretary or is_professor or is_admin or is_prefet %}
                     <div class="d-flex gap-2 flex-wrap">
                         <a href="{% url 'frontend:discipline:action_edit' pk=action.pk %}" class="btn btn-sm btn-primary">
                             <i class="bi bi-pencil"></i> Edit
@@ -118,7 +118,7 @@
     </div>
 </div>
 
-{% if is_direction or is_professor or is_admin or is_prefet %}
+{% if is_direction or is_secretary or is_professor or is_admin or is_prefet %}
 <!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">

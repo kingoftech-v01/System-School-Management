@@ -25,7 +25,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:core:home' %}">All Posts</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:core:add_item' %}">Add Post</a></li>
 					{% endif %}
 				</ul>
@@ -140,7 +140,7 @@
 		{% if not is_parent %}
 		<li class="menu-title">ACADEMIC</li>
 			<!-- Students -->
-			{% if is_professor or is_direction or is_admin or is_prefet or is_accountant %}
+			{% if is_professor or is_direction or is_secretary or is_admin or is_prefet or is_accountant %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -152,7 +152,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:accounts:student_list' %}">Student List</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:accounts:add_student' %}">Add Student</a></li>
 					{% endif %}
 				</ul>
@@ -160,7 +160,7 @@
 			{% endif %}
 			{% if not is_prefet and not is_accountant %}
 			<!-- Lecturers -->
-			{% if is_direction or is_admin %}
+			{% if is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -203,11 +203,11 @@
 				<span class="nav-text">Courses</span>
 			</a>
 				<ul aria-expanded="false">
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:course:programs' %}">Programs</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:course:course_list_all' %}">All Courses</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:course:course_allocation_view' %}">Allocations</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:course:course_registration' %}">Registration</a></li>
@@ -225,7 +225,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:filieres:filiere_list' %}">All Filieres</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:filieres:filiere_create' %}">Create Filiere</a></li>
 					{% endif %}
 				</ul>
@@ -241,11 +241,11 @@
 				<span class="nav-text">Enrollment</span>
 			</a>
 				<ul aria-expanded="false">
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:enrollment:enrollment_list' %}">Enrollments</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:enrollment:register_step1' %}">New Registration</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:enrollment:enrollment_statistics' %}">Statistics</a></li>
 					<li><a href="{% url 'frontend:enrollment:export_enrollments_csv' %}">Export CSV</a></li>
 					{% endif %}
@@ -267,7 +267,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:attendance:dashboard' %}">Dashboard</a></li>
-					{% if is_professor or is_direction or is_admin or is_prefet %}
+					{% if is_professor or is_direction or is_secretary or is_admin or is_prefet %}
 					<li><a href="{% url 'frontend:attendance:take_attendance' %}">Take Attendance</a></li>
 					<li><a href="{% url 'frontend:attendance:student_list' %}">Students</a></li>
 					<li><a href="{% url 'frontend:attendance:group_list' %}">Groups</a></li>
@@ -290,7 +290,7 @@
 				<span class="nav-text">Results</span>
 			</a>
 				<ul aria-expanded="false">
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:result:add_score' %}">Add Score</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:result:grade_results' %}">Grade Results</a></li>
@@ -309,12 +309,12 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:grading:dashboard' %}">Dashboard</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:grading:rubric_list' %}">Rubrics</a></li>
 					<li><a href="{% url 'frontend:grading:grade_entry_list' %}">Grade Entries</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:grading:peer_review_list' %}">Peer Reviews</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:grading:grade_curve_list' %}">Grade Curves</a></li>
 					{% endif %}
 					{% if is_student %}
@@ -335,7 +335,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:quiz:quiz_progress' %}">My Progress</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:quiz:quiz_marking' %}">Quiz Marking</a></li>
 					{% endif %}
 				</ul>
@@ -358,7 +358,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:admissions:home' %}">Overview</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:admissions:admission_list' %}">Applications</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:admissions:apply' %}">Apply</a></li>
@@ -414,7 +414,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:events:event_list' %}">All Events</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:events:event_create' %}">Create Event</a></li>
 					{% endif %}
 				</ul>
@@ -422,7 +422,7 @@
 			{% endif %}{# end if not is_accountant for library/events #}
 			{% endif %}{# end if not is_prefet for management #}
 			<!-- Discipline -->
-			{% if is_professor or is_direction or is_admin or is_prefet %}
+			{% if is_professor or is_direction or is_secretary or is_admin or is_prefet %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -433,14 +433,14 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:discipline:action_list' %}">All Actions</a></li>
-					{% if is_direction or is_admin or is_prefet %}
+					{% if is_direction or is_secretary or is_admin or is_prefet %}
 					<li><a href="{% url 'frontend:discipline:action_create' %}">Create Action</a></li>
 					{% endif %}
 				</ul>
 			</li>
 			{% endif %}
 			<!-- Certificates -->
-			{% if is_direction or is_admin %}
+			{% if is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -476,7 +476,7 @@
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:notes:note_list' %}">My Notes</a></li>
 					<li><a href="{% url 'frontend:notes:note_create' %}">Create Note</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:notes:notes_pending' %}">Pending Approval</a></li>
 					<li><a href="{% url 'frontend:notes:note_list_all' %}">All Notes</a></li>
 					{% endif %}
@@ -495,7 +495,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:notices:notice_list' %}">All Notices</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:notices:notice_create' %}">Create Notice</a></li>
 					{% endif %}
 				</ul>
@@ -530,7 +530,7 @@
 					<li><a href="{% url 'frontend:alumni:directory' %}">Directory</a></li>
 					<li><a href="{% url 'frontend:alumni:events' %}">Events</a></li>
 					<li><a href="{% url 'frontend:alumni:achievements' %}">Achievements</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:alumni:alumni_create' %}">Add Alumni</a></li>
 					{% endif %}
 				</ul>
@@ -549,7 +549,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:articles:article_list' %}">All Articles</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:articles:article_create' %}">Write Article</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:articles:newsletter' %}">Newsletter</a></li>
@@ -562,7 +562,7 @@
 			{% if not is_parent and not is_prefet %}
 			<li class="menu-title">ANALYTICS</li>
 			<!-- Analytics -->
-			{% if is_professor or is_direction or is_admin or is_accountant %}
+			{% if is_professor or is_direction or is_secretary or is_admin or is_accountant %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -583,7 +583,7 @@
 			</li>
 			{% endif %}
 			<!-- Monitoring -->
-			{% if is_direction or is_admin %}
+			{% if is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -601,7 +601,7 @@
 			</li>
 			{% endif %}
 			<!-- Daily Stats -->
-			{% if is_professor or is_direction or is_admin %}
+			{% if is_professor or is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -640,7 +640,7 @@
 					{% if is_admin %}
 					<li><a href="{% url 'frontend:accounts:admin_panel' %}">Admin Panel</a></li>
 					{% endif %}
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:core:session_list' %}">Sessions</a></li>
 					<li><a href="{% url 'frontend:core:semester_list' %}">Semesters</a></li>
 					{% endif %}

@@ -17,7 +17,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title">Forums</h4>
-                    {% if is_direction %}
+                    {% if is_direction or is_secretary %}
                     <a href="{% url 'frontend:forums:category_create' %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-circle"></i> Manage Categories</a>
                     {% endif %}
                 </div>

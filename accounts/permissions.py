@@ -7,14 +7,15 @@ from rest_framework import permissions
 
 class IsDirectionUser(permissions.BasePermission):
     """
-    Permission to check if user is a direction/admin user.
+    Permission to check if user is a direction/admin/secretary user.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and (
-            request.user.is_staff or
-            request.user.is_superuser or
-            getattr(request.user, 'is_direction', False)
-        )
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.user.is_staff or request.user.is_superuser:
+            return True
+        user_role = getattr(request.user, 'role', '')
+        return user_role in ('secretary', 'direction', 'admin')
 
 
 class IsLecturerOrAdmin(permissions.BasePermission):
@@ -122,7 +123,7 @@ class IsPrefetOrDirectionUser(permissions.BasePermission):
         if request.user.is_staff or request.user.is_superuser:
             return True
         user_role = getattr(request.user, 'role', '')
-        return user_role in ('prefet', 'direction', 'admin')
+        return user_role in ('prefet', 'secretary', 'direction', 'admin')
 
 
 class IsAccountantOrDirectionUser(permissions.BasePermission):
