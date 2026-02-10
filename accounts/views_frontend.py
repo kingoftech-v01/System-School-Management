@@ -11,7 +11,7 @@ from django.views.generic import CreateView
 from django_filters.views import FilterView
 from xhtml2pdf import pisa
 
-from accounts.decorators import admin_required
+from accounts.decorators import admin_required, role_required
 from accounts.filters import LecturerFilter, StudentFilter
 from accounts.forms import (
     ForcePasswordResetForm,
@@ -345,7 +345,7 @@ def edit_student(request, pk):
     )
 
 
-@method_decorator([login_required, admin_required], name="dispatch")
+@method_decorator([login_required, role_required('admin', 'direction', 'prefet')], name="dispatch")
 class StudentListView(FilterView):
     queryset = Student.objects.all()
     filterset_class = StudentFilter
@@ -1409,7 +1409,7 @@ def staff_invitation_step1(request):
         form = InvitationCodeForm(request.POST)
         if form.is_valid():
             invitation = form.invitation
-            if invitation.role not in ("professor", "direction"):
+            if invitation.role not in ("professor", "direction", "prefet"):
                 messages.error(request, "This is not a staff invitation code.")
                 return render(request, "account/staff_invitation_step1.html", {
                     "form": form, "title": "Staff Registration",
@@ -1472,7 +1472,8 @@ def staff_invitation_step2(request):
                     pass
 
             request.session.pop("invitation_code", None)
-            role_display = "Professor" if invitation.role == "professor" else "Staff"
+            role_displays = {"professor": "Professor", "prefet": "Discipline Officer", "direction": "Direction Staff"}
+            role_display = role_displays.get(invitation.role, "Staff")
             messages.success(
                 request,
                 f"Your {role_display} account has been created! You can now sign in.",

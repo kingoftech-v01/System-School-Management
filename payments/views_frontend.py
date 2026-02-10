@@ -10,6 +10,9 @@ from django.contrib import messages
 from django.views.generic.base import TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
+from django.core.paginator import Paginator
+
+from accounts.decorators import direction_only, student_required
 
 try:
     import gopay
@@ -167,8 +170,18 @@ def gopay_charge(request):
 def paymentComplete(request):
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if is_ajax or request.method == "POST":
-        invoice_id = request.session["invoice_session"]
-        invoice = Invoice.objects.get(id=invoice_id)
+        invoice_id = request.session.get("invoice_session")
+        if not invoice_id:
+            return JsonResponse({"error": "No invoice session found."}, status=400)
+        invoice = get_object_or_404(Invoice, id=invoice_id)
+        # Verify the user owns this invoice or is a parent of the student
+        if invoice.user != request.user and not request.user.is_superuser:
+            from accounts.models import Parent
+            is_parent_of_student = Parent.objects.filter(
+                user=request.user, student__student=invoice.user
+            ).exists()
+            if not is_parent_of_student:
+                return JsonResponse({"error": "Not authorized."}, status=403)
         invoice.payment_complete = True
         invoice.save()
     body = json.loads(request.body)
@@ -176,6 +189,7 @@ def paymentComplete(request):
 
 
 @login_required
+@direction_only
 def create_invoice(request):
     if request.method == "POST":
         amount = request.POST.get("amount", 0)
@@ -197,10 +211,20 @@ def create_invoice(request):
 
 @login_required
 def invoice_detail(request, slug):
+    invoice = get_object_or_404(Invoice, invoice_code=slug)
+    # Verify the user owns this invoice, is a parent of the student, or is admin
+    if invoice.user != request.user and not request.user.is_superuser:
+        from accounts.models import Parent
+        is_parent_of_student = Parent.objects.filter(
+            user=request.user, student__student=invoice.user
+        ).exists()
+        if not is_parent_of_student:
+            messages.error(request, "You are not authorized to view this invoice.")
+            return redirect("frontend:payments:student_invoices")
     return render(
         request,
         "invoice_detail.html",
-        context={"invoice": get_object_or_404(Invoice, invoice_code=slug)},
+        context={"invoice": invoice},
     )
 
 
@@ -208,8 +232,6 @@ def invoice_detail(request, slug):
 # Fee Structure CRUD (direction only)
 # ============================================================================
 
-from django.core.paginator import Paginator
-from accounts.decorators import direction_only
 from .models import FeeStructure, Payment
 from .forms import FeeStructureForm
 
@@ -320,6 +342,7 @@ def fee_structure_delete(request, pk):
 # ============================================================================
 
 @login_required
+@student_required
 def student_invoices(request):
     """List current user's invoices."""
     invoices = Invoice.objects.filter(
@@ -346,6 +369,7 @@ def student_invoices(request):
 
 
 @login_required
+@student_required
 def student_payment_history(request):
     """List current user's completed payment transactions."""
     payments = Payment.objects.filter(

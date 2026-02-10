@@ -48,6 +48,7 @@ ROLE_CHOICES = (
     ('parent', _('Parent')),
     ('student', _('Student')),
     ('professor', _('Professor')),
+    ('prefet', _('Discipline Officer')),
     ('direction', _('Direction')),
     ('admin', _('Administrator')),
 )
@@ -396,6 +397,7 @@ class DepartmentHead(models.Model):
 INVITATION_ROLE_CHOICES = (
     ('parent', _('Parent')),
     ('professor', _('Professor')),
+    ('prefet', _('Discipline Officer')),
     ('direction', _('Direction')),
 )
 

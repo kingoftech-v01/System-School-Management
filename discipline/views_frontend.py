@@ -5,14 +5,14 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from accounts.decorators import direction_only, professor_only, tenant_required
+from accounts.decorators import prefet_allowed, tenant_required
 from django_ratelimit.decorators import ratelimit
 from .models import DisciplinaryAction
 from .forms import DisciplinaryActionForm
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def disciplinary_action_list(request):
@@ -57,7 +57,7 @@ def disciplinary_action_list(request):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def disciplinary_action_create(request):
@@ -83,7 +83,7 @@ def disciplinary_action_create(request):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 def disciplinary_action_detail(request, pk):
     """View disciplinary action details."""
@@ -96,7 +96,7 @@ def disciplinary_action_detail(request, pk):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def disciplinary_action_edit(request, pk):
@@ -124,7 +124,7 @@ def disciplinary_action_edit(request, pk):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 def disciplinary_action_delete(request, pk):
     """Delete a disciplinary action (direction only). GET shows confirm, POST deletes."""
@@ -142,7 +142,7 @@ def disciplinary_action_delete(request, pk):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 def disciplinary_action_resolve(request, pk):
     """Mark a disciplinary action as resolved (POST-only, direction only)."""

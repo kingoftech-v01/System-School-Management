@@ -149,6 +149,31 @@ def direction_only(view_func):
     return role_required('direction', 'admin')(view_func)
 
 
+def prefet_allowed(view_func):
+    """
+    Shortcut decorator for views accessible to discipline officers, direction, and admin.
+    Use this for discipline and attendance views that the discipline officer should access.
+
+    Usage:
+        @prefet_allowed
+        def discipline_view(request):
+            ...
+    """
+    return role_required('direction', 'admin', 'prefet')(view_func)
+
+
+def prefet_only(view_func):
+    """
+    Shortcut decorator for discipline officer views. Also allows direction and admin.
+
+    Usage:
+        @prefet_only
+        def prefet_dashboard_view(request):
+            ...
+    """
+    return role_required('prefet', 'direction', 'admin')(view_func)
+
+
 def professor_only(view_func):
     """
     Shortcut decorator for professor-only views.

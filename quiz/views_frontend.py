@@ -12,7 +12,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.decorators import lecturer_required
+from accounts.decorators import lecturer_required, student_required
 from .forms import (
     EssayForm,
     EssayQuestionForm,
@@ -202,7 +202,7 @@ class MCQuestionCreate(CreateView):
 # ########################################################
 
 
-@method_decorator([login_required], name="dispatch")
+@method_decorator([login_required, student_required], name="dispatch")
 class QuizUserProgressView(TemplateView):
     template_name = "quiz/progress.html"
 
@@ -266,7 +266,7 @@ class QuizMarkingDetail(DetailView):
 # ########################################################
 
 
-@method_decorator([login_required], name="dispatch")
+@method_decorator([login_required, student_required], name="dispatch")
 class QuizTake(FormView):
     form_class = QuestionForm
     template_name = "quiz/question.html"

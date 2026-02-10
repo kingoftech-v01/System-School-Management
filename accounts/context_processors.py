@@ -36,6 +36,7 @@ def user_role_context(request):
         'is_student': False,
         'is_professor': False,
         'is_parent': False,
+        'is_prefet': False,
         'is_direction': False,
         'is_admin': False,
     }
@@ -127,6 +128,13 @@ def navigation_context(request):
             {'name': 'Students', 'url': '/search/students/', 'icon': 'fas fa-user-graduate'},
         ])
 
+    elif user_role == 'prefet':
+        nav_items.extend([
+            {'name': 'Discipline', 'url': '/discipline/', 'icon': 'fas fa-gavel'},
+            {'name': 'Attendance', 'url': '/attendance/', 'icon': 'fas fa-calendar-check'},
+            {'name': 'Students', 'url': '/search/students/', 'icon': 'fas fa-user-graduate'},
+        ])
+
     elif user_role in ['direction', 'admin']:
         nav_items.extend([
             {'name': 'Monitoring', 'url': '/monitoring/', 'icon': 'fas fa-chart-bar'},
@@ -185,5 +193,9 @@ def permissions_context(request):
         # Professors have limited permissions
         context['can_view_monitoring'] = False  # Can see limited stats
         context['can_manage_discipline'] = True  # Can report incidents
+    elif user_role == 'prefet':
+        # Discipline officers can manage discipline and view students
+        context['can_view_all_students'] = True
+        context['can_manage_discipline'] = True
 
     return context

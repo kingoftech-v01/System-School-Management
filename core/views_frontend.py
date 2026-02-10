@@ -52,6 +52,8 @@ def unified_dashboard(request):
         return render_parent_dashboard(request, base_context)
     elif user_role == 'professor':
         return render_professor_dashboard(request, base_context)
+    elif user_role == 'prefet':
+        return render_prefet_dashboard(request, base_context)
     elif user_role == 'direction':
         return render_direction_dashboard(request, base_context)
     elif user_role == 'admin':
@@ -231,6 +233,60 @@ def render_direction_dashboard(request, base_context):
     }
 
     return render(request, 'dashboards/direction_dashboard.html', context)
+
+
+def render_prefet_dashboard(request, base_context):
+    """Render discipline officer dashboard with discipline and attendance focus."""
+    from discipline.models import DisciplinaryAction
+    from django.db.models import Count
+
+    # Discipline stats
+    all_actions = DisciplinaryAction.objects.filter(tenant=request.tenant)
+    total_actions = all_actions.count()
+    pending_actions = all_actions.filter(is_resolved=False).count()
+    resolved_actions = all_actions.filter(is_resolved=True).count()
+
+    # Severity breakdown
+    severity_breakdown = list(
+        all_actions.values('severity').annotate(count=Count('id')).order_by('severity')
+    )
+
+    # Recent incidents (last 10)
+    recent_incidents = all_actions.select_related(
+        'student', 'reported_by'
+    ).order_by('-incident_date')[:10]
+
+    # Attendance overview
+    attendance_stats = {}
+    try:
+        from attendance.models import Attendance, AttendanceReport, Satus
+        today = timezone.now().date()
+        today_sessions = Attendance.objects.filter(date=today).count()
+        today_reports = AttendanceReport.objects.filter(attendance__date=today)
+        attendance_stats = {
+            'today_sessions': today_sessions,
+            'today_present': today_reports.filter(status=Satus.PRESENT).count() if hasattr(Satus, 'PRESENT') else 0,
+            'today_absent': today_reports.filter(status=Satus.ABSENT).count() if hasattr(Satus, 'ABSENT') else 0,
+        }
+    except Exception:
+        pass
+
+    # Student count
+    total_students = Student.objects.filter(student__tenant=request.tenant).count()
+
+    context = {
+        **base_context,
+        'title': 'Discipline Officer Dashboard',
+        'total_actions': total_actions,
+        'pending_actions': pending_actions,
+        'resolved_actions': resolved_actions,
+        'severity_breakdown': severity_breakdown,
+        'recent_incidents': recent_incidents,
+        'attendance_stats': attendance_stats,
+        'total_students': total_students,
+    }
+
+    return render(request, 'dashboards/prefet_dashboard.html', context)
 
 
 def render_admin_dashboard(request, base_context):
