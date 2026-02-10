@@ -34,6 +34,16 @@ from .models import (
 )
 
 
+def _check_course_ownership(request, course):
+    """Return a redirect response if the user is not allocated to the course, else None."""
+    if request.user.is_superuser:
+        return None
+    if not course.allocated_course.filter(lecturer=request.user).exists():
+        messages.error(request, "You are not authorized to manage quizzes for this course.")
+        return redirect("frontend:quiz:quiz_index", slug=course.slug)
+    return None
+
+
 # ########################################################
 # Quiz Views
 # ########################################################
@@ -44,6 +54,13 @@ class QuizCreateView(CreateView):
     model = Quiz
     form_class = QuizAddForm
     template_name = "quiz/quiz_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        course = get_object_or_404(Course, slug=self.kwargs["slug"])
+        denied = _check_course_ownership(request, course)
+        if denied:
+            return denied
+        return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
         initial = super().get_initial()
@@ -71,6 +88,13 @@ class QuizUpdateView(UpdateView):
     form_class = QuizAddForm
     template_name = "quiz/quiz_form.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        course = get_object_or_404(Course, slug=self.kwargs["slug"])
+        denied = _check_course_ownership(request, course)
+        if denied:
+            return denied
+        return super().dispatch(request, *args, **kwargs)
+
     def get_object(self, queryset=None):
         return get_object_or_404(Quiz, pk=self.kwargs["pk"])
 
@@ -88,6 +112,10 @@ class QuizUpdateView(UpdateView):
 @login_required
 @lecturer_required
 def quiz_delete(request, slug, pk):
+    course = get_object_or_404(Course, slug=slug)
+    denied = _check_course_ownership(request, course)
+    if denied:
+        return denied
     quiz = get_object_or_404(Quiz, pk=pk)
     quiz.delete()
     messages.success(request, "Quiz successfully deleted.")
@@ -113,6 +141,13 @@ class MCQuestionCreate(CreateView):
     model = MCQuestion
     form_class = MCQuestionForm
     template_name = "quiz/mcquestion_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        course = get_object_or_404(Course, slug=self.kwargs["slug"])
+        denied = _check_course_ownership(request, course)
+        if denied:
+            return denied
+        return super().dispatch(request, *args, **kwargs)
 
     # def get_form_kwargs(self):
     #     kwargs = super().get_form_kwargs()
@@ -207,6 +242,10 @@ class QuizMarkingDetail(DetailView):
 
     def post(self, request, *args, **kwargs):
         sitting = self.get_object()
+        # Verify the lecturer is allocated to this course
+        if not request.user.is_superuser and not sitting.quiz.course.allocated_course.filter(lecturer=request.user).exists():
+            messages.error(request, "You are not authorized to mark this quiz.")
+            return redirect("frontend:quiz:quiz_marking")
         question_id = request.POST.get("qid")
         if question_id:
             question = Question.objects.get_subclass(id=int(question_id))
@@ -351,6 +390,13 @@ class EssayQuestionCreate(CreateView):
     form_class = EssayQuestionForm
     template_name = "quiz/essay_form.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        course = get_object_or_404(Course, slug=self.kwargs["slug"])
+        denied = _check_course_ownership(request, course)
+        if denied:
+            return denied
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["course"] = get_object_or_404(Course, slug=self.kwargs["slug"])
@@ -389,6 +435,13 @@ class TFQuestionCreate(CreateView):
     form_class = TrueFalseQuestionForm
     template_name = "quiz/tf_form.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        course = get_object_or_404(Course, slug=self.kwargs["slug"])
+        denied = _check_course_ownership(request, course)
+        if denied:
+            return denied
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["course"] = get_object_or_404(Course, slug=self.kwargs["slug"])
@@ -426,6 +479,13 @@ class MCQuestionEdit(UpdateView):
     model = MCQuestion
     form_class = MCQuestionForm
     template_name = "quiz/mcquestion_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        course = get_object_or_404(Course, slug=self.kwargs["slug"])
+        denied = _check_course_ownership(request, course)
+        if denied:
+            return denied
+        return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
         return get_object_or_404(MCQuestion, pk=self.kwargs["pk"])

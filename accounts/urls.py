@@ -10,6 +10,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from . import views_frontend
+from . import views_parent
 from . import views_api
 
 
@@ -99,6 +100,27 @@ frontend_urlpatterns = [
     path('2fa/setup/', views_frontend.setup_2fa, name='setup_2fa'),
     path('2fa/disable/', views_frontend.disable_2fa, name='disable_2fa'),
     path('2fa/manage/', views_frontend.manage_2fa, name='manage_2fa'),
+
+    # Parent Portal
+    path('parent/dashboard/', views_parent.parent_dashboard, name='parent_dashboard'),
+    path('parent/select-child/<int:student_id>/', views_parent.parent_select_child, name='parent_select_child'),
+    path('parent/grades/', views_parent.parent_child_grades, name='parent_child_grades'),
+    path('parent/attendance/', views_parent.parent_child_attendance, name='parent_child_attendance'),
+    path('parent/timetable/', views_parent.parent_child_timetable, name='parent_child_timetable'),
+    path('parent/invoices/', views_parent.parent_child_invoices, name='parent_child_invoices'),
+    path('parent/payments/', views_parent.parent_child_payment_history, name='parent_child_payment_history'),
+    path('parent/pay/<int:invoice_id>/', views_parent.parent_make_payment, name='parent_make_payment'),
+    path('parent/messages/', views_parent.parent_messages_inbox, name='parent_messages_inbox'),
+    path('parent/messages/compose/', views_parent.parent_messages_compose, name='parent_messages_compose'),
+    path('parent/messages/<int:message_id>/', views_parent.parent_messages_thread, name='parent_messages_thread'),
+    path('parent/appointments/', views_parent.parent_appointments, name='parent_appointments'),
+    path('parent/appointments/request/', views_parent.parent_appointment_request, name='parent_appointment_request'),
+    path('parent/discipline/', views_parent.parent_disciplinary_records, name='parent_disciplinary_records'),
+    path('parent/discipline/<int:action_id>/acknowledge/', views_parent.parent_acknowledge_discipline, name='parent_acknowledge_discipline'),
+    path('parent/permission-slips/', views_parent.parent_permission_slips, name='parent_permission_slips'),
+    path('parent/permission-slips/<int:slip_id>/sign/', views_parent.parent_sign_permission_slip, name='parent_sign_permission_slip'),
+    path('parent/events/', views_parent.parent_events, name='parent_events'),
+    path('parent/events/<int:event_id>/', views_parent.parent_event_detail, name='parent_event_detail'),
 ]
 
 

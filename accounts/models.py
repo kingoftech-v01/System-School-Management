@@ -360,7 +360,9 @@ class Parent(models.Model):
     only view their connected students information
     """
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='parent_profiles'
+    )
     student = models.ForeignKey(
         Student, null=True, on_delete=models.SET_NULL, related_name='parents'
     )
@@ -456,3 +458,164 @@ class InvitationCode(models.Model):
             code = f"{raw[:4]}-{raw[4:]}"
             if not cls.objects.filter(code=code).exists():
                 return code
+
+
+# ============================================================================
+# Parent Portal Models
+# ============================================================================
+
+APPOINTMENT_STATUS_CHOICES = (
+    ('requested', _('Requested')),
+    ('confirmed', _('Confirmed')),
+    ('cancelled', _('Cancelled')),
+    ('completed', _('Completed')),
+)
+
+PERMISSION_SLIP_STATUS_CHOICES = (
+    ('pending', _('Pending')),
+    ('signed', _('Signed')),
+    ('declined', _('Declined')),
+    ('expired', _('Expired')),
+)
+
+
+class ParentTeacherMessage(models.Model):
+    """Messages between parents and teachers, scoped to a specific child."""
+
+    sender = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='sent_pt_messages'
+    )
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='received_pt_messages'
+    )
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name='parent_teacher_messages',
+        help_text=_('The child this message is about')
+    )
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    parent_initiated = models.BooleanField(
+        default=True,
+        help_text=_('True if parent sent, False if teacher sent')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Parent-Teacher Message')
+        verbose_name_plural = _('Parent-Teacher Messages')
+
+    def __str__(self):
+        return f"{self.sender} → {self.recipient}: {self.subject}"
+
+    def mark_read(self):
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=['is_read', 'read_at'])
+
+
+class ParentTeacherAppointment(models.Model):
+    """Appointments between parents and teachers."""
+
+    TIME_SLOT_CHOICES = (
+        ('08:00-08:30', '08:00 - 08:30'),
+        ('08:30-09:00', '08:30 - 09:00'),
+        ('09:00-09:30', '09:00 - 09:30'),
+        ('09:30-10:00', '09:30 - 10:00'),
+        ('10:00-10:30', '10:00 - 10:30'),
+        ('10:30-11:00', '10:30 - 11:00'),
+        ('11:00-11:30', '11:00 - 11:30'),
+        ('11:30-12:00', '11:30 - 12:00'),
+        ('13:00-13:30', '13:00 - 13:30'),
+        ('13:30-14:00', '13:30 - 14:00'),
+        ('14:00-14:30', '14:00 - 14:30'),
+        ('14:30-15:00', '14:30 - 15:00'),
+        ('15:00-15:30', '15:00 - 15:30'),
+        ('15:30-16:00', '15:30 - 16:00'),
+    )
+
+    parent = models.ForeignKey(
+        Parent, on_delete=models.CASCADE, related_name='appointments'
+    )
+    teacher = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='teacher_appointments',
+        limit_choices_to={'role': 'professor'}
+    )
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name='parent_appointments'
+    )
+    date = models.DateField()
+    time_slot = models.CharField(max_length=20, choices=TIME_SLOT_CHOICES)
+    status = models.CharField(
+        max_length=20, choices=APPOINTMENT_STATUS_CHOICES, default='requested'
+    )
+    reason = models.TextField(help_text=_('Reason for the appointment'))
+    notes = models.TextField(
+        blank=True,
+        help_text=_('Teacher notes after the meeting')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', 'time_slot']
+        verbose_name = _('Parent-Teacher Appointment')
+        verbose_name_plural = _('Parent-Teacher Appointments')
+        unique_together = ['teacher', 'date', 'time_slot']
+
+    def __str__(self):
+        return f"{self.parent} ↔ {self.teacher} on {self.date} {self.time_slot}"
+
+
+class PermissionSlip(models.Model):
+    """Permission slips that need parent signature."""
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name='permission_slips'
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='created_permission_slips',
+        help_text=_('Staff member who created this slip')
+    )
+    deadline = models.DateField()
+    status = models.CharField(
+        max_length=20, choices=PERMISSION_SLIP_STATUS_CHOICES, default='pending'
+    )
+    signed_by = models.ForeignKey(
+        Parent, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='signed_slips'
+    )
+    signed_at = models.DateTimeField(null=True, blank=True)
+    parent_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Permission Slip')
+        verbose_name_plural = _('Permission Slips')
+
+    def __str__(self):
+        return f"{self.title} - {self.student} ({self.get_status_display()})"
+
+    @property
+    def is_expired(self):
+        return self.status == 'pending' and self.deadline < timezone.now().date()
+
+    def sign(self, parent, notes=''):
+        self.signed_by = parent
+        self.signed_at = timezone.now()
+        self.status = 'signed'
+        self.parent_notes = notes
+        self.save(update_fields=['signed_by', 'signed_at', 'status', 'parent_notes'])
+
+    def decline(self, parent, notes=''):
+        self.signed_by = parent
+        self.signed_at = timezone.now()
+        self.status = 'declined'
+        self.parent_notes = notes
+        self.save(update_fields=['signed_by', 'signed_at', 'status', 'parent_notes'])

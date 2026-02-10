@@ -1,0 +1,59 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">{{ page_title }}</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:accounts:parent_dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Payment History</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    {% include 'parent/_child_selector.html' %}
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title mb-0">Payment History</h4>
+        </div>
+        <div class="card-body">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>Date</th><th>Invoice</th><th>Amount</th><th>Gateway</th><th>Transaction ID</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for p in payments %}
+                        <tr>
+                            <td>{{ p.payment_date|date:"M d, Y" }}</td>
+                            <td>{{ p.invoice.invoice_code }}</td>
+                            <td>{{ p.amount|floatformat:2 }}</td>
+                            <td>{{ p.payment_gateway }}</td>
+                            <td><code>{{ p.transaction_id|default:"-" }}</code></td>
+                            <td><span class="badge bg-success">{{ p.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if payments.has_other_pages %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if payments.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ payments.previous_page_number }}">Previous</a></li>{% endif %}
+                    {% for num in payments.paginator.page_range %}
+                    <li class="page-item {% if payments.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endfor %}
+                    {% if payments.has_next %}<li class="page-item"><a class="page-link" href="?page={{ payments.next_page_number }}">Next</a></li>{% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <p class="text-muted text-center py-4">No payment records found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -83,7 +83,12 @@ def add_score_for(request, id):
         courses = Course.objects.filter(
             allocated_course__lecturer__pk=request.user.id
         ).filter(semester=current_semester)
-        course = Course.objects.get(pk=id)
+        course = get_object_or_404(Course, pk=id)
+
+        # Verify the lecturer is allocated to this course
+        if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+            messages.error(request, "You are not authorized to grade this course.")
+            return redirect("frontend:result:add_score")
         # myclass = Class.objects.get(lecturer__pk=request.user.id)
         # myclass = get_object_or_404(Class, lecturer__pk=request.user.id)
 
@@ -111,6 +116,12 @@ def add_score_for(request, id):
         return render(request, "result/add_score_for.html", context)
 
     if request.method == "POST":
+        # Verify the lecturer is allocated to this course
+        course = get_object_or_404(Course, pk=id)
+        if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+            messages.error(request, "You are not authorized to grade this course.")
+            return redirect("frontend:result:add_score")
+
         ids = ()
         data = request.POST.copy()
         data.pop("csrfmiddlewaretoken", None)  # remove csrf_token
@@ -280,10 +291,14 @@ def assessment_result(request):
 @login_required
 @lecturer_required
 def result_sheet_pdf_view(request, id):
+    course = get_object_or_404(Course, id=id)
+    # Verify the lecturer is allocated to this course
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to view results for this course.")
+        return redirect("frontend:result:add_score")
     current_semester = Semester.objects.get(is_current_semester=True)
     current_session = Session.objects.get(is_current_session=True)
     result = TakenCourse.objects.filter(course__pk=id)
-    course = get_object_or_404(Course, id=id)
     no_of_pass = TakenCourse.objects.filter(course__pk=id, comment="PASS").count()
     no_of_fail = TakenCourse.objects.filter(course__pk=id, comment="FAIL").count()
     fname = (

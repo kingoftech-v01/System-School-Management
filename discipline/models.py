@@ -40,6 +40,17 @@ class DisciplinaryAction(models.Model):
         related_name='discipline_updates'
     )
 
+    # Parent acknowledgment fields
+    parent_acknowledged = models.BooleanField(
+        default=False, verbose_name=_('Parent Acknowledged')
+    )
+    parent_acknowledged_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=_('Acknowledged At')
+    )
+    parent_response = models.TextField(
+        blank=True, verbose_name=_('Parent Response')
+    )
+
     class Meta:
         ordering = ['-incident_date']
         verbose_name = _('Disciplinary Action')

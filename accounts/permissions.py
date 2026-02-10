@@ -82,3 +82,30 @@ class IsProfessorUser(permissions.BasePermission):
             request.user.is_lecturer or
             getattr(request.user, 'is_professor', False)
         )
+
+
+class IsParentUser(permissions.BasePermission):
+    """
+    Permission to check if user is a parent.
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and (
+            request.user.is_staff or
+            getattr(request.user, 'is_parent', False) or
+            getattr(request.user, 'role', '') == 'parent'
+        )
+
+
+class IsStudentOrParent(permissions.BasePermission):
+    """
+    Permission for views accessible to students and parents (e.g., invoices).
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.user.is_staff or request.user.is_superuser:
+            return True
+        return (
+            getattr(request.user, 'is_student', False) or
+            getattr(request.user, 'is_parent', False)
+        )

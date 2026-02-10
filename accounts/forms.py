@@ -816,3 +816,119 @@ class ForcePasswordResetForm(forms.Form):
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("Passwords do not match.")
         return cleaned_data
+
+
+# ============================================================================
+# Parent Portal Forms
+# ============================================================================
+
+class ParentMessageForm(forms.Form):
+    """Form for parents to send messages to teachers."""
+
+    recipient = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Teacher",
+    )
+    subject = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Subject"}),
+    )
+    body = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 5, "placeholder": "Your message..."}),
+    )
+
+    def __init__(self, *args, student=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if student:
+            from course.models import CourseAllocation
+            lecturer_ids = CourseAllocation.objects.filter(
+                courses__program=student.program
+            ).values_list('lecturer_id', flat=True).distinct()
+            self.fields['recipient'].queryset = User.objects.filter(
+                pk__in=lecturer_ids
+            ).order_by('last_name', 'first_name')
+
+
+class AppointmentRequestForm(forms.Form):
+    """Form for parents to request appointments with teachers."""
+
+    teacher = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Teacher",
+    )
+    preferred_date = forms.DateField(
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        label="Preferred Date",
+    )
+    preferred_time = forms.ChoiceField(
+        choices=[
+            ('08:00-08:30', '08:00 - 08:30'),
+            ('08:30-09:00', '08:30 - 09:00'),
+            ('09:00-09:30', '09:00 - 09:30'),
+            ('09:30-10:00', '09:30 - 10:00'),
+            ('10:00-10:30', '10:00 - 10:30'),
+            ('10:30-11:00', '10:30 - 11:00'),
+            ('11:00-11:30', '11:00 - 11:30'),
+            ('11:30-12:00', '11:30 - 12:00'),
+            ('13:00-13:30', '13:00 - 13:30'),
+            ('13:30-14:00', '13:30 - 14:00'),
+            ('14:00-14:30', '14:00 - 14:30'),
+            ('14:30-15:00', '14:30 - 15:00'),
+            ('15:00-15:30', '15:00 - 15:30'),
+            ('15:30-16:00', '15:30 - 16:00'),
+        ],
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Preferred Time Slot",
+    )
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Reason for the meeting..."}),
+    )
+
+    def __init__(self, *args, student=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if student:
+            from course.models import CourseAllocation
+            lecturer_ids = CourseAllocation.objects.filter(
+                courses__program=student.program
+            ).values_list('lecturer_id', flat=True).distinct()
+            self.fields['teacher'].queryset = User.objects.filter(
+                pk__in=lecturer_ids
+            ).order_by('last_name', 'first_name')
+
+
+class DisciplineAcknowledgmentForm(forms.Form):
+    """Form for parents to acknowledge disciplinary actions."""
+
+    response = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control", "rows": 4,
+            "placeholder": "Your response (optional)..."
+        }),
+        label="Response",
+    )
+
+
+class PermissionSlipSignForm(forms.Form):
+    """Form for parents to sign or decline permission slips."""
+
+    ACTION_CHOICES = [
+        ('sign', 'Sign / Approve'),
+        ('decline', 'Decline'),
+    ]
+
+    action = forms.ChoiceField(
+        choices=ACTION_CHOICES,
+        widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+        label="Your Decision",
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control", "rows": 3,
+            "placeholder": "Additional notes (optional)..."
+        }),
+        label="Notes",
+    )

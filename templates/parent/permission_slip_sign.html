@@ -1,0 +1,62 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">{{ page_title }}</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:accounts:parent_dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:accounts:parent_permission_slips' %}">Permission Slips</a></li>
+        <li class="breadcrumb-item active">Sign</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">{{ slip.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <p>{{ slip.description }}</p>
+                    <div class="d-flex gap-3 text-muted">
+                        <span><i class="bi bi-calendar me-1"></i>Deadline: {{ slip.deadline|date:"M d, Y" }}</span>
+                        <span><i class="bi bi-person me-1"></i>Created by: {{ slip.created_by.get_full_name }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Your Decision</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {% for choice in form.action %}
+                            <div class="form-check mb-2">
+                                {{ choice.tag }}
+                                <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                            </div>
+                            {% endfor %}
+                            {% if form.action.errors %}<div class="invalid-feedback d-block">{{ form.action.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}<div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <a href="{% url 'frontend:accounts:parent_permission_slips' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

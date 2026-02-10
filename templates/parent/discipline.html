@@ -1,0 +1,78 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">{{ page_title }}</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:accounts:parent_dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Discipline</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    {% include 'parent/_child_selector.html' %}
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title mb-0">Disciplinary Records</h4>
+        </div>
+        <div class="card-body">
+            {% if records %}
+            {% for rec in records %}
+            <div class="card mb-3 {% if not rec.parent_acknowledged %}border-warning{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="mb-1">{{ rec.incident_type }}</h5>
+                            <small class="text-muted">{{ rec.incident_date|date:"M d, Y" }}</small>
+                        </div>
+                        <div>
+                            <span class="badge
+                                {% if rec.severity == 'minor' %}bg-info
+                                {% elif rec.severity == 'moderate' %}bg-warning
+                                {% elif rec.severity == 'serious' %}bg-danger
+                                {% else %}bg-dark{% endif %}">
+                                {{ rec.get_severity_display }}
+                            </span>
+                            {% if rec.parent_acknowledged %}
+                            <span class="badge bg-success ms-1">Acknowledged</span>
+                            {% else %}
+                            <span class="badge bg-warning ms-1">Pending</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p class="mb-2">{{ rec.description }}</p>
+                    <p class="mb-2"><strong>Action Taken:</strong> {{ rec.action_taken }}</p>
+                    {% if rec.parent_response %}
+                    <div class="alert alert-info mt-2 mb-0">
+                        <strong>Your Response:</strong> {{ rec.parent_response }}
+                    </div>
+                    {% endif %}
+                    {% if not rec.parent_acknowledged %}
+                    <a href="{% url 'frontend:accounts:parent_acknowledge_discipline' rec.pk %}" class="btn btn-sm btn-warning mt-2">
+                        <i class="bi bi-check-circle me-1"></i>Acknowledge
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% if records.has_other_pages %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if records.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ records.previous_page_number }}">Previous</a></li>{% endif %}
+                    {% for num in records.paginator.page_range %}
+                    <li class="page-item {% if records.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endfor %}
+                    {% if records.has_next %}<li class="page-item"><a class="page-link" href="?page={{ records.next_page_number }}">Next</a></li>{% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <p class="text-muted text-center py-4">No disciplinary records found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

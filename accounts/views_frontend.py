@@ -53,6 +53,7 @@ def render_to_pdf(template_name, context):
 # ########################################################
 
 
+@login_required
 def validate_username(request):
     username = request.GET.get("username", None)
     data = {"is_taken": User.objects.filter(username__iexact=username).exists()}
@@ -1084,10 +1085,11 @@ def student_activate(request):
             # Generate 6-digit verification code
             code = f"{random.randint(0, 999999):06d}"
 
-            # Store in session
+            # Store in session with timestamp for expiry
             request.session["activation_student_id"] = student.pk
             request.session["activation_code"] = code
             request.session["activation_attempts"] = 0
+            request.session["activation_timestamp"] = timezone.now().isoformat()
 
             # Send code to parent(s) email
             parents = Parent.objects.filter(student=student)
@@ -1160,6 +1162,25 @@ def student_verify_parent(request):
         messages.error(request, "Please start the activation process from the beginning.")
         return redirect("frontend:accounts:student_activate")
 
+    # Check session expiry (15 minutes)
+    timestamp_str = request.session.get("activation_timestamp")
+    if timestamp_str:
+        try:
+            created_at = timezone.datetime.fromisoformat(timestamp_str)
+            if timezone.is_naive(created_at):
+                created_at = timezone.make_aware(created_at)
+            expiry_minutes = getattr(django_settings, "STUDENT_VERIFICATION_CODE_EXPIRY_MINUTES", 15)
+            if timezone.now() > created_at + timedelta(minutes=expiry_minutes):
+                for key in [
+                    "activation_student_id", "activation_code",
+                    "activation_attempts", "activation_verified", "activation_timestamp",
+                ]:
+                    request.session.pop(key, None)
+                messages.error(request, "Your verification code has expired. Please start over.")
+                return redirect("frontend:accounts:student_activate")
+        except (ValueError, TypeError):
+            pass
+
     if request.method == "POST":
         form = StudentVerifyParentForm(request.POST)
         if form.is_valid():
@@ -1178,6 +1199,7 @@ def student_verify_parent(request):
                     for key in [
                         "activation_student_id", "activation_code",
                         "activation_attempts", "activation_verified",
+                        "activation_timestamp",
                     ]:
                         request.session.pop(key, None)
                     messages.error(
@@ -1211,6 +1233,25 @@ def student_set_password(request):
         messages.error(request, "Please complete the verification step first.")
         return redirect("frontend:accounts:student_activate")
 
+    # Check session expiry (15 minutes)
+    timestamp_str = request.session.get("activation_timestamp")
+    if timestamp_str:
+        try:
+            created_at = timezone.datetime.fromisoformat(timestamp_str)
+            if timezone.is_naive(created_at):
+                created_at = timezone.make_aware(created_at)
+            expiry_minutes = getattr(django_settings, "STUDENT_VERIFICATION_CODE_EXPIRY_MINUTES", 15)
+            if timezone.now() > created_at + timedelta(minutes=expiry_minutes):
+                for key in [
+                    "activation_student_id", "activation_code",
+                    "activation_attempts", "activation_verified", "activation_timestamp",
+                ]:
+                    request.session.pop(key, None)
+                messages.error(request, "Your session has expired. Please start the activation process again.")
+                return redirect("frontend:accounts:student_activate")
+        except (ValueError, TypeError):
+            pass
+
     student = get_object_or_404(Student, pk=student_id)
     user = student.student
 
@@ -1238,6 +1279,7 @@ def student_set_password(request):
             for key in [
                 "activation_student_id", "activation_code",
                 "activation_attempts", "activation_verified",
+                "activation_timestamp",
             ]:
                 request.session.pop(key, None)
 

@@ -70,6 +70,15 @@ def stripe_charge(request):
     if request.method == "POST":
         invoice_code = request.session.get("invoice_session")
         invoice = get_object_or_404(Invoice, invoice_code=invoice_code)
+        # Verify the user owns this invoice or is a parent of the student
+        if invoice.user != request.user and not request.user.is_superuser:
+            from accounts.models import Parent
+            is_parent_of_student = Parent.objects.filter(
+                user=request.user, student__student=invoice.user
+            ).exists()
+            if not is_parent_of_student:
+                messages.error(request, "You are not authorized to pay this invoice.")
+                return redirect("frontend:payments:student_invoices")
         amount = int(invoice.amount * 100) if invoice.amount else 0
         charge = stripe.Charge.create(
             amount=amount,
