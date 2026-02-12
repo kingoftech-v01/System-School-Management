@@ -58,7 +58,8 @@
 			<ul aria-expanded="false">
 				<li><a href="{% url 'frontend:accounts:parent_child_grades' %}">Grades & Results</a></li>
 				<li><a href="{% url 'frontend:accounts:parent_child_attendance' %}">Attendance</a></li>
-				<li><a href="{% url 'frontend:accounts:parent_child_timetable' %}">Timetable</a></li>
+				<li><a href="{% url 'frontend:scheduling:parent_child_timetable' %}">Timetable</a></li>
+				<li><a href="{% url 'frontend:scheduling:schedule_calendar' %}">Calendar</a></li>
 			</ul>
 		</li>
 		<!-- Child Financial -->
@@ -138,6 +139,39 @@
 		{% endif %}
 
 		{% if not is_parent %}
+		<li class="menu-title">SCHEDULE</li>
+		<!-- Schedule Calendar -->
+		<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="3.667" y="3.667" width="14.667" height="16.5" rx="2" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M14.667 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M7.333 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M3.667 9.167H18.333" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Schedule</span>
+		</a>
+			<ul aria-expanded="false">
+				<li><a href="{% url 'frontend:scheduling:schedule_calendar' %}">Calendar</a></li>
+				<li><a href="{% url 'frontend:scheduling:my_schedule' %}">My Schedule</a></li>
+				{% if is_professor %}
+				<li><a href="{% url 'frontend:scheduling:professor_schedule' %}">Teaching Schedule</a></li>
+				<li><a href="{% url 'frontend:scheduling:my_substitution_requests' %}">My Substitutions</a></li>
+				{% endif %}
+				{% if is_direction or is_secretary or is_admin %}
+				<li><a href="{% url 'frontend:scheduling:schedule_editor' %}">Schedule Editor</a></li>
+				<li><a href="{% url 'frontend:scheduling:room_list' %}">Rooms</a></li>
+				<li><a href="{% url 'frontend:scheduling:timeslot_config' %}">Time Slots</a></li>
+				<li><a href="{% url 'frontend:scheduling:timetable_wizard_step1' %}">Auto-Generate</a></li>
+				<li><a href="{% url 'frontend:scheduling:conflict_list' %}">Conflicts</a></li>
+				<li><a href="{% url 'frontend:scheduling:substitution_list' %}">Substitutions</a></li>
+				<li><a href="{% url 'frontend:scheduling:room_utilization_report' %}">Utilization Report</a></li>
+				<li><a href="{% url 'frontend:scheduling:export_timetable_pdf' %}">Export PDF</a></li>
+				{% endif %}
+			</ul>
+		</li>
+
 		<li class="menu-title">ACADEMIC</li>
 			<!-- Students -->
 			{% if is_professor or is_direction or is_secretary or is_admin or is_prefet or is_accountant %}
@@ -625,6 +659,27 @@
 			</li>
 			{% endif %}
 			{% endif %}{# end if not is_parent and not is_prefet for analytics #}
+
+			{% if is_direction or is_admin %}
+			<!-- Anomaly Detection -->
+			<li class="menu-title">SECURITY</li>
+			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+				<div class="menu-icon">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M11 1.833L2.75 5.5V10.083C2.75 15.18 6.27 19.943 11 20.167C15.73 19.943 19.25 15.18 19.25 10.083V5.5L11 1.833Z" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M11 7.333V11" stroke="#888888" stroke-linecap="round"/>
+						<circle cx="11" cy="14.667" r="0.5" fill="#888888"/>
+					</svg>
+				</div>
+				<span class="nav-text">Anomaly Detection</span>
+				{% if anomaly_alert_count %}<span class="badge badge-danger badge-sm float-end">{{ anomaly_alert_count }}</span>{% endif %}
+			</a>
+				<ul aria-expanded="false">
+					<li><a href="{% url 'frontend:anomaly_detection:dashboard' %}">Dashboard</a></li>
+					<li><a href="{% url 'frontend:anomaly_detection:alert_list' %}">All Alerts</a></li>
+				</ul>
+			</li>
+			{% endif %}
 
 			<li class="menu-title">SETTINGS</li>
 			<!-- Settings -->

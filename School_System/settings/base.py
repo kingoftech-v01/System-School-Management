@@ -123,6 +123,12 @@ TENANT_APPS = [
     'grading',
     'analytics',
     'dailystat',
+
+    # Scheduling & Timetable
+    'scheduling',
+
+    # Anomaly Detection
+    'anomaly_detection',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -203,6 +209,7 @@ TEMPLATES = [
                 'accounts.context_processors.app_settings_context',
                 'accounts.context_processors.navigation_context',
                 'accounts.context_processors.permissions_context',
+                'anomaly_detection.context_processors.anomaly_alert_count',
                 'custom_context_processor.dz_static',
             ],
         },
@@ -354,14 +361,12 @@ STUDENT_VERIFICATION_MAX_ATTEMPTS = 3
 # DJANGO-ALLAUTH CONFIGURATION
 # ==============================================================================
 
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+ACCOUNT_RATE_LIMITS = {"login_failed": "5/5m"}
 
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
@@ -431,7 +436,7 @@ if not DEBUG:
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1  # hours
 AXES_LOCK_OUT_AT_FAILURE = True
-AXES_USE_USER_AGENT = True
+AXES_LOCKOUT_PARAMETERS = [["ip_address", "user_agent"]]
 AXES_LOCKOUT_TEMPLATE = 'accounts/account_locked.html'
 AXES_RESET_ON_SUCCESS = True
 AXES_NEVER_LOCKOUT_WHITELIST = []

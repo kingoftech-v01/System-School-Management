@@ -74,6 +74,12 @@ frontend_urlpatterns = [
 
     # Search
     path('search/', include((_get('search.urls'), 'search'))),
+
+    # Scheduling & Timetable
+    path('scheduling/', include((_get('scheduling.urls'), 'scheduling'))),
+
+    # Anomaly Detection
+    path('anomaly/', include((_get('anomaly_detection.urls'), 'anomaly_detection'))),
 ]
 
 
@@ -106,6 +112,8 @@ api_v1_urlpatterns = [
     path('payments/', include((_get('payments.urls', 'api_urlpatterns'), 'payments'))),
     path('search/', include((_get('search.urls', 'api_urlpatterns'), 'search'))),
     path('dailystat/', include((_get('dailystat.urls', 'api_urlpatterns'), 'dailystat'))),
+    path('scheduling/', include((_get('scheduling.urls', 'api_urlpatterns'), 'scheduling'))),
+    path('anomaly/', include((_get('anomaly_detection.urls', 'api_urlpatterns'), 'anomaly_detection'))),
 ]
 
 
