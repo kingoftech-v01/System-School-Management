@@ -2,6 +2,8 @@
 Forms for student enrollment and registration.
 """
 
+import os
+
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
@@ -250,7 +252,6 @@ class DocumentUploadForm(forms.ModelForm):
 
     def clean_file(self):
         """Validate file size (max 10MB) and file type."""
-        import os
         file = self.cleaned_data.get('file')
         if file:
             if file.size > 10 * 1024 * 1024:  # 10MB

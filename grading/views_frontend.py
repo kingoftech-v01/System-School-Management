@@ -411,7 +411,8 @@ def grade_entry_detail(request, pk):
         base_qs = base_qs.filter(student__student=request.user)
     elif request.user.role in ('lecturer', 'professor'):
         base_qs = base_qs.filter(graded_by=request.user)
-    # direction/admin can see all -- no filter needed
+    elif request.user.role not in ('secretary', 'direction', 'admin') and not request.user.is_superuser:
+        base_qs = base_qs.none()
 
     grade = get_object_or_404(base_qs, pk=pk)
 

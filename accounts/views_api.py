@@ -11,6 +11,8 @@ This module provides API endpoints for:
 API URL namespace: api:v1:accounts:resource-name
 """
 
+import re
+
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from rest_framework import viewsets, status, filters
@@ -153,7 +155,6 @@ class ValidateUsernameAPIView(APIView):
                 {'valid': False, 'message': 'Username must be at least 3 characters.'}
             )
 
-        import re
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
             return Response(
                 {'valid': False, 'message': 'Username can only contain letters, numbers, and underscores.'}

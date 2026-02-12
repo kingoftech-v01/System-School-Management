@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import RegistrationForm, EnrollmentDocument, EnrollmentStatusHistory
@@ -72,7 +73,6 @@ class RegistrationFormViewSet(viewsets.ModelViewSet):
             user = self.request.user
             if not (hasattr(user, 'role') and user.role in ('direction', 'admin', 'secretary')):
                 # Filter by user FK where available, fall back to email
-                from django.db.models import Q
                 queryset = queryset.filter(
                     Q(enrolled_user=user) | Q(email=user.email)
                 )

@@ -181,25 +181,31 @@ def add_score_for(request, id):
             obj.save()
 
             # Create audit trail entry
-            GradeHistory.objects.create(
-                taken_course=obj,
-                old_assignment=old_assignment,
-                old_mid_exam=old_mid_exam,
-                old_quiz=old_quiz,
-                old_attendance=old_attendance,
-                old_final_exam=old_final_exam,
-                old_total=old_total,
-                old_grade=old_grade,
-                new_assignment=obj.assignment,
-                new_mid_exam=obj.mid_exam,
-                new_quiz=obj.quiz,
-                new_attendance=obj.attendance,
-                new_final_exam=obj.final_exam,
-                new_total=obj.total,
-                new_grade=obj.grade,
-                changed_by=request.user,
-                change_reason='Score entry via add_score_for',
-            )
+            try:
+                GradeHistory.objects.create(
+                    taken_course=obj,
+                    old_assignment=old_assignment,
+                    old_mid_exam=old_mid_exam,
+                    old_quiz=old_quiz,
+                    old_attendance=old_attendance,
+                    old_final_exam=old_final_exam,
+                    old_total=old_total,
+                    old_grade=old_grade,
+                    new_assignment=obj.assignment,
+                    new_mid_exam=obj.mid_exam,
+                    new_quiz=obj.quiz,
+                    new_attendance=obj.attendance,
+                    new_final_exam=obj.final_exam,
+                    new_total=obj.total,
+                    new_grade=obj.grade,
+                    changed_by=request.user,
+                    change_reason='Score entry via add_score_for',
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).error(
+                    "Failed to create GradeHistory for TakenCourse %s", obj.pk, exc_info=True
+                )
             gpa = obj.calculate_gpa()
             cgpa = obj.calculate_cgpa()
 

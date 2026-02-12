@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -356,7 +356,6 @@ class PaymentVerification(models.Model):
 
     def verify(self, user, notes=''):
         """Verify the payment atomically."""
-        from django.db import transaction
         with transaction.atomic():
             self.verification_status = 'verified'
             self.verified_by = user
@@ -370,7 +369,6 @@ class PaymentVerification(models.Model):
 
     def reject(self, user, notes=''):
         """Reject the payment atomically."""
-        from django.db import transaction
         with transaction.atomic():
             self.verification_status = 'rejected'
             self.verified_by = user

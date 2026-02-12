@@ -11,6 +11,8 @@ from django.views.generic.base import TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Q
 
 from accounts.decorators import direction_only, accountant_allowed, student_required
 
@@ -21,7 +23,7 @@ try:
 except ImportError:
     GOPAY_AVAILABLE = False
 
-from .models import Invoice
+from .models import Invoice, Payment, FeeStructure
 
 
 @login_required
@@ -125,7 +127,6 @@ def stripe_charge(request):
             )
 
             if charge.status == "succeeded":
-                from django.db import transaction
                 with transaction.atomic():
                     invoice.payment_complete = True
                     invoice.save()
@@ -144,7 +145,7 @@ def stripe_charge(request):
                 return redirect("frontend:payments:payment_gateways")
 
         except stripe.error.CardError as e:
-            messages.error(request, _(f"Card error: {e.user_message}"))
+            messages.error(request, _("Card error: %(msg)s") % {"msg": e.user_message})
             return redirect("frontend:payments:payment_gateways")
         except stripe.error.StripeError:
             messages.error(request, _("Payment processing error. Please try again."))
@@ -232,7 +233,7 @@ def paymentComplete(request):
         invoice_id = request.session.get("invoice_session")
         if not invoice_id:
             return JsonResponse({"error": "No invoice session found."}, status=400)
-        invoice = get_object_or_404(Invoice, id=invoice_id)
+        invoice = get_object_or_404(Invoice, invoice_code=invoice_id)
         # Verify the user owns this invoice or is a parent of the student
         if invoice.user != request.user and not request.user.is_superuser:
             from accounts.models import Parent
@@ -311,7 +312,6 @@ def invoice_detail(request, slug):
 # Fee Structure CRUD (direction only)
 # ============================================================================
 
-from .models import FeeStructure, Payment
 from .forms import FeeStructureForm
 
 
@@ -333,7 +333,6 @@ def fee_structure_list(request):
     # Search by academic year or program
     search = request.GET.get('search', '').strip()
     if search:
-        from django.db.models import Q
         fee_structures = fee_structures.filter(
             Q(academic_year__icontains=search) |
             Q(program__title__icontains=search)
