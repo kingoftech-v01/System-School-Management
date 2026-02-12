@@ -19,6 +19,9 @@ class RegistrationFormSerializer(serializers.ModelSerializer):
     """
     Full serializer for registration forms.
     """
+    student_full_name = serializers.CharField(read_only=True)
+    parent_full_name = serializers.CharField(read_only=True)
+    full_address = serializers.CharField(read_only=True)
     filiere_name = serializers.CharField(source='filiere.name', read_only=True, allow_null=True)
     reviewed_by_name = serializers.CharField(
         source='reviewed_by.get_full_name',
@@ -32,9 +35,17 @@ class RegistrationFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistrationForm
         fields = [
-            'id', 'tenant', 'student_name', 'date_of_birth', 'gender', 'gender_display',
-            'nationality', 'email', 'phone', 'address', 'parent_name', 'parent_email',
-            'parent_phone', 'parent_relationship', 'filiere', 'filiere_name',
+            'id', 'tenant',
+            'student_first_name', 'student_middle_name', 'student_last_name',
+            'student_full_name',
+            'date_of_birth', 'gender', 'gender_display',
+            'nationality', 'email', 'phone',
+            'street_address', 'city', 'province', 'country', 'postal_code',
+            'full_address',
+            'parent_first_name', 'parent_middle_name', 'parent_last_name',
+            'parent_full_name',
+            'parent_email', 'parent_phone', 'parent_relationship',
+            'filiere', 'filiere_name',
             'academic_year', 'level', 'previous_school', 'enrollment_type',
             'enrollment_type_display', 'status', 'status_display', 'reviewed_by',
             'reviewed_by_name', 'review_notes', 'rejection_reason', 'created_at',
@@ -47,13 +58,15 @@ class RegistrationFormListSerializer(serializers.ModelSerializer):
     """
     Lightweight serializer for listing registration forms.
     """
+    student_full_name = serializers.CharField(read_only=True)
     filiere_name = serializers.CharField(source='filiere.name', read_only=True, allow_null=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = RegistrationForm
         fields = [
-            'id', 'student_name', 'email', 'filiere_name', 'academic_year',
+            'id', 'student_first_name', 'student_last_name', 'student_full_name',
+            'email', 'filiere_name', 'academic_year',
             'status', 'status_display', 'enrollment_type', 'created_at'
         ]
 
@@ -65,9 +78,12 @@ class RegistrationFormCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistrationForm
         fields = [
-            'student_name', 'date_of_birth', 'gender', 'nationality', 'email',
-            'phone', 'address', 'parent_name', 'parent_email', 'parent_phone',
-            'parent_relationship', 'filiere', 'academic_year', 'level',
+            'student_first_name', 'student_middle_name', 'student_last_name',
+            'date_of_birth', 'gender', 'nationality', 'email', 'phone',
+            'street_address', 'city', 'province', 'country', 'postal_code',
+            'parent_first_name', 'parent_middle_name', 'parent_last_name',
+            'parent_email', 'parent_phone', 'parent_relationship',
+            'filiere', 'academic_year', 'level',
             'previous_school', 'enrollment_type'
         ]
 
@@ -113,7 +129,7 @@ class EnrollmentDocumentSerializer(serializers.ModelSerializer):
     Serializer for enrollment documents.
     """
     registration_student_name = serializers.CharField(
-        source='registration.student_name',
+        source='registration.student_full_name',
         read_only=True
     )
     document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
@@ -186,7 +202,7 @@ class EnrollmentStatusHistorySerializer(serializers.ModelSerializer):
     Serializer for enrollment status history.
     """
     registration_student_name = serializers.CharField(
-        source='registration.student_name',
+        source='registration.student_full_name',
         read_only=True
     )
     changed_by_name = serializers.CharField(

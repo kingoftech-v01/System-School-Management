@@ -85,6 +85,7 @@ frontend_urlpatterns = [
     path('signup/student/password/', views_frontend.student_set_password, name='student_set_password'),
     path('signup/parent/', views_frontend.parent_invitation_step1, name='parent_invitation_step1'),
     path('signup/parent/complete/', views_frontend.parent_invitation_step2, name='parent_invitation_step2'),
+    path('signup/parent/new/', views_frontend.parent_self_signup, name='parent_self_signup'),
     path('signup/staff/', views_frontend.staff_invitation_step1, name='staff_invitation_step1'),
     path('signup/staff/complete/', views_frontend.staff_invitation_step2, name='staff_invitation_step2'),
     path('password/force-reset/', views_frontend.force_password_reset, name='force_password_reset'),

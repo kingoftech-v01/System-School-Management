@@ -13,7 +13,7 @@ ALLOWED_TAGS = {
 }
 
 ALLOWED_ATTRIBUTES = {
-    'a': {'href', 'target', 'rel'},
+    'a': {'href', 'target'},
     'img': {'src', 'alt', 'width', 'height'},
     'td': {'colspan', 'rowspan'},
     'th': {'colspan', 'rowspan'},

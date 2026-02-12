@@ -32,7 +32,7 @@ class UserMinimalSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         """Get user's full name."""
-        return obj.get_full_name() if hasattr(obj, 'get_full_name') else obj.username
+        return obj.get_full_name if hasattr(obj, 'get_full_name') else obj.username
 
 
 # ============================================================================
@@ -132,10 +132,17 @@ class DisciplinaryActionCreateSerializer(serializers.ModelSerializer):
 
     def validate_resolution_date(self, value):
         """Ensure resolution date is after incident date."""
+        from datetime import date as date_type
         incident_date = self.initial_data.get('incident_date')
 
-        if value and incident_date and value < incident_date:
-            raise serializers.ValidationError('Resolution date must be after incident date.')
+        if value and incident_date:
+            if isinstance(incident_date, str):
+                try:
+                    incident_date = date_type.fromisoformat(incident_date)
+                except (ValueError, TypeError):
+                    return value
+            if value < incident_date:
+                raise serializers.ValidationError('Resolution date must be after incident date.')
 
         return value
 

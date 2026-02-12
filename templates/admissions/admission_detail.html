@@ -75,7 +75,7 @@
                         </tr>
                         <tr>
                             <th class="text-muted">Address</th>
-                            <td>{{ application.address|default:"-" }}</td>
+                            <td>{{ application.full_address|default:"-" }}</td>
                         </tr>
                     </table>
                 </div>
@@ -126,7 +126,7 @@
                     <table class="table table-borderless">
                         <tr>
                             <th class="text-muted" style="width: 35%;">Guardian Name</th>
-                            <td>{{ application.guardian_name }}</td>
+                            <td>{{ application.guardian_full_name }}</td>
                         </tr>
                         <tr>
                             <th class="text-muted">Guardian Phone</th>

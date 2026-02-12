@@ -20,7 +20,7 @@ class NoticeViewSet(viewsets.ModelViewSet):
     lookup_field = 'pk'
 
     def get_queryset(self):
-        return Notice.objects.filter(tenant=self.request.tenant).select_related('uploaded_by')
+        return Notice.objects.all().select_related('uploaded_by')
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -30,7 +30,7 @@ class NoticeViewSet(viewsets.ModelViewSet):
         return NoticeSerializer
 
     def perform_create(self, serializer):
-        serializer.save(tenant=self.request.tenant, uploaded_by=self.request.user)
+        serializer.save(uploaded_by=self.request.user)
 
     @action(detail=False, methods=['get'])
     def active(self, request):

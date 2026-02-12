@@ -75,6 +75,7 @@ def analytics_dashboard(request):
             'recent_engagement': recent_engagement,
             'completions': completions,
             'avg_engagement': avg_engagement,
+            'total_courses': completions.count(),
         })
 
     elif request.user.role == 'lecturer':

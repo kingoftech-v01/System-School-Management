@@ -15,7 +15,7 @@ class UserMinimalSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'full_name']
         read_only_fields = fields
     def get_full_name(self, obj):
-        return obj.get_full_name() if hasattr(obj, 'get_full_name') else obj.username
+        return obj.get_full_name if hasattr(obj, 'get_full_name') else obj.username
 
 class NoticeSerializer(serializers.ModelSerializer):
     uploaded_by = UserMinimalSerializer(read_only=True)

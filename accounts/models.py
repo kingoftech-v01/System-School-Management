@@ -118,9 +118,14 @@ class User(AbstractUser):
     )
 
     # Profile fields
+    middle_name = models.CharField(max_length=100, blank=True, default='')
     gender = models.CharField(max_length=1, choices=GENDERS, blank=True, null=True)
     phone = models.CharField(max_length=60, blank=True, null=True)
     address = models.CharField(max_length=60, blank=True, null=True)
+    street_address = models.CharField(max_length=255, blank=True, default='')
+    city = models.CharField(max_length=100, blank=True, default='')
+    province = models.CharField(max_length=100, blank=True, default='')
+    postal_code = models.CharField(max_length=20, blank=True, default='')
     picture = models.ImageField(
         upload_to="profile_pictures/%y/%m/%d/", default="default.png", null=True
     )
@@ -184,8 +189,15 @@ class User(AbstractUser):
     def get_full_name(self):
         full_name = self.username
         if self.first_name and self.last_name:
-            full_name = self.first_name + " " + self.last_name
+            parts = [self.first_name, self.middle_name, self.last_name]
+            full_name = ' '.join(p for p in parts if p)
         return full_name
+
+    @property
+    def full_address(self):
+        parts = [self.street_address, self.city, self.province,
+                 str(self.country) if self.country else '', self.postal_code]
+        return ', '.join(p for p in parts if p)
 
     def __str__(self):
         return "{} ({})".format(self.username, self.get_full_name)

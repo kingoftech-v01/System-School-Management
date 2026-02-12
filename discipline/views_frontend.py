@@ -41,6 +41,10 @@ def disciplinary_action_list(request):
     elif resolved == 'false':
         actions = actions.filter(is_resolved=False)
 
+    # Summary stats (before pagination)
+    total_count = actions.count()
+    unresolved_count = actions.filter(is_resolved=False).count()
+
     # Pagination
     paginator = Paginator(actions, 25)
     page = request.GET.get('page')
@@ -48,6 +52,8 @@ def disciplinary_action_list(request):
 
     return render(request, 'discipline/action_list.html', {
         'actions': actions,
+        'total_count': total_count,
+        'unresolved_count': unresolved_count,
         'severity_choices': DisciplinaryAction.SEVERITY_CHOICES,
         'current_severity': severity,
         'current_search': search,

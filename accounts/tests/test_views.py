@@ -38,6 +38,9 @@ class RegisterViewTest(TestDataMixin, TestCase):
 class ValidateUsernameViewTest(TestDataMixin, TestCase):
     def setUp(self):
         self.client = Client()
+        # validate_username is @login_required, so we need an authenticated user
+        self.user = self.create_admin_user()
+        self.client.force_login(self.user)
 
     def test_username_available(self):
         response = self.client.get(

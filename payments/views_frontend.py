@@ -26,29 +26,59 @@ except ImportError:
 from .models import Invoice, Payment, FeeStructure
 
 
+def _get_invoice_context(request):
+    """Helper to build invoice context from session for payment views."""
+    invoice_code = request.session.get("invoice_session")
+    if not invoice_code:
+        return {"invoice": None, "amount": 0, "student_name": ""}
+    invoice = Invoice.objects.select_related('user', 'student', 'fee_structure').filter(
+        invoice_code=invoice_code
+    ).first()
+    if not invoice:
+        return {"invoice": None, "amount": 0, "student_name": ""}
+    return {
+        "invoice": invoice,
+        "amount": invoice.amount or 0,
+        "student_name": invoice.user.get_full_name if invoice.user else "",
+        "due_date": invoice.due_date,
+        "description": invoice.description or (str(invoice.fee_structure) if invoice.fee_structure else ""),
+    }
+
+
 @login_required
 def payment_paypal(request):
-    return render(request, "payments/paypal.html", context={})
+    context = _get_invoice_context(request)
+    return render(request, "payments/paypal.html", context)
 
 
 @login_required
 def payment_stripe(request):
-    return render(request, "payments/stripe.html", context={})
+    context = _get_invoice_context(request)
+    return render(request, "payments/stripe.html", context)
 
 
 @login_required
 def payment_coinbase(request):
-    return render(request, "payments/coinbase.html", context={})
+    context = _get_invoice_context(request)
+    return render(request, "payments/coinbase.html", context)
 
 
 @login_required
 def payment_paylike(request):
-    return render(request, "payments/paylike.html", context={})
+    context = _get_invoice_context(request)
+    return render(request, "payments/paylike.html", context)
 
 
 @login_required
 def payment_succeed(request):
-    return render(request, "payments/payment_succeed.html", context={})
+    context = _get_invoice_context(request)
+    # Also check for the most recent completed payment for receipt info
+    recent_payment = Payment.objects.filter(
+        invoice__user=request.user, status='completed'
+    ).select_related('invoice').order_by('-payment_date').first()
+    if recent_payment:
+        context["recent_payment"] = recent_payment
+    return render(request, "payments/payment_succeed.html", context)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -62,7 +92,9 @@ class PaymentGetwaysView(TemplateView):
         invoice = None
         if invoice_code:
             # Validate ownership: only show invoice if user owns it or is parent
-            invoice = Invoice.objects.filter(
+            invoice = Invoice.objects.select_related(
+                'user', 'student', 'fee_structure'
+            ).filter(
                 invoice_code=invoice_code, user=self.request.user
             ).first()
             if not invoice:
@@ -70,11 +102,19 @@ class PaymentGetwaysView(TemplateView):
                 student_ids = Parent.objects.filter(
                     user=self.request.user
                 ).values_list('student__student_id', flat=True)
-                invoice = Invoice.objects.filter(
+                invoice = Invoice.objects.select_related(
+                    'user', 'student', 'fee_structure'
+                ).filter(
                     invoice_code=invoice_code, user_id__in=student_ids
                 ).first()
+        context["invoice"] = invoice
         context["amount"] = int(invoice.amount * 100) if invoice and invoice.amount else 0
-        context["description"] = "Stripe Payment"
+        context["amount_display"] = invoice.amount if invoice else 0
+        context["student_name"] = invoice.user.get_full_name if invoice and invoice.user else ""
+        context["due_date"] = invoice.due_date if invoice else None
+        context["description"] = invoice.description if invoice and invoice.description else (
+            str(invoice.fee_structure) if invoice and invoice.fee_structure else "Stripe Payment"
+        )
         context["invoice_session"] = self.request.session.get("invoice_session", {})
         return context
 

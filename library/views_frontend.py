@@ -42,11 +42,17 @@ def book_list(request):
     # Get categories for filter dropdown
     categories = BookCategory.objects.filter(is_active=True)
 
+    # Inventory stats
+    total_books = Book.objects.filter(tenant=request.tenant).count()
+    available_count = Book.objects.filter(tenant=request.tenant, available__gt=0).count()
+
     return render(request, 'library/book_list.html', {
         'books': books_page,
         'query': query,
         'selected_category': category_id,
         'categories': categories,
+        'total_books': total_books,
+        'available_count': available_count,
         'title': _('Library Books'),
     })
 
@@ -136,9 +142,17 @@ def book_detail(request, pk):
             tenant=request.tenant
         ).select_related('student').order_by('-borrowed_at')[:20]
 
+    # Check if current user has already borrowed this book
+    user_has_borrowed = False
+    if request.user.role == 'student':
+        user_has_borrowed = BorrowRecord.objects.filter(
+            book=book, student=request.user, status='borrowed'
+        ).exists()
+
     return render(request, 'library/book_detail.html', {
         'book': book,
         'borrow_records': borrow_records,
+        'user_has_borrowed': user_has_borrowed,
         'title': book.title,
     })
 

@@ -41,7 +41,7 @@ def get_parent_profiles(user):
 
 def get_active_child(request):
     """Get the currently selected child from session, or default to first."""
-    profiles = get_parent_profiles(request.user)
+    profiles = get_parent_profiles(request.user).exclude(student__isnull=True)
     if not profiles.exists():
         return None, None
 
@@ -94,10 +94,16 @@ def parent_dashboard(request):
     """Parent overview dashboard for the selected child."""
     parent, student = get_active_child(request)
     if not student:
+        from enrollment.models import RegistrationForm
+        pending = RegistrationForm.objects.filter(
+            parent_user=request.user,
+            status__in=['pending', 'under_review']
+        ).order_by('-submitted_at')
         return render(request, 'parent/dashboard.html', {
             **get_children_context(request),
             'page_title': _('Parent Dashboard'),
-            'error': _('No student profile linked. Please contact administration.'),
+            'no_children': True,
+            'pending_enrollments': pending,
         })
 
     # Recent grades

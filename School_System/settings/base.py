@@ -510,12 +510,23 @@ CELERY_RESULT_EXTENDED = True
 CELERY_RESULT_EXPIRES = 60 * 60 * 24  # 24 hours
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
+# Celery beat schedule
+from celery.schedules import crontab  # noqa: E402
+
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-inactive-parents': {
+        'task': 'accounts.tasks.cleanup_inactive_parent_accounts',
+        'schedule': crontab(hour=2, minute=0),  # daily at 2 AM
+    },
+}
+
 # Celery task routing
 CELERY_TASK_ROUTES = {
     'attendance.tasks.*': {'queue': 'attendance'},
     'payments.tasks.*': {'queue': 'payments'},
     'result.tasks.*': {'queue': 'results'},
     'events.tasks.*': {'queue': 'events'},
+    'accounts.tasks.*': {'queue': 'default'},
 }
 
 # ==============================================================================

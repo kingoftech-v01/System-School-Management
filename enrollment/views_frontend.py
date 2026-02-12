@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.signing import Signer, BadSignature
 from django_ratelimit.decorators import ratelimit
-from accounts.decorators import registrar_only, tenant_required, role_required
+from accounts.decorators import registrar_only, tenant_required, role_required, parent_only
 from .models import RegistrationForm, EnrollmentDocument, EnrollmentStatusHistory
 from .forms import (
     RegistrationFormStep1, RegistrationFormStep2, RegistrationFormStep3,
@@ -45,10 +45,9 @@ def _create_accounts_for_enrollment(registration, tenant):
     from course.models import Program
 
     with transaction.atomic():
-        # Parse student name (first + last)
-        name_parts = registration.student_name.strip().split(' ', 1)
-        first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else ''
+        # Use structured name fields directly
+        first_name = registration.student_first_name
+        last_name = registration.student_last_name
 
         # Generate student username
         base_username = f"student_{first_name.lower()}"
@@ -106,53 +105,84 @@ def _create_accounts_for_enrollment(registration, tenant):
             except ImportError:
                 pass
 
-        # Create parent account
-        parent_name_parts = registration.parent_name.strip().split(' ', 1)
-        parent_first = parent_name_parts[0]
-        parent_last = parent_name_parts[1] if len(parent_name_parts) > 1 else ''
+        # Create or reuse parent account
+        if registration.parent_user:
+            # Parent already has an account (dashboard enrollment)
+            parent_user = registration.parent_user
+        else:
+            # Public flow — create parent account
+            parent_first = registration.parent_first_name
+            parent_last = registration.parent_last_name
 
-        parent_base_username = f"parent_{parent_first.lower()}"
-        parent_username = parent_base_username
-        counter = 1
-        while User.objects.filter(username=parent_username).exists():
-            parent_username = f"{parent_base_username}_{counter}"
-            counter += 1
+            parent_base_username = f"parent_{parent_first.lower()}"
+            parent_username = parent_base_username
+            counter = 1
+            while User.objects.filter(username=parent_username).exists():
+                parent_username = f"{parent_base_username}_{counter}"
+                counter += 1
 
-        parent_temp_password = _generate_temp_password()
+            parent_temp_password = _generate_temp_password()
 
-        parent_user = User.objects.create_user(
-            username=parent_username,
-            email=registration.parent_email or None,
-            password=parent_temp_password,
-            first_name=parent_first,
-            last_name=parent_last,
-            phone=registration.parent_phone,
-            is_parent=True,
-            role='parent',
-            tenant=tenant,
-            must_change_password=True,
-        )
+            parent_user = User.objects.create_user(
+                username=parent_username,
+                email=registration.parent_email or None,
+                password=parent_temp_password,
+                first_name=parent_first,
+                last_name=parent_last,
+                phone=registration.parent_phone,
+                is_parent=True,
+                role='parent',
+                tenant=tenant,
+                must_change_password=True,
+            )
 
-        Parent.objects.create(
-            user=parent_user,
-            student=student,
-            first_name=parent_first,
-            last_name=parent_last,
-            phone=registration.parent_phone,
-            email=registration.parent_email,
-            relation_ship=registration.parent_relationship or 'Other',
-        )
+            if registration.parent_email:
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=parent_user,
+                        email=registration.parent_email,
+                        defaults={'verified': True, 'primary': True},
+                    )
+                except ImportError:
+                    pass
 
-        if registration.parent_email:
-            try:
-                from allauth.account.models import EmailAddress
-                EmailAddress.objects.get_or_create(
+        # Create or update Parent profile (per-child link)
+        if registration.parent_user:
+            # Reuse placeholder profile (student=None) if one exists
+            placeholder = Parent.objects.filter(
+                user=parent_user, student__isnull=True
+            ).first()
+            if placeholder:
+                placeholder.student = student
+                placeholder.first_name = registration.parent_first_name or parent_user.first_name
+                placeholder.last_name = registration.parent_last_name or parent_user.last_name
+                placeholder.phone = registration.parent_phone or parent_user.phone
+                placeholder.email = registration.parent_email or parent_user.email
+                placeholder.relation_ship = registration.parent_relationship or 'Other'
+                placeholder.save()
+            else:
+                # Additional child — create new Parent profile
+                Parent.objects.create(
                     user=parent_user,
-                    email=registration.parent_email,
-                    defaults={'verified': True, 'primary': True},
+                    student=student,
+                    first_name=registration.parent_first_name or parent_user.first_name,
+                    last_name=registration.parent_last_name or parent_user.last_name,
+                    phone=registration.parent_phone or parent_user.phone,
+                    email=registration.parent_email or parent_user.email,
+                    relation_ship=registration.parent_relationship or 'Other',
                 )
-            except ImportError:
-                pass
+        else:
+            # Public flow — always create new Parent profile
+            Parent.objects.create(
+                user=parent_user,
+                student=student,
+                first_name=registration.parent_first_name or parent_user.first_name,
+                last_name=registration.parent_last_name or parent_user.last_name,
+                phone=registration.parent_phone or parent_user.phone,
+                email=registration.parent_email or parent_user.email,
+                relation_ship=registration.parent_relationship or 'Other',
+            )
 
         logger.info(
             f"Created accounts for enrollment {registration.id}: "
@@ -315,6 +345,142 @@ def register_complete(request, signed_id):
     })
 
 
+# ########################################################
+# Parent-Authenticated Enrollment (3-step wizard)
+# ########################################################
+
+RELATIONSHIP_CHOICES = [
+    ('father', _('Father')),
+    ('mother', _('Mother')),
+    ('guardian', _('Legal Guardian')),
+    ('other', _('Other')),
+]
+
+
+@login_required
+@parent_only
+@ratelimit(key='user', rate='10/h', method='POST')
+def parent_enroll_step1(request):
+    """Step 1 of parent enrollment: Child personal information."""
+    if request.method == 'POST':
+        form = RegistrationFormStep1(request.POST)
+        if form.is_valid():
+            registration = form.save(commit=False)
+
+            # Set tenant
+            if hasattr(request, 'tenant'):
+                registration.tenant = request.tenant
+
+            # Auto-populate parent fields from logged-in user
+            user = request.user
+            registration.parent_first_name = user.first_name
+            registration.parent_middle_name = getattr(user, 'middle_name', '') or ''
+            registration.parent_last_name = user.last_name
+            registration.parent_email = user.email
+            registration.parent_phone = user.phone or ''
+            registration.parent_user = user
+
+            registration.save()
+
+            request.session['parent_enrollment_id'] = registration.id
+            messages.success(request, _('Child information saved. Please provide academic details.'))
+            return redirect('frontend:enrollment:parent_enroll_step2')
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = RegistrationFormStep1()
+
+    return render(request, 'enrollment/parent_enroll_step1.html', {
+        'form': form,
+        'step': 1,
+        'title': _('Enroll Child - Step 1'),
+    })
+
+
+@login_required
+@parent_only
+@ratelimit(key='user', rate='10/h', method='POST')
+def parent_enroll_step2(request):
+    """Step 2 of parent enrollment: Academic information."""
+    registration_id = request.session.get('parent_enrollment_id')
+    if not registration_id:
+        messages.error(request, _('Please start from step 1.'))
+        return redirect('frontend:enrollment:parent_enroll_step1')
+
+    registration = get_object_or_404(RegistrationForm, id=registration_id, parent_user=request.user)
+    tenant = registration.tenant if registration.tenant else getattr(request, 'tenant', None)
+
+    if request.method == 'POST':
+        form = RegistrationFormStep3(request.POST, instance=registration, tenant=tenant)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Academic information saved. Please complete the final step.'))
+            return redirect('frontend:enrollment:parent_enroll_step3')
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = RegistrationFormStep3(instance=registration, tenant=tenant)
+
+    return render(request, 'enrollment/parent_enroll_step2.html', {
+        'form': form,
+        'step': 2,
+        'registration': registration,
+        'title': _('Enroll Child - Step 2'),
+    })
+
+
+@login_required
+@parent_only
+@ratelimit(key='user', rate='10/h', method='POST')
+def parent_enroll_step3(request):
+    """Step 3 of parent enrollment: Additional info + relationship + submit."""
+    registration_id = request.session.get('parent_enrollment_id')
+    if not registration_id:
+        messages.error(request, _('Please start from step 1.'))
+        return redirect('frontend:enrollment:parent_enroll_step1')
+
+    registration = get_object_or_404(RegistrationForm, id=registration_id, parent_user=request.user)
+
+    if request.method == 'POST':
+        form = RegistrationFormStep4(request.POST, instance=registration)
+        relationship = request.POST.get('parent_relationship', 'father')
+        if form.is_valid():
+            reg = form.save(commit=False)
+            reg.parent_relationship = relationship
+            reg.save()
+
+            # Clear session
+            del request.session['parent_enrollment_id']
+
+            # Send notification email
+            send_enrollment_status_email.delay(registration.id, 'submitted')
+
+            messages.success(request, _(
+                'Enrollment submitted successfully! '
+                'You will receive an email confirmation shortly. '
+                'Our admissions team will review your application.'
+            ))
+            signer = Signer()
+            signed_id = signer.sign(str(registration.id))
+            return redirect('frontend:enrollment:register_complete', signed_id=signed_id)
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = RegistrationFormStep4(instance=registration)
+
+    return render(request, 'enrollment/parent_enroll_step3.html', {
+        'form': form,
+        'step': 3,
+        'registration': registration,
+        'title': _('Enroll Child - Step 3'),
+        'relationship_choices': RELATIONSHIP_CHOICES,
+    })
+
+
+# ########################################################
+# Document Upload
+# ########################################################
+
 @ratelimit(key='ip', rate='20/h', method='POST')
 def upload_document(request, registration_id):
     """Upload enrollment documents (public or authenticated)."""
@@ -359,8 +525,11 @@ def enrollment_list(request):
     # Apply filters
     if form.is_valid():
         if form.cleaned_data.get('student_name'):
+            name_q = form.cleaned_data['student_name']
             registrations = registrations.filter(
-                student_name__icontains=form.cleaned_data['student_name']
+                Q(student_first_name__icontains=name_q) |
+                Q(student_middle_name__icontains=name_q) |
+                Q(student_last_name__icontains=name_q)
             )
         if form.cleaned_data.get('email'):
             registrations = registrations.filter(
@@ -426,7 +595,7 @@ def enrollment_detail(request, registration_id):
         'registration': registration,
         'documents': documents,
         'history': history,
-        'title': f'{registration.student_name} - Registration Detail'
+        'title': f'{registration.student_full_name} - Registration Detail'
     })
 
 
@@ -549,7 +718,12 @@ def export_enrollments_csv(request):
     if form.is_valid():
         # Apply same filters as enrollment_list
         if form.cleaned_data.get('student_name'):
-            registrations = registrations.filter(student_name__icontains=form.cleaned_data['student_name'])
+            name_q = form.cleaned_data['student_name']
+            registrations = registrations.filter(
+                Q(student_first_name__icontains=name_q) |
+                Q(student_middle_name__icontains=name_q) |
+                Q(student_last_name__icontains=name_q)
+            )
         if form.cleaned_data.get('status'):
             registrations = registrations.filter(status=form.cleaned_data['status'])
         # ... (apply other filters)
@@ -559,20 +733,32 @@ def export_enrollments_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        'Student Name', 'Email', 'Phone', 'Gender', 'Date of Birth',
-        'Parent Name', 'Parent Email', 'Parent Phone',
+        'First Name', 'Middle Name', 'Last Name',
+        'Email', 'Phone', 'Gender', 'Date of Birth',
+        'Street Address', 'City', 'Province', 'Country', 'Postal Code',
+        'Parent First Name', 'Parent Middle Name', 'Parent Last Name',
+        'Parent Email', 'Parent Phone',
         'Filiere', 'Academic Year', 'Level', 'Enrollment Type',
         'Status', 'Submitted At', 'Reviewed By', 'Reviewed At'
     ])
 
     for reg in registrations:
         writer.writerow([
-            reg.student_name,
+            reg.student_first_name,
+            reg.student_middle_name,
+            reg.student_last_name,
             reg.email,
             reg.phone,
             reg.get_gender_display(),
             reg.date_of_birth,
-            reg.parent_name,
+            reg.street_address,
+            reg.city,
+            reg.province,
+            reg.country,
+            reg.postal_code,
+            reg.parent_first_name,
+            reg.parent_middle_name,
+            reg.parent_last_name,
             reg.parent_email,
             reg.parent_phone,
             reg.filiere.name if reg.filiere else '',
@@ -690,7 +876,7 @@ def registration_delete(request, registration_id):
     )
 
     if request.method == 'POST':
-        student_name = registration.student_name
+        student_name = registration.student_full_name
         registration.delete()
         messages.success(
             request,

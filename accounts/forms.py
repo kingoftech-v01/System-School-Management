@@ -54,15 +54,54 @@ class StaffAddForm(UserCreationForm):
         ),
     )
 
-    address = forms.CharField(
-        max_length=30,
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
-        label="Address",
+        label="Middle Name",
+    )
+
+    street_address = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    country = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Country"}
+        ),
+        label="Country",
+    )
+
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
     )
 
     phone = forms.CharField(
@@ -119,9 +158,13 @@ class StaffAddForm(UserCreationForm):
         user = super().save(commit=False)
         user.is_lecturer = True
         user.first_name = self.cleaned_data.get("first_name")
+        user.middle_name = self.cleaned_data.get("middle_name", "")
         user.last_name = self.cleaned_data.get("last_name")
         user.phone = self.cleaned_data.get("phone")
-        user.address = self.cleaned_data.get("address")
+        user.street_address = self.cleaned_data.get("street_address", "")
+        user.city = self.cleaned_data.get("city", "")
+        user.province = self.cleaned_data.get("province", "")
+        user.postal_code = self.cleaned_data.get("postal_code", "")
         user.email = self.cleaned_data.get("email")
 
         if commit:
@@ -139,48 +182,79 @@ class StudentAddForm(UserCreationForm):
         label="Username",
         required=False,
     )
-    address = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Address",
-    )
-
-    phone = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Mobile No.",
-    )
 
     first_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="First name",
+    )
+
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Middle name",
     )
 
     last_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="Last name",
+    )
+
+    street_address = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    country = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Country"}
+        ),
+        label="Country",
+    )
+
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
+    )
+
+    phone = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Mobile No.",
     )
 
     gender = forms.CharField(
@@ -256,11 +330,14 @@ class StudentAddForm(UserCreationForm):
         user = super().save(commit=False)
         user.is_student = True
         user.first_name = self.cleaned_data.get("first_name")
+        user.middle_name = self.cleaned_data.get("middle_name", "")
         user.last_name = self.cleaned_data.get("last_name")
         user.gender = self.cleaned_data.get("gender")
-        user.address = self.cleaned_data.get("address")
+        user.street_address = self.cleaned_data.get("street_address", "")
+        user.city = self.cleaned_data.get("city", "")
+        user.province = self.cleaned_data.get("province", "")
+        user.postal_code = self.cleaned_data.get("postal_code", "")
         user.phone = self.cleaned_data.get("phone")
-        user.address = self.cleaned_data.get("address")
         user.email = self.cleaned_data.get("email")
 
         if commit:
@@ -324,25 +401,59 @@ class ProfileUpdateForm(UserChangeForm):
         label="Phone No.",
     )
 
-    address = forms.CharField(
+    middle_name = forms.CharField(
+        required=False,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
-        label="Address / city",
+        label="Middle Name",
+    )
+
+    street_address = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    postal_code = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
     )
 
     class Meta:
         model = User
         fields = [
             "first_name",
+            "middle_name",
             "last_name",
             "gender",
             "email",
             "phone",
-            "address",
+            "street_address",
+            "city",
+            "province",
+            "postal_code",
             "picture",
         ]
 
@@ -374,63 +485,88 @@ class ParentAddForm(UserCreationForm):
     username = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="Username",
-    )
-    address = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Address",
-    )
-
-    phone = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Mobile No.",
     )
 
     first_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="First name",
+    )
+
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Middle name",
     )
 
     last_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="Last name",
     )
 
+    street_address = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    country = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Country"}
+        ),
+        label="Country",
+    )
+
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
+    )
+
+    phone = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Mobile No.",
+    )
+
     email = forms.EmailField(
         widget=forms.TextInput(
-            attrs={
-                "type": "email",
-                "class": "form-control",
-            }
+            attrs={"type": "email", "class": "form-control"}
         ),
         label="Email Address",
     )
@@ -455,10 +591,7 @@ class ParentAddForm(UserCreationForm):
     password1 = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "password",
-                "class": "form-control",
-            }
+            attrs={"type": "password", "class": "form-control"}
         ),
         label="Password",
     )
@@ -466,18 +599,10 @@ class ParentAddForm(UserCreationForm):
     password2 = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "password",
-                "class": "form-control",
-            }
+            attrs={"type": "password", "class": "form-control"}
         ),
         label="Password Confirmation",
     )
-
-    # def validate_email(self):
-    #     email = self.cleaned_data['email']
-    #     if User.objects.filter(email__iexact=email, is_active=True).exists():
-    #         raise forms.ValidationError("Email has taken, try another email address. ")
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -487,8 +612,12 @@ class ParentAddForm(UserCreationForm):
         user = super().save(commit=False)
         user.is_parent = True
         user.first_name = self.cleaned_data.get("first_name")
+        user.middle_name = self.cleaned_data.get("middle_name", "")
         user.last_name = self.cleaned_data.get("last_name")
-        user.address = self.cleaned_data.get("address")
+        user.street_address = self.cleaned_data.get("street_address", "")
+        user.city = self.cleaned_data.get("city", "")
+        user.province = self.cleaned_data.get("province", "")
+        user.postal_code = self.cleaned_data.get("postal_code", "")
         user.phone = self.cleaned_data.get("phone")
         user.email = self.cleaned_data.get("email")
         user.save()
@@ -710,6 +839,94 @@ class ParentInvitationSignupForm(forms.Form):
         choices=RELATION_SHIP,
         widget=forms.Select(attrs={"class": "form-control"}),
         label="Relationship to Student",
+    )
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}),
+        label="Password",
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Confirm Password"}),
+        label="Confirm Password",
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("This email address is already in use.")
+        return email
+
+    def clean_password1(self):
+        password = self.cleaned_data["password1"]
+        validate_password(password)
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords do not match.")
+        return cleaned_data
+
+
+class ParentSelfSignupForm(forms.Form):
+    """Parent self-registration form (no invitation code needed)."""
+
+    first_name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}),
+        label="First Name",
+    )
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Middle Name (optional)"}),
+        label="Middle Name",
+    )
+    last_name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}),
+        label="Last Name",
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "your@email.com"}),
+        label="Email Address",
+    )
+    phone = forms.CharField(
+        max_length=60,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone Number"}),
+        label="Phone",
+    )
+    street_address = forms.CharField(
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Street Address"}),
+        label="Street Address",
+    )
+    city = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "City"}),
+        label="City",
+    )
+    province = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Province / State"}),
+        label="Province",
+    )
+    country = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Country"}),
+        label="Country",
+    )
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Postal Code (optional)"}),
+        label="Postal Code",
     )
     password1 = forms.CharField(
         widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}),

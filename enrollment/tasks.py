@@ -62,8 +62,8 @@ def send_enrollment_status_email(self, registration_id, status):
         # Render email content
         context = {
             'registration': registration,
-            'student_name': registration.student_name,
-            'parent_name': registration.parent_name,
+            'student_name': registration.student_full_name,
+            'parent_name': registration.parent_full_name,
             'school_name': registration.tenant.name,
             'filiere': registration.filiere.name if registration.filiere else 'N/A',
             'academic_year': registration.academic_year,
@@ -74,9 +74,9 @@ def send_enrollment_status_email(self, registration_id, status):
 
         html_message = render_to_string(config['template'], context)
         plain_message = f"""
-        Dear {registration.parent_name},
+        Dear {registration.parent_full_name},
 
-        Your registration for {registration.student_name} has been {status}.
+        Your registration for {registration.student_full_name} has been {status}.
 
         Status: {registration.get_status_display()}
 
@@ -126,8 +126,8 @@ def send_enrollment_reminders():
         try:
             context = {
                 'registration': registration,
-                'student_name': registration.student_name,
-                'parent_name': registration.parent_name,
+                'student_name': registration.student_full_name,
+                'parent_name': registration.parent_full_name,
                 'school_name': registration.tenant.name,
                 'days_pending': (timezone.now() - registration.submitted_at).days
             }
@@ -139,7 +139,7 @@ def send_enrollment_reminders():
 
             send_mail(
                 subject=f"[{registration.tenant.name}] Registration Reminder",
-                message=f"Dear {registration.parent_name}, Your registration is still pending review.",
+                message=f"Dear {registration.parent_full_name}, Your registration is still pending review.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[registration.parent_email],
                 html_message=html_message,

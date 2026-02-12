@@ -68,6 +68,11 @@ def event_list(request):
         except ValueError:
             pass
 
+    # Summary counts (before pagination)
+    total_count = events.count()
+    from django.utils import timezone as tz
+    upcoming_count = events.filter(start_date__gte=tz.now()).count()
+
     # Pagination
     paginator = Paginator(events, 20)
     page = request.GET.get('page')
@@ -75,6 +80,8 @@ def event_list(request):
 
     return render(request, 'events/event_list.html', {
         'events': events,
+        'total_count': total_count,
+        'upcoming_count': upcoming_count,
         'event_type_choices': Event.EVENT_TYPE_CHOICES,
         'current_event_type': event_type,
         'current_date_from': date_from,
@@ -116,9 +123,14 @@ def event_detail(request, pk):
     tenant = get_current_tenant(request)
     event = get_object_or_404(Event, pk=pk, tenant=tenant)
 
+    # Check if event is upcoming or past
+    from django.utils import timezone as tz
+    is_upcoming = event.start_date >= tz.now() if event.start_date else False
+
     return render(request, 'events/event_detail.html', {
         'event': event,
-        'title': event.title
+        'is_upcoming': is_upcoming,
+        'title': event.title,
     })
 
 

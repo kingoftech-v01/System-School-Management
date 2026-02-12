@@ -17,18 +17,32 @@ class RegistrationFormStep1(forms.ModelForm):
     class Meta:
         model = RegistrationForm
         fields = [
-            'student_name',
+            'student_first_name',
+            'student_middle_name',
+            'student_last_name',
             'date_of_birth',
             'gender',
             'nationality',
             'email',
             'phone',
-            'address'
+            'street_address',
+            'city',
+            'province',
+            'country',
+            'postal_code',
         ]
         widgets = {
-            'student_name': forms.TextInput(attrs={
+            'student_first_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('Enter full name as per ID')
+                'placeholder': _('First name')
+            }),
+            'student_middle_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Middle name (optional)')
+            }),
+            'student_last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Last name')
             }),
             'date_of_birth': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -47,10 +61,25 @@ class RegistrationFormStep1(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': '+1234567890'
             }),
-            'address': forms.Textarea(attrs={
+            'street_address': forms.TextInput(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': _('Enter full residential address')
+                'placeholder': _('Street address')
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('City')
+            }),
+            'province': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Province / State')
+            }),
+            'country': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Country')
+            }),
+            'postal_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Postal code (optional)')
             }),
         }
 
@@ -85,15 +114,25 @@ class RegistrationFormStep2(forms.ModelForm):
     class Meta:
         model = RegistrationForm
         fields = [
-            'parent_name',
+            'parent_first_name',
+            'parent_middle_name',
+            'parent_last_name',
             'parent_email',
             'parent_phone',
             'parent_relationship'
         ]
         widgets = {
-            'parent_name': forms.TextInput(attrs={
+            'parent_first_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('Parent/Guardian full name')
+                'placeholder': _('Parent first name')
+            }),
+            'parent_middle_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Parent middle name (optional)')
+            }),
+            'parent_last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Parent last name')
             }),
             'parent_email': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -179,22 +218,33 @@ class RegistrationEditForm(forms.ModelForm):
     class Meta:
         model = RegistrationForm
         fields = [
-            'student_name', 'date_of_birth', 'gender', 'nationality',
-            'email', 'phone', 'address',
-            'parent_name', 'parent_email', 'parent_phone', 'parent_relationship',
+            'student_first_name', 'student_middle_name', 'student_last_name',
+            'date_of_birth', 'gender', 'nationality',
+            'email', 'phone',
+            'street_address', 'city', 'province', 'country', 'postal_code',
+            'parent_first_name', 'parent_middle_name', 'parent_last_name',
+            'parent_email', 'parent_phone', 'parent_relationship',
             'enrollment_type', 'filiere', 'academic_year', 'level', 'previous_school',
             'special_needs', 'medical_information',
             'status', 'review_notes', 'rejection_reason',
         ]
         widgets = {
-            'student_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_middle_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'nationality': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'parent_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'street_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'province': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
+            'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'parent_first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'parent_middle_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'parent_last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'parent_email': forms.EmailInput(attrs={'class': 'form-control'}),
             'parent_phone': forms.TextInput(attrs={'class': 'form-control'}),
             'parent_relationship': forms.Select(attrs={'class': 'form-control'}, choices=[

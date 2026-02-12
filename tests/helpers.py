@@ -10,7 +10,8 @@ Usage:
             user = self.create_user(role='student')
 """
 
-from datetime import date, timedelta
+from datetime import date, time, timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -199,13 +200,18 @@ class TestDataMixin:
         n = _next_counter()
         defaults = {
             'tenant': tenant,
-            'student_name': f'Student {n}',
+            'student_first_name': f'Student{n}',
+            'student_last_name': f'Last{n}',
             'date_of_birth': date(2005, 1, 1),
             'gender': 'M',
             'email': f'student{n}@test.com',
             'phone': '+1234567890',
-            'address': '123 Test St',
-            'parent_name': f'Parent {n}',
+            'street_address': '123 Test St',
+            'city': 'Test City',
+            'province': 'Test Province',
+            'country': 'Test Country',
+            'parent_first_name': f'Parent{n}',
+            'parent_last_name': f'ParentLast{n}',
             'parent_email': f'parent{n}@test.com',
             'parent_phone': '+0987654321',
             'academic_year': '2024-2025',
@@ -250,6 +256,459 @@ class TestDataMixin:
         if session is None:
             session = self._ensure_session()
         return self.create_semester(session=session, **overrides)
+
+    def create_parent_user(self, **overrides):
+        """Create a user with parent role."""
+        return self.create_user(role='parent', is_parent=True, **overrides)
+
+    def create_accountant_user(self, **overrides):
+        """Create a user with accountant role."""
+        return self.create_user(role='accountant', **overrides)
+
+    def create_secretary_user(self, **overrides):
+        """Create a user with secretary role."""
+        return self.create_user(role='secretary', **overrides)
+
+    def create_librarian_user(self, **overrides):
+        """Create a user with librarian role."""
+        return self.create_user(role='librarian', **overrides)
+
+    def create_registrar_user(self, **overrides):
+        """Create a user with registrar role."""
+        return self.create_user(role='registrar', **overrides)
+
+    def create_prefet_user(self, **overrides):
+        """Create a user with prefet role."""
+        return self.create_user(role='prefet', **overrides)
+
+    # ── Scheduling ──────────────────────────────────────────────────
+
+    def create_room(self, tenant=None, **overrides):
+        from scheduling.models import Room
+        if tenant is None:
+            tenant = self.create_school()
+        n = _next_counter()
+        defaults = {
+            'tenant': tenant,
+            'name': f'Room {n}',
+            'code': f'R{n:03d}',
+        }
+        defaults.update(overrides)
+        return Room.objects.create(**defaults)
+
+    def create_timeslot(self, tenant=None, **overrides):
+        from scheduling.models import TimeSlot
+        if tenant is None:
+            tenant = self.create_school()
+        n = _next_counter()
+        defaults = {
+            'tenant': tenant,
+            'name': f'Slot {n}',
+            'start_time': time(8, 0),
+            'end_time': time(10, 0),
+            'day_of_week': 0,
+        }
+        defaults.update(overrides)
+        return TimeSlot.objects.create(**defaults)
+
+    def create_schedule_entry(self, tenant=None, course=None,
+                              professor=None, time_slot=None, **overrides):
+        from scheduling.models import ScheduleEntry
+        if tenant is None:
+            tenant = self.create_school()
+        if course is None:
+            course = self.create_course()
+        if professor is None:
+            professor = self.create_professor_user()
+        if time_slot is None:
+            time_slot = self.create_timeslot(tenant=tenant)
+        defaults = {
+            'tenant': tenant,
+            'course': course,
+            'professor': professor,
+            'time_slot': time_slot,
+            'effective_from': date.today(),
+            'effective_until': date.today() + timedelta(days=120),
+        }
+        defaults.update(overrides)
+        return ScheduleEntry.objects.create(**defaults)
+
+    # ── Payments ────────────────────────────────────────────────────
+
+    def create_fee_structure(self, program=None, **overrides):
+        from payments.models import FeeStructure
+        if program is None:
+            program = self.create_program()
+        defaults = {
+            'program': program,
+            'level': 'Bachelor',
+            'academic_year': '2024-2025',
+            'tuition_fee': 5000.00,
+        }
+        defaults.update(overrides)
+        return FeeStructure.objects.create(**defaults)
+
+    def create_payment(self, invoice=None, **overrides):
+        from payments.models import Payment
+        if invoice is None:
+            invoice = self.create_invoice()
+        n = _next_counter()
+        defaults = {
+            'invoice': invoice,
+            'amount': 500.00,
+            'payment_gateway': 'stripe',
+            'transaction_id': f'TXN-{n:06d}',
+        }
+        defaults.update(overrides)
+        return Payment.objects.create(**defaults)
+
+    # ── Library ─────────────────────────────────────────────────────
+
+    def create_book_category(self, **overrides):
+        from library.models import BookCategory
+        n = _next_counter()
+        defaults = {'name': f'Category {n}'}
+        defaults.update(overrides)
+        return BookCategory.objects.create(**defaults)
+
+    def create_book(self, tenant=None, **overrides):
+        from library.models import Book
+        if tenant is None:
+            tenant = self.create_school()
+        n = _next_counter()
+        defaults = {
+            'tenant': tenant,
+            'title': f'Test Book {n}',
+            'author': f'Author {n}',
+            'isbn': f'978{n:010d}',
+        }
+        defaults.update(overrides)
+        return Book.objects.create(**defaults)
+
+    def create_borrow_record(self, tenant=None, book=None,
+                             student=None, **overrides):
+        from library.models import BorrowRecord
+        if tenant is None:
+            tenant = self.create_school()
+        if book is None:
+            book = self.create_book(tenant=tenant)
+        if student is None:
+            student = self.create_student_user()
+        defaults = {
+            'tenant': tenant,
+            'book': book,
+            'student': student,
+            'due_date': date.today() + timedelta(days=14),
+        }
+        defaults.update(overrides)
+        return BorrowRecord.objects.create(**defaults)
+
+    # ── Notices ─────────────────────────────────────────────────────
+
+    def create_notice(self, **overrides):
+        from notices.models import Notice
+        n = _next_counter()
+        defaults = {
+            'title': f'Test Notice {n}',
+            'content': f'Content for notice {n}',
+        }
+        defaults.update(overrides)
+        return Notice.objects.create(**defaults)
+
+    # ── Events ──────────────────────────────────────────────────────
+
+    def create_event(self, tenant=None, **overrides):
+        from events.models import Event
+        from datetime import datetime
+        if tenant is None:
+            tenant = self.create_school()
+        n = _next_counter()
+        defaults = {
+            'tenant': tenant,
+            'title': f'Test Event {n}',
+            'description': f'Description for event {n}',
+            'event_type': 'academic',
+            'start_date': datetime(2025, 6, 1, 9, 0),
+            'end_date': datetime(2025, 6, 1, 17, 0),
+            'target_audience': 'all',
+        }
+        defaults.update(overrides)
+        return Event.objects.create(**defaults)
+
+    # ── Grading ─────────────────────────────────────────────────────
+
+    def create_rubric(self, course=None, **overrides):
+        from grading.models import GradingRubric
+        if course is None:
+            course = self.create_course()
+        n = _next_counter()
+        defaults = {
+            'name': f'Test Rubric {n}',
+            'course': course,
+        }
+        defaults.update(overrides)
+        return GradingRubric.objects.create(**defaults)
+
+    def create_rubric_criterion(self, rubric=None, **overrides):
+        from grading.models import RubricCriterion
+        if rubric is None:
+            rubric = self.create_rubric()
+        n = _next_counter()
+        defaults = {
+            'rubric': rubric,
+            'name': f'Criterion {n}',
+            'weight': 25.0,
+        }
+        defaults.update(overrides)
+        return RubricCriterion.objects.create(**defaults)
+
+    # ── Forums ──────────────────────────────────────────────────────
+
+    def create_forum_category(self, **overrides):
+        from forums.models import ForumCategory
+        n = _next_counter()
+        defaults = {'name': f'Forum Category {n}'}
+        defaults.update(overrides)
+        return ForumCategory.objects.create(**defaults)
+
+    def create_thread(self, category=None, author=None, **overrides):
+        from forums.models import Thread
+        if category is None:
+            category = self.create_forum_category()
+        if author is None:
+            author = self.create_user()
+        n = _next_counter()
+        defaults = {
+            'category': category,
+            'title': f'Test Thread {n}',
+            'content': f'Thread content {n}',
+            'author': author,
+        }
+        defaults.update(overrides)
+        return Thread.objects.create(**defaults)
+
+    # ── Certificates ────────────────────────────────────────────────
+
+    def create_certificate_template(self, **overrides):
+        from certificates.models import CertificateTemplate
+        n = _next_counter()
+        defaults = {
+            'name': f'Cert Template {n}',
+            'body_template': f'Certificate body {n}',
+        }
+        defaults.update(overrides)
+        return CertificateTemplate.objects.create(**defaults)
+
+    # ── Anomaly Detection ───────────────────────────────────────────
+
+    def create_anomaly_type(self, **overrides):
+        from anomaly_detection.models import AnomalyType
+        n = _next_counter()
+        defaults = {
+            'code': f'ANOM-{n:04d}',
+            'name': f'Anomaly Type {n}',
+            'domain': 'grades',
+        }
+        defaults.update(overrides)
+        return AnomalyType.objects.create(**defaults)
+
+    def create_anomaly_alert(self, anomaly_type=None, **overrides):
+        from anomaly_detection.models import AnomalyAlert
+        if anomaly_type is None:
+            anomaly_type = self.create_anomaly_type()
+        n = _next_counter()
+        defaults = {
+            'anomaly_type': anomaly_type,
+            'severity': 'medium',
+            'title': f'Test Alert {n}',
+        }
+        defaults.update(overrides)
+        return AnomalyAlert.objects.create(**defaults)
+
+    # ── Articles ────────────────────────────────────────────────────
+
+    def create_article_category(self, **overrides):
+        from articles.models import Category
+        n = _next_counter()
+        defaults = {'name': f'Article Category {n}'}
+        defaults.update(overrides)
+        return Category.objects.create(**defaults)
+
+    def create_article(self, author=None, **overrides):
+        from articles.models import Article
+        if author is None:
+            author = self.create_user()
+        n = _next_counter()
+        defaults = {
+            'title': f'Test Article {n}',
+            'summary': f'Summary {n}',
+            'content': f'Article content {n}',
+            'author': author,
+        }
+        defaults.update(overrides)
+        return Article.objects.create(**defaults)
+
+    # ── Discipline ──────────────────────────────────────────────────
+
+    def create_disciplinary_action(self, tenant=None, student=None,
+                                   reported_by=None, **overrides):
+        from discipline.models import DisciplinaryAction
+        if tenant is None:
+            tenant = self.create_school()
+        if student is None:
+            student = self.create_student_user()
+        if reported_by is None:
+            reported_by = self.create_professor_user()
+        defaults = {
+            'tenant': tenant,
+            'student': student,
+            'reported_by': reported_by,
+            'incident_type': 'misconduct',
+            'description': 'Test incident description',
+            'action_taken': 'Warning issued',
+            'severity': 'minor',
+            'incident_date': date.today(),
+        }
+        defaults.update(overrides)
+        return DisciplinaryAction.objects.create(**defaults)
+
+    # ── Quiz ────────────────────────────────────────────────────────
+
+    def create_quiz(self, course=None, **overrides):
+        from quiz.models import Quiz
+        if course is None:
+            course = self.create_course()
+        n = _next_counter()
+        defaults = {
+            'course': course,
+            'title': f'Test Quiz {n}',
+        }
+        defaults.update(overrides)
+        return Quiz.objects.create(**defaults)
+
+    # ── Notes ───────────────────────────────────────────────────────
+
+    def create_professor_note(self, tenant=None, student=None,
+                              professor=None, filiere=None,
+                              subject=None, **overrides):
+        from notes.models import ProfessorNote
+        if tenant is None:
+            tenant = self.create_school()
+        if student is None:
+            student = self.create_student_user()
+        if professor is None:
+            professor = self.create_professor_user()
+        if filiere is None:
+            filiere = self.create_filiere(tenant=tenant)
+        if subject is None:
+            subject = self.create_course()
+        defaults = {
+            'tenant': tenant,
+            'student': student,
+            'professor': professor,
+            'filiere': filiere,
+            'subject': subject,
+            'note_type': 'final',
+            'score': Decimal('15.00'),
+            'coefficient': Decimal('2.00'),
+        }
+        defaults.update(overrides)
+        return ProfessorNote.objects.create(**defaults)
+
+    # ── Attendance ──────────────────────────────────────────────────
+
+    def create_attendance_group(self, **overrides):
+        from attendance.models import Group
+        n = _next_counter()
+        defaults = {'name': f'Group {n}'}
+        defaults.update(overrides)
+        return Group.objects.create(**defaults)
+
+    def create_attendance_student(self, group=None, **overrides):
+        from attendance.models import Student as AttStudent
+        if group is None:
+            group = self.create_attendance_group()
+        n = _next_counter()
+        defaults = {
+            'first_name': f'AttStudent{n}',
+            'last_name': f'Last{n}',
+            'email': f'attstudent{n}@test.com',
+            'group': group,
+        }
+        defaults.update(overrides)
+        return AttStudent.objects.create(**defaults)
+
+    def create_attendance_subject(self, teacher=None, **overrides):
+        from attendance.models import Subject
+        if teacher is None:
+            teacher = self.create_professor_user()
+        n = _next_counter()
+        defaults = {
+            'name': f'Subject {n}',
+            'teacher': teacher,
+            'slug': f'subject-{n}',
+        }
+        defaults.update(overrides)
+        return Subject.objects.create(**defaults)
+
+    # ── Admissions ──────────────────────────────────────────────────
+
+    def create_admission_session(self, **overrides):
+        from admissions.models import AdmissionSession
+        n = _next_counter()
+        defaults = {
+            'name': f'Admission Session {n}',
+            'start_date': date.today(),
+            'end_date': date.today() + timedelta(days=90),
+        }
+        defaults.update(overrides)
+        return AdmissionSession.objects.create(**defaults)
+
+    def create_admission_student(self, session=None, **overrides):
+        from admissions.models import AdmissionStudent
+        if session is None:
+            session = self.create_admission_session()
+        n = _next_counter()
+        defaults = {
+            'session': session,
+            'first_name': f'Applicant{n}',
+            'last_name': f'Last{n}',
+            'email': f'applicant{n}@test.com',
+            'phone': '1234567890',
+            'date_of_birth': date(2005, 1, 1),
+            'gender': 'M',
+            'guardian_first_name': f'Guardian{n}',
+            'guardian_last_name': f'GuardianLast{n}',
+            'guardian_phone': '0987654321',
+        }
+        defaults.update(overrides)
+        return AdmissionStudent.objects.create(**defaults)
+
+    # ── Alumni ──────────────────────────────────────────────────────
+
+    def create_alumni(self, student_profile=None, **overrides):
+        from alumni.models import Alumni
+        if student_profile is None:
+            student_profile = self.create_student_profile()
+        defaults = {
+            'student': student_profile,
+            'graduation_year': 2024,
+        }
+        defaults.update(overrides)
+        return Alumni.objects.create(**defaults)
+
+    def create_alumni_event(self, **overrides):
+        from alumni.models import AlumniEvent
+        from datetime import datetime
+        n = _next_counter()
+        defaults = {
+            'title': f'Alumni Event {n}',
+            'description': f'Alumni event description {n}',
+            'event_date': datetime(2025, 9, 15, 10, 0),
+            'location': f'Venue {n}',
+        }
+        defaults.update(overrides)
+        return AlumniEvent.objects.create(**defaults)
 
     @staticmethod
     def add_middleware(request):

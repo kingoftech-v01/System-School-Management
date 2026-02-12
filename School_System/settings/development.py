@@ -93,10 +93,10 @@ DEBUG_TOOLBAR_CONFIG = {
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'"),
-        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"),
-        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://cdn.datatables.net"),
+        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.datatables.net", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"),
+        'font-src': ("'self'", "https://fonts.gstatic.com"),
         'img-src': ("'self'", "data:", "https:"),
-        'font-src': ("'self'",),
         'connect-src': ("'self'",),
         'frame-ancestors': ("'none'",),
     }
@@ -123,6 +123,13 @@ STRIPE_SECRET_KEY = 'sk_test_placeholder'
 
 # Development file storage
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# Disable throttling in development/tests to avoid 429 errors
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {},
+}
 
 # Use simple static files storage (no manifest needed, no collectstatic required)
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

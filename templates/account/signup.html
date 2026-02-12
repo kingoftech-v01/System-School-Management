@@ -72,12 +72,12 @@
                                 </a>
                             </div>
                             <div class="col-md-6">
-                                <a href="{% url 'frontend:enrollment:register_step1' %}" class="role-card">
+                                <a href="{% url 'frontend:accounts:parent_self_signup' %}" class="role-card">
                                     <div class="icon-wrap bg-success-light">
                                         <i class="bi bi-person-plus text-success"></i>
                                     </div>
-                                    <h5>Parent - Enroll</h5>
-                                    <p>New to our school? Start the enrollment process for your child.</p>
+                                    <h5>Parent - New Account</h5>
+                                    <p>Create your account to enroll children and monitor their progress.</p>
                                 </a>
                             </div>
                             <div class="col-md-6">
@@ -99,6 +99,9 @@
                                 </a>
                             </div>
                         </div>
+                        <p class="text-center text-muted mb-2">
+                            <small>Prefer not to create an account? <a href="{% url 'frontend:enrollment:register_step1' %}">Use the public enrollment form</a></small>
+                        </p>
                         <p class="text-center">Already have an account?
                             <a class="btn-link text-primary" href="{% url 'account_login' %}">Sign In</a>
                         </p>

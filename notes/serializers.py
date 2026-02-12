@@ -22,7 +22,7 @@ class ProfessorNoteSerializer(serializers.ModelSerializer):
     """
     professor_name = serializers.CharField(source='professor.get_full_name', read_only=True)
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
-    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    subject_name = serializers.CharField(source='subject.title', read_only=True)
     approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, allow_null=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     note_type_display = serializers.CharField(source='get_note_type_display', read_only=True)
@@ -33,7 +33,7 @@ class ProfessorNoteSerializer(serializers.ModelSerializer):
             'id', 'tenant', 'student', 'student_name', 'professor', 'professor_name',
             'subject', 'subject_name', 'score', 'coefficient', 'note_type',
             'note_type_display', 'comment', 'status', 'status_display',
-            'approved_by', 'approved_by_name', 'approved_at', 'approval_comment',
+            'approved_by', 'approved_by_name', 'approved_at', 'approval_notes',
             'is_deleted', 'created_at', 'updated_at'
         ]
         read_only_fields = ['professor', 'tenant', 'approved_by', 'approved_at', 'created_at', 'updated_at']
@@ -45,7 +45,7 @@ class ProfessorNoteListSerializer(serializers.ModelSerializer):
     Reduced fields for performance.
     """
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
-    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    subject_name = serializers.CharField(source='subject.title', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
@@ -87,7 +87,7 @@ class NoteApprovalSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = ProfessorNote
-        fields = ['status', 'approval_comment']
+        fields = ['status', 'approval_notes']
 
     def validate_status(self, value):
         """Ensure status is valid for approval action."""
@@ -120,4 +120,4 @@ class NoteHistorySerializer(serializers.ModelSerializer):
 
     def get_note_title(self, obj):
         """Get a descriptive title for the note."""
-        return f"{obj.note.student.get_full_name()} - {obj.note.subject.name}"
+        return f"{obj.note.student.get_full_name} - {obj.note.subject.title}"

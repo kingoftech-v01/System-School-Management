@@ -67,9 +67,15 @@ def rubric_list(request):
     page_num = request.GET.get('page', 1)
     rubrics_page = paginator.get_page(page_num)
 
+    # Get courses for filter dropdown
+    from course.models import Course
+    courses = Course.objects.all().order_by('title')
+
     context = {
         'rubrics': rubrics_page,
         'total_count': paginator.count,
+        'courses': courses,
+        'selected_course': course_id,
         'title': _('Grading Rubrics'),
         'meta_description': _('Manage grading rubrics for assignments'),
     }
@@ -844,11 +850,19 @@ def grading_dashboard(request):
         pending_peer_reviews = PeerReview.objects.filter(status__in=['pending', 'in_progress']).count()
         applied_curves = GradeCurve.objects.filter(is_active=True).count()
 
+        # Recent grades and pending reviews for tables
+        recent_grades = RubricGrade.objects.select_related('rubric', 'student', 'graded_by').order_by('-graded_at')[:10]
+        pending_reviews = PeerReview.objects.filter(
+            status__in=['pending', 'in_progress']
+        ).select_related('reviewer', 'reviewee', 'course')[:10]
+
         context.update({
             'total_rubrics': total_rubrics,
             'total_grades': total_grades,
             'pending_peer_reviews': pending_peer_reviews,
             'applied_curves': applied_curves,
+            'recent_grades': recent_grades,
+            'pending_reviews': pending_reviews,
         })
 
     return render(request, 'grading/dashboard.html', context)

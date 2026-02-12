@@ -19,6 +19,7 @@ from accounts.forms import (
     InvitationCodeForm,
     ParentAddForm,
     ParentInvitationSignupForm,
+    ParentSelfSignupForm,
     ProfileUpdateForm,
     ProgramUpdateForm,
     StaffAddForm,
@@ -591,113 +592,6 @@ def dashboard_student(request):
     }
 
     return render(request, 'accounts/dashboard_student.html', context)
-
-
-@login_required
-@parent_only
-def dashboard_parent(request):
-    """Parent dashboard with children's academic information."""
-    parent = get_object_or_404(Parent, user=request.user)
-    student = parent.student
-    current_session = Session.objects.filter(is_current_session=True).first()
-    current_semester = Semester.objects.filter(
-        is_current_semester=True, session=current_session
-    ).first()
-
-    # Get student's recent grades
-    recent_grades = TakenCourse.objects.filter(
-        student=student,
-        total__isnull=False
-    ).order_by('-id')[:10]
-
-    # Calculate GPA
-    gpa = TakenCourse.objects.filter(
-        student=student,
-        total__isnull=False
-    ).aggregate(Avg('total'))['total__avg'] or 0.0
-
-    # Get attendance summary
-    attendance_summary = {}
-    try:
-        from attendance.models import AttendanceRecord
-        total_classes = AttendanceRecord.objects.filter(
-            student=student.student,
-            session=current_session
-        ).count()
-        present_classes = AttendanceRecord.objects.filter(
-            student=student.student,
-            session=current_session,
-            status='present'
-        ).count()
-        if total_classes > 0:
-            attendance_percentage = (present_classes / total_classes) * 100
-        else:
-            attendance_percentage = 0
-        attendance_summary = {
-            'total': total_classes,
-            'present': present_classes,
-            'percentage': round(attendance_percentage, 2)
-        }
-    except:
-        pass
-
-    # Get payment status
-    payment_status = {}
-    try:
-        from payments.models import PaymentRecord
-        total_fees = PaymentRecord.objects.filter(
-            student=student.student,
-            session=current_session
-        ).aggregate(
-            total=models.Sum('amount'),
-            paid=models.Sum('amount', filter=Q(status='paid'))
-        )
-        payment_status = {
-            'total': total_fees['total'] or 0,
-            'paid': total_fees['paid'] or 0,
-            'balance': (total_fees['total'] or 0) - (total_fees['paid'] or 0)
-        }
-    except:
-        pass
-
-    # Get upcoming events
-    upcoming_events = []
-    try:
-        from events.models import Event
-        upcoming_events = Event.objects.filter(
-            tenant=request.tenant,
-            start_date__gte=timezone.now(),
-            target_audience__in=['all', 'parents']
-        ).order_by('start_date')[:5]
-    except:
-        pass
-
-    # Get disciplinary actions (if any)
-    disciplinary_actions = []
-    try:
-        from discipline.models import DisciplinaryAction
-        disciplinary_actions = DisciplinaryAction.objects.filter(
-            tenant=request.tenant,
-            student=student.student
-        ).order_by('-incident_date')[:5]
-    except:
-        pass
-
-    context = {
-        'title': 'Parent Dashboard',
-        'parent': parent,
-        'student': student,
-        'recent_grades': recent_grades,
-        'gpa': round(gpa, 2),
-        'attendance_summary': attendance_summary,
-        'payment_status': payment_status,
-        'upcoming_events': upcoming_events,
-        'disciplinary_actions': disciplinary_actions,
-        'current_session': current_session,
-        'current_semester': current_semester,
-    }
-
-    return render(request, 'accounts/dashboard_parent.html', context)
 
 
 @login_required
@@ -1402,6 +1296,79 @@ def parent_invitation_step2(request):
         context["linked_student"] = invitation.linked_student
 
     return render(request, "account/parent_invitation_step2.html", context)
+
+
+@ratelimit(key="ip", rate="5/h", method="POST")
+def parent_self_signup(request):
+    """Parent self-registration (no invitation code needed)."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = ParentSelfSignupForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                base_username = f"parent_{form.cleaned_data['first_name'].lower()}"
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
+
+                user = User.objects.create_user(
+                    username=username,
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password1"],
+                    first_name=form.cleaned_data["first_name"],
+                    middle_name=form.cleaned_data.get("middle_name", ""),
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    street_address=form.cleaned_data.get("street_address", ""),
+                    city=form.cleaned_data.get("city", ""),
+                    province=form.cleaned_data.get("province", ""),
+                    postal_code=form.cleaned_data.get("postal_code", ""),
+                    is_parent=True,
+                    role="parent",
+                )
+
+                # Set country if provided
+                country = form.cleaned_data.get("country", "")
+                if country:
+                    user.country = country
+                    user.save(update_fields=["country"])
+
+                # Create Parent profile (placeholder with student=None)
+                Parent.objects.create(
+                    user=user,
+                    student=None,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    phone=user.phone,
+                    email=user.email,
+                )
+
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=user,
+                        email=form.cleaned_data["email"],
+                        defaults={"verified": True, "primary": True},
+                    )
+                except ImportError:
+                    pass
+
+            messages.success(
+                request,
+                "Your parent account has been created! You can now sign in and enroll your children.",
+            )
+            return redirect("account_login")
+    else:
+        form = ParentSelfSignupForm()
+
+    return render(request, "account/parent_self_signup.html", {
+        "form": form,
+        "title": "Create Parent Account",
+    })
 
 
 def staff_invitation_step1(request):
