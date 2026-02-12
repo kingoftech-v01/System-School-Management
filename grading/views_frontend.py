@@ -400,21 +400,20 @@ def grade_entry_detail(request, pk):
     Display grade entry details.
     Students can view their own grades.
     Lecturers can view grades they assigned.
+    Permission check is done via queryset filtering BEFORE fetch.
     """
-    grade = get_object_or_404(
-        RubricGrade.objects.select_related('rubric', 'student', 'graded_by').prefetch_related('criterion_grades__criterion'),
-        pk=pk
-    )
+    base_qs = RubricGrade.objects.select_related(
+        'rubric', 'student', 'graded_by'
+    ).prefetch_related('criterion_grades__criterion')
 
-    # Check permissions
+    # Filter by role before fetching - prevents IDOR
     if request.user.role == 'student':
-        if grade.student.student != request.user:
-            messages.error(request, _('You do not have permission to view this grade.'))
-            return redirect('frontend:grading:student_gradebook')
-    elif request.user.role == 'lecturer':
-        if grade.graded_by != request.user:
-            messages.error(request, _('You do not have permission to view this grade.'))
-            return redirect('frontend:grading:grade_entry_list')
+        base_qs = base_qs.filter(student__student=request.user)
+    elif request.user.role in ('lecturer', 'professor'):
+        base_qs = base_qs.filter(graded_by=request.user)
+    # direction/admin can see all -- no filter needed
+
+    grade = get_object_or_404(base_qs, pk=pk)
 
     context = {
         'grade': grade,
@@ -433,16 +432,15 @@ def grade_entry_edit(request, pk):
     Edit an existing grade entry.
     Lecturers can only edit grades they assigned.
     Direction can edit any grade.
+    Permission check is done via queryset filtering BEFORE fetch.
     """
-    grade = get_object_or_404(
-        RubricGrade.objects.select_related('rubric', 'student', 'graded_by'),
-        pk=pk
-    )
+    base_qs = RubricGrade.objects.select_related('rubric', 'student', 'graded_by')
 
-    # Check permissions
-    if request.user.role != 'direction' and grade.graded_by != request.user:
-        messages.error(request, _('You do not have permission to edit this grade.'))
-        return redirect('frontend:grading:grade_entry_list')
+    # Filter by role before fetching - prevents IDOR
+    if request.user.role not in ('direction', 'admin') and not request.user.is_superuser:
+        base_qs = base_qs.filter(graded_by=request.user)
+
+    grade = get_object_or_404(base_qs, pk=pk)
 
     rubric = grade.rubric
 
@@ -492,15 +490,12 @@ def grade_entry_delete(request, pk):
     Lecturers can only delete grades they assigned.
     Direction can delete any grade. GET shows confirmation, POST deletes.
     """
-    grade = get_object_or_404(
-        RubricGrade.objects.select_related('rubric', 'student', 'graded_by'),
-        pk=pk
-    )
+    # Filter by role before fetching - prevents IDOR
+    base_qs = RubricGrade.objects.select_related('rubric', 'student', 'graded_by')
+    if request.user.role not in ('direction', 'admin') and not request.user.is_superuser:
+        base_qs = base_qs.filter(graded_by=request.user)
 
-    # Check permissions
-    if request.user.role != 'direction' and grade.graded_by != request.user:
-        messages.error(request, _('You do not have permission to delete this grade.'))
-        return redirect('frontend:grading:grade_entry_list')
+    grade = get_object_or_404(base_qs, pk=pk)
 
     if request.method == 'POST':
         grade.delete()

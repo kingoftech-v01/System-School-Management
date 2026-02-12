@@ -239,12 +239,36 @@ class DocumentUploadForm(forms.ModelForm):
             }),
         }
 
+    ALLOWED_CONTENT_TYPES = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ]
+    ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']
+
     def clean_file(self):
-        """Validate file size (max 10MB)."""
+        """Validate file size (max 10MB) and file type."""
+        import os
         file = self.cleaned_data.get('file')
         if file:
             if file.size > 10 * 1024 * 1024:  # 10MB
                 raise ValidationError(_('File size must not exceed 10 MB.'))
+
+            # Validate file extension
+            ext = os.path.splitext(file.name)[1].lower()
+            if ext not in self.ALLOWED_EXTENSIONS:
+                raise ValidationError(
+                    _('Unsupported file type "%(ext)s". Allowed: PDF, JPG, PNG, DOC, DOCX.'),
+                    params={'ext': ext},
+                )
+
+            # Validate content type
+            if hasattr(file, 'content_type') and file.content_type not in self.ALLOWED_CONTENT_TYPES:
+                raise ValidationError(
+                    _('Invalid file content type. Please upload a PDF, image, or Word document.')
+                )
         return file
 
 

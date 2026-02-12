@@ -42,7 +42,7 @@ frontend_urlpatterns = [
     path('register/step2/', views_frontend.register_step2, name='register_step2'),
     path('register/step3/', views_frontend.register_step3, name='register_step3'),
     path('register/step4/', views_frontend.register_step4, name='register_step4'),
-    path('register/complete/<int:registration_id>/', views_frontend.register_complete, name='register_complete'),
+    path('register/complete/<str:signed_id>/', views_frontend.register_complete, name='register_complete'),
     path('register/<int:registration_id>/upload/', views_frontend.upload_document, name='upload_document'),
 
     # Direction/Admin URLs

@@ -1,5 +1,5 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
-{% load static %}
+{% load static sanitize %}
 
 {% block title %}{{ title }} - School Management{% endblock %}
 
@@ -66,7 +66,7 @@
 
                     <!-- Article Body -->
                     <div class="article-content">
-                        {{ article.content|safe }}
+                        {{ article.content|sanitize }}
                     </div>
 
                     <!-- Tags -->

@@ -1,5 +1,5 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
-{% load static %}
+{% load static sanitize %}
 
 {% block title %}{{ thread.title|default:"Thread" }} - School Management{% endblock %}
 
@@ -73,7 +73,7 @@
                 </div>
                 {% if thread.content %}
                 <div class="card-body">
-                    {{ thread.content|safe }}
+                    {{ thread.content|sanitize }}
                 </div>
                 {% endif %}
                 {% if thread.tags.all %}
@@ -109,7 +109,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">{{ post.content|safe }}</div>
+                    <div class="mb-3">{{ post.content|sanitize }}</div>
                     <div class="d-flex align-items-center gap-2">
                         <!-- Vote buttons -->
                         {% if not thread.is_locked %}
@@ -161,7 +161,7 @@
                             </div>
                             {% endif %}
                         </div>
-                        <div>{{ reply.content|safe }}</div>
+                        <div>{{ reply.content|sanitize }}</div>
                     </div>
                     {% endif %}
                     {% endfor %}

@@ -59,7 +59,18 @@ class PaymentGetwaysView(TemplateView):
         invoice_code = self.request.session.get("invoice_session")
         invoice = None
         if invoice_code:
-            invoice = Invoice.objects.filter(invoice_code=invoice_code).first()
+            # Validate ownership: only show invoice if user owns it or is parent
+            invoice = Invoice.objects.filter(
+                invoice_code=invoice_code, user=self.request.user
+            ).first()
+            if not invoice:
+                from accounts.models import Parent
+                student_ids = Parent.objects.filter(
+                    user=self.request.user
+                ).values_list('student__student_id', flat=True)
+                invoice = Invoice.objects.filter(
+                    invoice_code=invoice_code, user_id__in=student_ids
+                ).first()
         context["amount"] = int(invoice.amount * 100) if invoice and invoice.amount else 0
         context["description"] = "Stripe Payment"
         context["invoice_session"] = self.request.session.get("invoice_session", {})
@@ -72,7 +83,12 @@ def stripe_charge(request):
 
     if request.method == "POST":
         invoice_code = request.session.get("invoice_session")
+        if not invoice_code:
+            messages.error(request, _("No invoice session found."))
+            return redirect("frontend:payments:student_invoices")
+
         invoice = get_object_or_404(Invoice, invoice_code=invoice_code)
+
         # Verify the user owns this invoice or is a parent of the student
         if invoice.user != request.user and not request.user.is_superuser:
             from accounts.models import Parent
@@ -80,18 +96,61 @@ def stripe_charge(request):
                 user=request.user, student__student=invoice.user
             ).exists()
             if not is_parent_of_student:
-                messages.error(request, "You are not authorized to pay this invoice.")
+                messages.error(request, _("You are not authorized to pay this invoice."))
                 return redirect("frontend:payments:student_invoices")
+
+        # Prevent double-payment
+        if invoice.payment_complete:
+            messages.info(request, _("This invoice has already been paid."))
+            return redirect("frontend:payments:completed")
+
+        # Safely get token
+        stripe_token = request.POST.get("stripeToken")
+        if not stripe_token:
+            messages.error(request, _("Payment token missing. Please try again."))
+            return redirect("frontend:payments:payment_gateways")
+
         amount = int(invoice.amount * 100) if invoice.amount else 0
-        charge = stripe.Charge.create(
-            amount=amount,
-            currency="eur",
-            description=f"Payment for invoice {invoice.invoice_code}",
-            source=request.POST["stripeToken"],
-        )
-        invoice.payment_complete = True
-        invoice.save()
-        return redirect("frontend:payments:completed")
+        if amount <= 0:
+            messages.error(request, _("Invalid invoice amount."))
+            return redirect("frontend:payments:student_invoices")
+
+        try:
+            charge = stripe.Charge.create(
+                amount=amount,
+                currency="eur",
+                description=f"Payment for invoice {invoice.invoice_code}",
+                source=stripe_token,
+                idempotency_key=f"charge-{invoice.invoice_code}",
+            )
+
+            if charge.status == "succeeded":
+                from django.db import transaction
+                with transaction.atomic():
+                    invoice.payment_complete = True
+                    invoice.save()
+                    Payment.objects.create(
+                        invoice=invoice,
+                        amount=invoice.amount,
+                        payment_gateway='stripe',
+                        transaction_id=charge.id,
+                        status='completed',
+                    )
+                if "invoice_session" in request.session:
+                    del request.session["invoice_session"]
+                return redirect("frontend:payments:completed")
+            else:
+                messages.error(request, _("Payment not successful. Please try again."))
+                return redirect("frontend:payments:payment_gateways")
+
+        except stripe.error.CardError as e:
+            messages.error(request, _(f"Card error: {e.user_message}"))
+            return redirect("frontend:payments:payment_gateways")
+        except stripe.error.StripeError:
+            messages.error(request, _("Payment processing error. Please try again."))
+            return redirect("frontend:payments:payment_gateways")
+
+    return redirect("frontend:payments:payment_gateways")
 
 
 @login_required
@@ -192,20 +251,40 @@ def paymentComplete(request):
 @accountant_allowed
 def create_invoice(request):
     if request.method == "POST":
-        amount = request.POST.get("amount", 0)
+        fee_structure_id = request.POST.get("fee_structure_id")
+        student_id = request.POST.get("student_id")
+
+        if not fee_structure_id or not student_id:
+            messages.error(request, _("Student and fee structure are required."))
+            return redirect("frontend:payments:create_invoice")
+
+        from accounts.models import Student
+        student = get_object_or_404(Student, pk=student_id)
+        fee_structure = get_object_or_404(FeeStructure, pk=fee_structure_id, is_active=True)
+
+        # Derive amount from fee structure - no user-supplied amount
+        amount = fee_structure.get_total_fee() if hasattr(fee_structure, 'get_total_fee') else fee_structure.total_fee
+
         invoice = Invoice.objects.create(
-            user=request.user,
+            user=student.student,
+            student=student,
+            fee_structure=fee_structure,
             amount=amount,
             total=amount,
             invoice_code=str(uuid.uuid4()),
         )
         request.session["invoice_session"] = invoice.invoice_code
+        messages.success(request, _("Invoice created successfully."))
         return redirect("frontend:payments:payment_gateways")
 
+    fee_structures = FeeStructure.objects.filter(is_active=True)
     return render(
         request,
         "invoices.html",
-        context={"invoices": Invoice.objects.filter(user=request.user)},
+        context={
+            "invoices": Invoice.objects.filter(user=request.user),
+            "fee_structures": fee_structures,
+        },
     )
 
 

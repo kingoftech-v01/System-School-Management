@@ -69,8 +69,13 @@ class RegistrationFormViewSet(viewsets.ModelViewSet):
 
         # Non-direction users can only see their own registration
         if self.request.user.is_authenticated:
-            if not hasattr(self.request.user, 'is_direction') or not self.request.user.is_direction:
-                queryset = queryset.filter(email=self.request.user.email)
+            user = self.request.user
+            if not (hasattr(user, 'role') and user.role in ('direction', 'admin', 'secretary')):
+                # Filter by user FK where available, fall back to email
+                from django.db.models import Q
+                queryset = queryset.filter(
+                    Q(enrolled_user=user) | Q(email=user.email)
+                )
 
         return queryset
 
@@ -195,8 +200,12 @@ class EnrollmentDocumentViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(registration__tenant=self.request.tenant)
 
         # Non-direction users can only see their own documents
-        if not hasattr(self.request.user, 'is_direction') or not self.request.user.is_direction:
-            queryset = queryset.filter(registration__email=self.request.user.email)
+        user = self.request.user
+        if not (hasattr(user, 'role') and user.role in ('direction', 'admin', 'secretary')):
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(registration__enrolled_user=user) | Q(registration__email=user.email)
+            )
 
         return queryset
 
@@ -266,7 +275,11 @@ class EnrollmentStatusHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(registration__tenant=self.request.tenant)
 
         # Non-direction users can only see history for their own registration
-        if not hasattr(self.request.user, 'is_direction') or not self.request.user.is_direction:
-            queryset = queryset.filter(registration__email=self.request.user.email)
+        user = self.request.user
+        if not (hasattr(user, 'role') and user.role in ('direction', 'admin', 'secretary')):
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(registration__enrolled_user=user) | Q(registration__email=user.email)
+            )
 
         return queryset

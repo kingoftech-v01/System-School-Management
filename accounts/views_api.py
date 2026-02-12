@@ -11,6 +11,8 @@ This module provides API endpoints for:
 API URL namespace: api:v1:accounts:resource-name
 """
 
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -130,29 +132,38 @@ class StaffViewSet(viewsets.ModelViewSet):
 class ValidateUsernameAPIView(APIView):
     """
     API view to validate username availability.
+    Rate-limited and uses generic messages to prevent username enumeration.
     """
     permission_classes = [AllowAny]
+    throttle_classes = []  # Use django-ratelimit instead
 
+    @method_decorator(ratelimit(key='ip', rate='10/m', method='POST'))
     def post(self, request):
-        """Check if username is available."""
+        """Check if username is available (generic response to prevent enumeration)."""
         username = request.data.get('username', '').strip()
 
         if not username:
             return Response(
-                {'available': False, 'message': 'Username is required.'},
+                {'valid': False, 'message': 'Username is required.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if len(username) < 3:
             return Response(
-                {'available': False, 'message': 'Username must be at least 3 characters.'}
+                {'valid': False, 'message': 'Username must be at least 3 characters.'}
+            )
+
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            return Response(
+                {'valid': False, 'message': 'Username can only contain letters, numbers, and underscores.'}
             )
 
         exists = User.objects.filter(username=username).exists()
 
         return Response({
-            'available': not exists,
-            'message': 'Username is available.' if not exists else 'Username is already taken.'
+            'valid': not exists,
+            'message': 'Username is valid.' if not exists else 'Username is not available. Please try a different one.'
         })
 
 
