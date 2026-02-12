@@ -1,0 +1,31 @@
+{% load scheduling_tags %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="card-title mb-0">Today's Schedule</h4>
+        <a href="{% url 'frontend:scheduling:schedule_calendar' %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-calendar3"></i> Full Calendar
+        </a>
+    </div>
+    <div class="card-body p-0">
+        {% if schedule_entries %}
+        <div class="list-group list-group-flush">
+            {% for entry in schedule_entries %}
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">{{ entry.course.title }}</h6>
+                    <small class="text-primary">{{ entry.time_slot.start_time|time:"H:i" }}-{{ entry.time_slot.end_time|time:"H:i" }}</small>
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-person"></i> {{ entry.professor.get_full_name }}
+                    {% if entry.room %} | <i class="bi bi-door-open"></i> {{ entry.room.name }}{% endif %}
+                </small>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-3 text-muted">
+            <small>No classes scheduled for today.</small>
+        </div>
+        {% endif %}
+    </div>
+</div>

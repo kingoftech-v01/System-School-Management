@@ -1,0 +1,95 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+
+{% block title %}Substitution Requests - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Substitution Requests</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:scheduling:schedule_calendar' %}">Schedule</a></li>
+        <li class="breadcrumb-item active">Substitutions</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Substitution Requests</h4>
+                    <div>
+                        <a href="?status=pending" class="btn btn-sm {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">Pending</a>
+                        <a href="?status=approved" class="btn btn-sm {% if current_status == 'approved' %}btn-success{% else %}btn-outline-success{% endif %}">Approved</a>
+                        <a href="?status=rejected" class="btn btn-sm {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-danger{% endif %}">Rejected</a>
+                        <a href="?" class="btn btn-sm {% if not current_status %}btn-secondary{% else %}btn-outline-secondary{% endif %}">All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Course</th>
+                                    <th>Requesting Professor</th>
+                                    <th>Suggested Substitute</th>
+                                    <th>Assigned Substitute</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sub in substitution_requests %}
+                                <tr>
+                                    <td>{{ sub.date|date:"d/m/Y" }}</td>
+                                    <td>{{ sub.schedule_entry.course.title }}</td>
+                                    <td>{{ sub.requesting_professor.get_full_name }}</td>
+                                    <td>{{ sub.suggested_substitute.get_full_name|default:"-" }}</td>
+                                    <td>{{ sub.assigned_substitute.get_full_name|default:"-" }}</td>
+                                    <td>
+                                        {% if sub.status == 'pending' %}<span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif sub.status == 'approved' %}<span class="badge bg-success">Approved</span>
+                                        {% elif sub.status == 'rejected' %}<span class="badge bg-danger">Rejected</span>
+                                        {% elif sub.status == 'fulfilled' %}<span class="badge bg-info">Fulfilled</span>
+                                        {% else %}<span class="badge bg-secondary">{{ sub.get_status_display }}</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if sub.status == 'pending' %}
+                                        <a href="{% url 'frontend:scheduling:substitution_review' pk=sub.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Review
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No substitution requests found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if substitution_requests.has_other_pages %}
+                    <nav>
+                        <ul class="pagination justify-content-center mt-3">
+                            {% if substitution_requests.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ substitution_requests.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}">Previous</a></li>
+                            {% endif %}
+                            {% for num in substitution_requests.paginator.page_range %}
+                            <li class="page-item {% if substitution_requests.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}{% if current_status %}&status={{ current_status }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+                            {% if substitution_requests.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ substitution_requests.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}">Next</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+
+{% block title %}Generate Timetable - Step 1{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Generate Timetable</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:scheduling:schedule_calendar' %}">Schedule</a></li>
+        <li class="breadcrumb-item active">Step 1: Scope</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Step 1: Define Scope</h4>
+                    <p class="text-muted mb-0 mt-1">Select the session, semester, and programs to schedule.</p>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="session" class="form-label">Session <span class="text-danger">*</span></label>
+                                <select name="session" id="session" class="form-select" required>
+                                    <option value="">Select Session</option>
+                                    {% for s in sessions %}
+                                    <option value="{{ s.id }}" {% if s.is_current_session %}selected{% endif %}>{{ s }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="semester" class="form-label">Semester <span class="text-danger">*</span></label>
+                                <select name="semester" id="semester" class="form-select" required>
+                                    <option value="">Select Semester</option>
+                                    {% for sem in semesters %}
+                                    <option value="{{ sem.id }}" {% if sem.is_current_semester %}selected{% endif %}>{{ sem }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="effective_from" class="form-label">Effective From <span class="text-danger">*</span></label>
+                                <input type="date" name="effective_from" id="effective_from" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="effective_until" class="form-label">Effective Until <span class="text-danger">*</span></label>
+                                <input type="date" name="effective_until" id="effective_until" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Filieres to Include <span class="text-danger">*</span></label>
+                            <div class="row">
+                                {% for f in filieres %}
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="filieres" value="{{ f.id }}" id="fil_{{ f.id }}" checked>
+                                        <label class="form-check-label" for="fil_{{ f.id }}">{{ f.name }} ({{ f.code }})</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Next: Constraints <i class="bi bi-arrow-right"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5>Wizard Steps</h5>
+                    <ol>
+                        <li class="fw-bold text-primary">Define Scope</li>
+                        <li class="text-muted">Configure Constraints</li>
+                        <li class="text-muted">Preview & Validate</li>
+                        <li class="text-muted">Generate</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
+{% load scheduling_tags %}
 
 {% block title %}Admin Dashboard - School Management{% endblock %}
 
@@ -138,6 +139,13 @@
                     {% endif %}
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Today's Schedule Widget -->
+    <div class="row mt-3">
+        <div class="col-xl-6 mb-4">
+            {% todays_schedule %}
         </div>
     </div>
 </div>
