@@ -124,11 +124,14 @@ STRIPE_SECRET_KEY = 'sk_test_placeholder'
 # Development file storage
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
-# Disable throttling in development/tests to avoid 429 errors
+# Disable default throttling in development/tests to avoid 429 errors,
+# but keep rates defined so view-level throttle_classes still work.
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
     'DEFAULT_THROTTLE_CLASSES': [],
-    'DEFAULT_THROTTLE_RATES': {},
+    'DEFAULT_THROTTLE_RATES': {
+        'search': '50/hour',
+    },
 }
 
 # Use simple static files storage (no manifest needed, no collectstatic required)

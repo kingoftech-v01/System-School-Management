@@ -48,7 +48,7 @@ frontend_urlpatterns = [
     path('item/<int:pk>/', views_frontend.post_detail, name='post_detail'),
     path('item/<int:pk>/edit/', views_frontend.edit_post, name='edit_post'),
     path('item/<int:pk>/delete/', views_frontend.delete_post, name='delete_post'),
-    path('search/', views_frontend.news_search, name='news_search'),
+    path('news/search/', views_frontend.news_search, name='news_search'),
 
     # Sessions
     path('session/', views_frontend.session_list_view, name='session_list'),

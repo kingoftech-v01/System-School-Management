@@ -1,9 +1,9 @@
-from itertools import chain
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from core.models import NewsAndEvents
-from course.models import Program, Course
-from quiz.models import Quiz
+
+from .forms import AdvancedSearchForm
+from .utils import execute_search
 
 
 class SearchView(LoginRequiredMixin, ListView):
@@ -15,25 +15,39 @@ class SearchView(LoginRequiredMixin, ListView):
         context = super().get_context_data(*args, **kwargs)
         context["count"] = self.count or 0
         context["query"] = self.request.GET.get("q")
+        context["search_form"] = AdvancedSearchForm(self.request.GET or None)
+        context["search_type"] = self.request.GET.get("search_type", "all")
+        context["date_from"] = self.request.GET.get("date_from", "")
+        context["date_to"] = self.request.GET.get("date_to", "")
         return context
 
     def get_queryset(self):
         request = self.request
+
+        # Defensive tenant check
+        if not getattr(request, 'tenant', None):
+            return NewsAndEvents.objects.none()
+
         query = request.GET.get("q", None)
 
         if query is not None and len(query.strip()) >= 2:
-            news_events_results = NewsAndEvents.objects.search(query)
-            program_results = Program.objects.search(query)
-            course_results = Course.objects.search(query)
-            quiz_results = Quiz.objects.search(query)
+            search_type = "all"
+            date_from = None
+            date_to = None
 
-            # combine querysets
-            queryset_chain = chain(
-                news_events_results, program_results, course_results, quiz_results
+            form = AdvancedSearchForm(request.GET)
+            if form.is_valid():
+                search_type = form.cleaned_data.get("search_type", "all") or "all"
+                date_from = form.cleaned_data.get("date_from")
+                date_to = form.cleaned_data.get("date_to")
+
+            queryset = execute_search(
+                query.strip(),
+                search_type=search_type,
+                date_from=date_from,
+                date_to=date_to,
             )
-            queryset = sorted(
-                queryset_chain, key=lambda instance: instance.pk, reverse=True
-            )
-            self.count = len(queryset)  # since queryset is actually a list
+            self.count = len(queryset)
             return queryset
-        return NewsAndEvents.objects.none()  # just an empty queryset as default
+
+        return NewsAndEvents.objects.none()

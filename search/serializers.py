@@ -78,6 +78,10 @@ class UnifiedSearchResultSerializer(serializers.Serializer):
         """Get creation timestamp if available."""
         if hasattr(obj, 'created_at'):
             return obj.created_at
+        elif hasattr(obj, 'upload_time'):
+            return obj.upload_time  # NewsAndEvents
+        elif hasattr(obj, 'timestamp'):
+            return obj.timestamp  # Quiz
         return None
 
 

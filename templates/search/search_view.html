@@ -1,5 +1,6 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
 {% load static %}
+{% load class_name %}
 
 {% block title %}Search Results - School Management{% endblock %}
 
@@ -23,6 +24,46 @@
                         <i class="bi bi-search"></i> Search
                     </button>
                 </div>
+
+                <!-- Advanced Search Toggle -->
+                <div class="text-center mt-2">
+                    <a class="text-muted small" data-bs-toggle="collapse"
+                       href="#advancedSearch" role="button"
+                       aria-expanded="{% if search_type != 'all' or date_from or date_to %}true{% else %}false{% endif %}">
+                        <i class="bi bi-sliders"></i> Advanced Search Options
+                    </a>
+                </div>
+
+                <!-- Collapsible Advanced Search Panel -->
+                <div class="collapse {% if search_type != 'all' or date_from or date_to %}show{% endif %}"
+                     id="advancedSearch">
+                    <div class="card card-body mt-2">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label for="search_type" class="form-label small">Search In</label>
+                                <select name="search_type" id="search_type" class="form-select form-select-sm">
+                                    <option value="all" {% if search_type == 'all' %}selected{% endif %}>All Content</option>
+                                    <option value="news" {% if search_type == 'news' %}selected{% endif %}>News & Events</option>
+                                    <option value="programs" {% if search_type == 'programs' %}selected{% endif %}>Programs</option>
+                                    <option value="courses" {% if search_type == 'courses' %}selected{% endif %}>Courses</option>
+                                    <option value="quizzes" {% if search_type == 'quizzes' %}selected{% endif %}>Quizzes</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="date_from" class="form-label small">From Date</label>
+                                <input type="date" name="date_from" id="date_from"
+                                       class="form-control form-control-sm"
+                                       value="{{ date_from }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="date_to" class="form-label small">To Date</label>
+                                <input type="date" name="date_to" id="date_to"
+                                       class="form-control form-control-sm"
+                                       value="{{ date_to }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -43,24 +84,21 @@
                         {% for result in object_list %}
                         <div class="list-group-item d-flex align-items-start gap-3 py-3">
                             <!-- Result type indicator -->
+                            {% with type=result|class_name %}
                             <div class="flex-shrink-0">
-                                {% if result.course_code is not None or result.credit is not None %}
-                                {# Course object - has course_code or credit field #}
+                                {% if type == 'Course' %}
                                 <span class="badge bg-primary rounded-pill p-2" title="Course">
                                     <i class="bi bi-book fs-6"></i>
                                 </span>
-                                {% elif result.summary is not None %}
-                                {# Program object - has summary field #}
+                                {% elif type == 'Program' %}
                                 <span class="badge bg-success rounded-pill p-2" title="Program">
                                     <i class="bi bi-mortarboard fs-6"></i>
                                 </span>
-                                {% elif result.pass_mark is not None %}
-                                {# Quiz object - has pass_mark field #}
+                                {% elif type == 'Quiz' %}
                                 <span class="badge bg-warning rounded-pill p-2" title="Quiz">
                                     <i class="bi bi-question-circle fs-6"></i>
                                 </span>
                                 {% else %}
-                                {# NewsAndEvents or other #}
                                 <span class="badge bg-info rounded-pill p-2" title="News / Event">
                                     <i class="bi bi-newspaper fs-6"></i>
                                 </span>
@@ -74,19 +112,22 @@
                                 </h6>
                                 {% if result.description %}
                                 <p class="text-muted mb-1 small">{{ result.description|truncatewords:30 }}</p>
+                                {% elif result.summary %}
+                                <p class="text-muted mb-1 small">{{ result.summary|truncatewords:30 }}</p>
                                 {% endif %}
 
                                 <!-- Type badge label -->
-                                {% if result.course_code is not None or result.credit is not None %}
+                                {% if type == 'Course' %}
                                 <span class="badge bg-primary bg-opacity-10 text-primary">Course</span>
-                                {% elif result.summary is not None %}
+                                {% elif type == 'Program' %}
                                 <span class="badge bg-success bg-opacity-10 text-success">Program</span>
-                                {% elif result.pass_mark is not None %}
+                                {% elif type == 'Quiz' %}
                                 <span class="badge bg-warning bg-opacity-10 text-warning">Quiz</span>
                                 {% else %}
                                 <span class="badge bg-info bg-opacity-10 text-info">News / Event</span>
                                 {% endif %}
                             </div>
+                            {% endwith %}
                         </div>
                         {% endfor %}
                     </div>
@@ -97,17 +138,17 @@
                         <ul class="pagination justify-content-center">
                             {% if page_obj.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                                <a class="page-link" href="?q={{ query }}&search_type={{ search_type }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ page_obj.previous_page_number }}">Previous</a>
                             </li>
                             {% endif %}
                             {% for num in page_obj.paginator.page_range %}
                             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                                <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+                                <a class="page-link" href="?q={{ query }}&search_type={{ search_type }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ num }}">{{ num }}</a>
                             </li>
                             {% endfor %}
                             {% if page_obj.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
+                                <a class="page-link" href="?q={{ query }}&search_type={{ search_type }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ page_obj.next_page_number }}">Next</a>
                             </li>
                             {% endif %}
                         </ul>

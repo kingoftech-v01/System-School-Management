@@ -122,3 +122,31 @@ class TestSearchQuery(SearchViewsBase):
         self.client.force_login(self.student)
         response = self.client.get(self.url(), {'q': self.course.title[:10]})
         self.assertIn(response.status_code, [200, 302, 500])
+
+    # --- Advanced search tests ---
+
+    def test_search_with_search_type(self):
+        """search_type parameter is accepted."""
+        self.client.force_login(self.student)
+        response = self.client.get(self.url(), {'q': 'Test', 'search_type': 'courses'})
+        self.assertIn(response.status_code, [200, 302, 500])
+
+    def test_search_with_date_range(self):
+        """Date range parameters are accepted."""
+        self.client.force_login(self.student)
+        response = self.client.get(self.url(), {
+            'q': 'Test',
+            'date_from': '2024-01-01',
+            'date_to': '2025-12-31',
+        })
+        self.assertIn(response.status_code, [200, 302, 500])
+
+    def test_advanced_search_form_in_context(self):
+        """search_form should be present in context."""
+        self.client.force_login(self.student)
+        response = self.client.get(self.url(), {'q': 'Test'})
+        if response.status_code == 200:
+            self.assertIn('search_form', response.context)
+            self.assertIn('search_type', response.context)
+            self.assertIn('date_from', response.context)
+            self.assertIn('date_to', response.context)

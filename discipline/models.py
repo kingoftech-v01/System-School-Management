@@ -2,9 +2,16 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from audit.mixins import AuditedModelMixin
 
-class DisciplinaryAction(models.Model):
+
+class DisciplinaryAction(AuditedModelMixin, models.Model):
     """Disciplinary actions with immutable audit trail."""
+
+    AUDITED_FIELDS = [
+        'incident_type', 'description', 'action_taken', 'severity',
+        'is_resolved', 'parent_acknowledged', 'parent_response',
+    ]
 
     SEVERITY_CHOICES = (
         ('minor', _('Minor')),

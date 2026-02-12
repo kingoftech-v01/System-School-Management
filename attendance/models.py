@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q, Count
 from django.utils import timezone
@@ -7,6 +8,17 @@ import csv
 import json
 
 User = get_user_model()
+
+
+ABSENCE_REASON_CHOICES = (
+    ('unexcused', _('Unexcused')),
+    ('medical', _('Medical')),
+    ('family_emergency', _('Family Emergency')),
+    ('court_date', _('Court Date')),
+    ('suspension', _('Suspension')),
+    ('school_event', _('School Event')),
+    ('other', _('Other')),
+)
 
 class Group(models.Model):
     name = models.CharField(max_length=50)
@@ -117,6 +129,28 @@ class AttendanceReport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Absence reason tracking
+    absence_reason = models.CharField(
+        max_length=30, choices=ABSENCE_REASON_CHOICES,
+        blank=True, help_text=_('Reason for absence (when status is absent)')
+    )
+    absence_notes = models.TextField(
+        blank=True, help_text=_('Additional details about the absence')
+    )
+    excused = models.BooleanField(
+        default=False,
+        help_text=_('Whether the absence has been excused by administration')
+    )
+    excused_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='excused_absences'
+    )
+    excused_at = models.DateTimeField(null=True, blank=True)
+    supporting_document = models.FileField(
+        upload_to='absence_docs/%Y/%m/%d/',
+        blank=True, help_text=_('Medical certificate or supporting document')
+    )
+
     class Meta:
         ordering = ['student__last_name', 'student__first_name']
         unique_together = [['attendance', 'student']]  # Prevent duplicate entries
@@ -216,3 +250,38 @@ class DailyAttendanceStat(models.Model):
                     date=date
                 )
                 stat.calculate_stats()
+
+
+class AbsenceNotification(models.Model):
+    """Track parent notifications about student absences."""
+
+    NOTIFICATION_METHOD_CHOICES = (
+        ('email', _('Email')),
+        ('sms', _('SMS')),
+        ('in_app', _('In-App Notification')),
+    )
+
+    attendance_report = models.ForeignKey(
+        AttendanceReport, on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    parent = models.ForeignKey(
+        'accounts.Parent', on_delete=models.CASCADE,
+        related_name='absence_notifications'
+    )
+    method = models.CharField(
+        max_length=10, choices=NOTIFICATION_METHOD_CHOICES
+    )
+    sent_at = models.DateTimeField(auto_now_add=True)
+    delivered = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    parent_acknowledged = models.BooleanField(default=False)
+    parent_response = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = _('Absence Notification')
+        verbose_name_plural = _('Absence Notifications')
+
+    def __str__(self):
+        return f"Notification to {self.parent} for {self.attendance_report}"

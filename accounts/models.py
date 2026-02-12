@@ -11,6 +11,7 @@ from django.utils import timezone
 from PIL import Image
 from django_countries.fields import CountryField
 
+from audit.mixins import AuditedModelMixin
 from course.models import Program
 from .validators import ASCIIUsernameValidator
 
@@ -94,7 +95,14 @@ class CustomUserManager(UserManager):
 GENDERS = ((_("M"), _("Male")), (_("F"), _("Female")))
 
 
-class User(AbstractUser):
+class User(AuditedModelMixin, AbstractUser):
+    AUDITED_FIELDS = [
+        'first_name', 'last_name', 'middle_name', 'email', 'phone',
+        'role', 'is_active', 'is_student', 'is_lecturer', 'is_parent',
+        'approval_status', 'street_address', 'city', 'province',
+        'postal_code', 'emergency_contact', 'emergency_phone',
+    ]
+
     # Legacy boolean fields (kept for backward compatibility)
     is_student = models.BooleanField(default=False)
     is_lecturer = models.BooleanField(default=False)
@@ -274,7 +282,12 @@ class DroppedStudentManager(models.Manager):
         return super().get_queryset().filter(is_dropped=True)
 
 
-class Student(models.Model):
+class Student(AuditedModelMixin, models.Model):
+    AUDITED_FIELDS = [
+        'level', 'program', 'is_alumni', 'is_dropped',
+        'drop_reason', 'graduation_date',
+    ]
+
     student = models.OneToOneField(User, on_delete=models.CASCADE)
     # id_number = models.CharField(max_length=20, unique=True, blank=True)
     level = models.CharField(max_length=25, choices=LEVEL, null=True)
@@ -371,11 +384,15 @@ class Student(models.Model):
         super().delete(*args, **kwargs)
 
 
-class Parent(models.Model):
+class Parent(AuditedModelMixin, models.Model):
     """
-    Connect student with their parent, parents can
-    only view their connected students information
+    Connect student with their parent/guardian.
+    Supports date-ranged guardianship tracking for custody changes.
     """
+    AUDITED_FIELDS = [
+        'student', 'first_name', 'last_name', 'phone', 'email',
+        'relation_ship', 'is_primary', 'is_active',
+    ]
 
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='parent_profiles'
@@ -391,6 +408,28 @@ class Parent(models.Model):
     # What is the relationship between the student and
     # the parent (i.e. father, mother, brother, sister)
     relation_ship = models.TextField(choices=RELATION_SHIP, blank=True)
+
+    # Guardian history tracking
+    effective_from = models.DateField(
+        auto_now_add=True,
+        help_text=_('Date this guardianship became effective')
+    )
+    effective_until = models.DateField(
+        null=True, blank=True,
+        help_text=_('Date this guardianship ended (null = current)')
+    )
+    is_primary = models.BooleanField(
+        default=False,
+        help_text=_('Primary guardian for the student')
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text=_('Whether this guardianship is currently active')
+    )
+    custody_notes = models.TextField(
+        blank=True,
+        help_text=_('Notes about custody arrangement')
+    )
 
     class Meta:
         ordering = ("-user__date_joined",)
