@@ -62,7 +62,7 @@ class GradeJumpDetector(BaseDetector):
         abs_threshold = personal_mean + jump_threshold
 
         if new_total > stat_threshold or new_total > abs_threshold:
-            student_name = student.student.get_full_name() if hasattr(student, 'student') else str(student)
+            student_name = student.student.get_full_name if hasattr(student, 'student') else str(student)
             course_name = str(taken_course.course)
             deviation = round(new_total - personal_mean, 2)
 
@@ -121,7 +121,7 @@ class GradeAbnormallyHighDetector(BaseDetector):
 
         if new_total > threshold:
             student = taken_course.student
-            student_name = student.student.get_full_name() if hasattr(student, 'student') else str(student)
+            student_name = student.student.get_full_name if hasattr(student, 'student') else str(student)
             course_name = str(taken_course.course)
 
             self.create_alert(
@@ -165,13 +165,13 @@ class GradeUnauthorizedChangeDetector(BaseDetector):
 
             if not is_allocated:
                 student = taken_course.student
-                student_name = student.student.get_full_name() if hasattr(student, 'student') else str(student)
+                student_name = student.student.get_full_name if hasattr(student, 'student') else str(student)
 
                 self.create_alert(
-                    title=f"Unauthorized grade change by {changed_by.get_full_name()} "
+                    title=f"Unauthorized grade change by {changed_by.get_full_name} "
                           f"for {student_name} in {taken_course.course}",
                     details={
-                        'changed_by': changed_by.get_full_name(),
+                        'changed_by': changed_by.get_full_name,
                         'changed_by_role': changed_by.role,
                         'student_name': student_name,
                         'course': str(taken_course.course),
@@ -190,7 +190,7 @@ class GradeUnauthorizedChangeDetector(BaseDetector):
 
         if change_count > max_changes:
             student = taken_course.student
-            student_name = student.student.get_full_name() if hasattr(student, 'student') else str(student)
+            student_name = student.student.get_full_name if hasattr(student, 'student') else str(student)
 
             self.create_alert(
                 title=f"Excessive grade changes ({change_count}) for {student_name} "
@@ -200,7 +200,7 @@ class GradeUnauthorizedChangeDetector(BaseDetector):
                     'course': str(taken_course.course),
                     'change_count': change_count,
                     'max_allowed': max_changes,
-                    'last_changed_by': changed_by.get_full_name() if changed_by else 'Unknown',
+                    'last_changed_by': changed_by.get_full_name if changed_by else 'Unknown',
                 },
                 severity='high',
                 user=changed_by,

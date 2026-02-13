@@ -66,7 +66,7 @@ class UnusualLoginTimeDetector(BaseDetector):
 
         if current_hour < start_hour or current_hour >= end_hour:
             self.create_alert(
-                title=f"Unusual login time: {user.get_full_name()} logged in at "
+                title=f"Unusual login time: {user.get_full_name} logged in at "
                       f"{local_time.strftime('%H:%M')}",
                 details={
                     'username': user.username,
@@ -113,7 +113,7 @@ class DeviceChangeDetector(BaseDetector):
             return
 
         self.create_alert(
-            title=f"Device change detected for {user.get_full_name()}",
+            title=f"Device change detected for {user.get_full_name}",
             details={
                 'username': user.username,
                 'previous_user_agent': previous_login.user_agent[:500],

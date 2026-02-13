@@ -57,7 +57,7 @@ class AdmissionStudentTest(TestDataMixin, TestCase):
             'phone': '1234567890',
             'date_of_birth': date(2005, 1, 1),
             'gender': 'M',
-            'guardian_name': 'Jane Doe',
+            'guardian_first_name': 'Jane', 'guardian_last_name': 'Doe',
             'guardian_phone': '0987654321',
             'previous_school': 'Old School',
             'previous_grade': 'A',
@@ -96,7 +96,7 @@ class CounselingCommentTest(TestDataMixin, TestCase):
         app = AdmissionStudent.objects.create(
             session=session, first_name='Test', last_name='Student',
             email='cc@test.com', phone='123', date_of_birth=date(2005, 1, 1),
-            gender='F', guardian_name='Parent', guardian_phone='456',
+            gender='F', guardian_first_name='Parent', guardian_last_name='Test', guardian_phone='456',
             previous_school='School', previous_grade='B',
         )
         counselor = self.create_user(role='direction')
@@ -114,7 +114,7 @@ class CounselingCommentTest(TestDataMixin, TestCase):
         app = AdmissionStudent.objects.create(
             session=session, first_name='T', last_name='S',
             email='cc2@test.com', phone='123', date_of_birth=date(2005, 1, 1),
-            gender='M', guardian_name='P', guardian_phone='456',
+            gender='M', guardian_first_name='P', guardian_last_name='T', guardian_phone='456',
             previous_school='S', previous_grade='C',
         )
         comment = CounselingComment.objects.create(
@@ -133,7 +133,7 @@ class AdmissionPaymentTest(TestDataMixin, TestCase):
         app = AdmissionStudent.objects.create(
             session=session, first_name='Pay', last_name='Test',
             email='pay@test.com', phone='123', date_of_birth=date(2005, 1, 1),
-            gender='M', guardian_name='P', guardian_phone='456',
+            gender='M', guardian_first_name='P', guardian_last_name='T', guardian_phone='456',
             previous_school='S', previous_grade='A',
         )
         payment = AdmissionPayment.objects.create(
@@ -150,7 +150,7 @@ class AdmissionPaymentTest(TestDataMixin, TestCase):
         app = AdmissionStudent.objects.create(
             session=session, first_name='P', last_name='T',
             email='pay2@test.com', phone='123', date_of_birth=date(2005, 1, 1),
-            gender='F', guardian_name='G', guardian_phone='789',
+            gender='F', guardian_first_name='G', guardian_last_name='T', guardian_phone='789',
             previous_school='S', previous_grade='B',
         )
         payment = AdmissionPayment.objects.create(
@@ -168,13 +168,13 @@ class AdmissionPaymentTest(TestDataMixin, TestCase):
         app1 = AdmissionStudent.objects.create(
             session=session, first_name='A', last_name='A',
             email='a@test.com', phone='1', date_of_birth=date(2005, 1, 1),
-            gender='M', guardian_name='G', guardian_phone='2',
+            gender='M', guardian_first_name='G', guardian_last_name='T', guardian_phone='2',
             previous_school='S', previous_grade='A',
         )
         app2 = AdmissionStudent.objects.create(
             session=session, first_name='B', last_name='B',
             email='b@test.com', phone='3', date_of_birth=date(2005, 1, 1),
-            gender='F', guardian_name='G', guardian_phone='4',
+            gender='F', guardian_first_name='G', guardian_last_name='T', guardian_phone='4',
             previous_school='S', previous_grade='B',
         )
         AdmissionPayment.objects.create(

@@ -63,7 +63,7 @@ class ProfessorNoteViewSet(viewsets.ModelViewSet):
         ).select_related('professor', 'student', 'subject', 'approved_by')
 
         # Professors can only see their own notes
-        if not hasattr(user, 'is_direction') or not user.is_direction:
+        if getattr(user, 'role', '') not in ('direction', 'admin'):
             queryset = queryset.filter(professor=user)
 
         return queryset

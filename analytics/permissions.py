@@ -11,7 +11,7 @@ class CanViewAnalytics(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         return (request.user and request.user.is_authenticated and
-                (request.user.is_staff or request.user.is_teacher))
+                (request.user.is_staff or request.user.is_lecturer))
 
 
 class CanViewOwnAnalytics(permissions.BasePermission):
@@ -24,7 +24,7 @@ class CanViewOwnAnalytics(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Staff and instructors can view all
-        if request.user.is_staff or request.user.is_teacher:
+        if request.user.is_staff or request.user.is_lecturer:
             return True
 
         # Students can only view their own analytics
@@ -41,10 +41,10 @@ class CanManageAtRiskStudents(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return (request.user and request.user.is_authenticated and
-                    (request.user.is_staff or request.user.is_teacher))
+                    (request.user.is_staff or request.user.is_lecturer))
 
         return (request.user and request.user.is_authenticated and
-                (request.user.is_staff or request.user.is_teacher))
+                (request.user.is_staff or request.user.is_lecturer))
 
 
 class CanViewActivityLogs(permissions.BasePermission):
@@ -74,7 +74,7 @@ class CanViewLearningOutcomes(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Staff and instructors can view all
-        if request.user.is_staff or request.user.is_teacher:
+        if request.user.is_staff or request.user.is_lecturer:
             return True
 
         # Students can view outcomes for enrolled courses
@@ -98,7 +98,7 @@ class CanManageLearningOutcomes(permissions.BasePermission):
             return request.user and request.user.is_authenticated
 
         return (request.user and request.user.is_authenticated and
-                (request.user.is_staff or request.user.is_teacher))
+                (request.user.is_staff or request.user.is_lecturer))
 
 
 class CanExportAnalytics(permissions.BasePermission):
@@ -107,4 +107,4 @@ class CanExportAnalytics(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         return (request.user and request.user.is_authenticated and
-                (request.user.is_staff or request.user.is_teacher))
+                (request.user.is_staff or request.user.is_lecturer))

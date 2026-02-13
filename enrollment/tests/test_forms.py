@@ -63,7 +63,8 @@ class RegistrationFormStep1Test(TestCase):
 class RegistrationFormStep2Test(TestCase):
     def test_valid_form(self):
         form = RegistrationFormStep2(data={
-            'parent_name': 'Jane Doe',
+            'parent_first_name': 'Jane',
+            'parent_last_name': 'Doe',
             'parent_email': 'jane@example.com',
             'parent_phone': '+0987654321',
             'parent_relationship': 'mother',

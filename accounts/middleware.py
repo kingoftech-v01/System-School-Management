@@ -229,6 +229,8 @@ class AuditLogMiddleware(MiddlewareMixin):
         '/search/',
         '/discipline/',
         '/monitoring/',
+        '/safeguarding/',
+        '/reports/',
     ]
 
     # Paths where even GET requests should be logged

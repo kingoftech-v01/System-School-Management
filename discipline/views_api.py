@@ -80,7 +80,7 @@ class DisciplinaryActionViewSet(viewsets.ModelViewSet):
         ).select_related('student', 'reported_by', 'updated_by')
 
         # Filter by permissions
-        if user.is_staff or user.is_direction or getattr(user, 'role', '') == 'prefet':
+        if user.is_staff or getattr(user, 'role', '') == 'direction' or getattr(user, 'role', '') == 'prefet':
             # Staff, direction, and discipline officers can see all records
             return queryset
         elif user.is_student:
@@ -136,7 +136,7 @@ class DisciplinaryActionViewSet(viewsets.ModelViewSet):
         action = self.get_object()
 
         # Permission check (only staff/direction/discipline officer)
-        if not (request.user.is_staff or request.user.is_direction or getattr(request.user, 'role', '') == 'prefet'):
+        if not (request.user.is_staff or request.getattr(user, 'role', '') == 'direction' or getattr(request.user, 'role', '') == 'prefet'):
             return Response(
                 {'error': 'Only staff, direction, and discipline officers can resolve disciplinary actions'},
                 status=status.HTTP_403_FORBIDDEN

@@ -10,6 +10,7 @@ Tests cover:
 - Role-based access enforcement
 """
 
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import TestCase, Client
@@ -48,8 +49,8 @@ class NotesViewBase(TestDataMixin, TestCase):
             session=self.session,
             semester=self.semester,
             note_type='exam',
-            score=15.0,
-            coefficient=2.0,
+            score=Decimal('15.00'),
+            coefficient=Decimal('2.00'),
             status='draft',
         )
 
@@ -332,7 +333,7 @@ class NoteApproveTests(NotesViewBase):
         r = self.client.get(self._url('note_approve', pk=self.note.pk))
         self.assertIn(r.status_code, OK_CODES)
 
-    @patch('notes.views_frontend.notify_note_status_change')
+    @patch('notes.tasks.notify_note_status_change')
     def test_approve_post_direction(self, mock_task):
         """Direction can approve/reject a note."""
         mock_task.delay.return_value = None

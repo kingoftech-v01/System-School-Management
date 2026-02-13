@@ -49,7 +49,7 @@ class StudentEngagementViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Staff and teachers can see all engagement data
-        if user.is_staff or user.is_teacher:
+        if user.is_staff or user.is_lecturer:
             return self.queryset
 
         # Students can only see their own engagement
@@ -151,7 +151,7 @@ class CourseCompletionViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Staff and teachers can see all completion data
-        if user.is_staff or user.is_teacher:
+        if user.is_staff or user.is_lecturer:
             return self.queryset
 
         # Students can only see their own completions
@@ -248,7 +248,7 @@ class OutcomeMeasurementViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Staff and teachers can see all measurements
-        if user.is_staff or user.is_teacher:
+        if user.is_staff or user.is_lecturer:
             return self.queryset
 
         # Students can only see their own measurements
@@ -484,7 +484,7 @@ class AnalyticsDashboardViewSet(viewsets.ViewSet):
 
         dashboard_data = {
             'student_id': student.id,
-            'student_name': student.student.get_full_name(),
+            'student_name': student.student.get_full_name,
             'enrolled_courses': completions.count(),
             'completed_courses': completions.filter(is_completed=True).count(),
             'average_engagement': engagements.aggregate(Avg('engagement_score'))['engagement_score__avg'] or 0,

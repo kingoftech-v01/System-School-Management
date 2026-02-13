@@ -83,7 +83,7 @@ class EventViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(target_audience__in=['all', 'students'])
         elif user.is_parent:
             queryset = queryset.filter(target_audience__in=['all', 'parents'])
-        elif user.is_lecturer or user.is_professor:
+        elif user.is_lecturer or getattr(user, 'role', '') == 'professor':
             queryset = queryset.filter(target_audience__in=['all', 'staff'])
         # Direction and staff can see all events
 

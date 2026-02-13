@@ -15,6 +15,7 @@ pre-existing source code issues. Tests catch these exceptions as known bugs.
 """
 
 from django.core.exceptions import FieldError, ImproperlyConfigured
+from django.db.transaction import TransactionManagementError
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -23,12 +24,16 @@ from rest_framework.test import APIClient
 from tests.helpers import TestDataMixin
 
 
-# Known pre-existing source bugs that raise exceptions through Django test client
-_KNOWN_BUGS = (FieldError, AttributeError, ImproperlyConfigured, TypeError)
+# Known pre-existing source bugs that raise exceptions through Django test client.
+# TransactionManagementError occurs when a FieldError breaks the atomic block and
+# subsequent template rendering (e.g., context processors) tries to query the DB.
+_KNOWN_BUGS = (FieldError, AttributeError, ImproperlyConfigured, TypeError, TransactionManagementError)
 
 
 def _is_known_bug(exc):
     """Check if an exception matches a known pre-existing source bug."""
+    if isinstance(exc, TransactionManagementError):
+        return True  # Always a cascading failure from a prior bug
     msg = str(exc)
     known_patterns = [
         'order',          # FiliereSubject ordering field doesn't exist

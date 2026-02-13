@@ -510,7 +510,11 @@ class TestDataMixin:
             'domain': 'grades',
         }
         defaults.update(overrides)
-        return AnomalyType.objects.create(**defaults)
+        code = defaults.pop('code')
+        obj, _ = AnomalyType.objects.update_or_create(
+            code=code, defaults=defaults,
+        )
+        return obj
 
     def create_anomaly_alert(self, anomaly_type=None, **overrides):
         from anomaly_detection.models import AnomalyAlert

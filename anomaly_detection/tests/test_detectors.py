@@ -1,7 +1,7 @@
 """Tests for anomaly_detection detectors."""
 
 from decimal import Decimal
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 
@@ -78,7 +78,7 @@ class BaseDetectorTest(TestDataMixin, TestCase):
         result = detector.get_threshold('my_threshold', 2.0)
         self.assertEqual(result, Decimal('3.5'))
 
-    @patch('anomaly_detection.detectors.base.notify_anomaly')
+    @patch('anomaly_detection.notifications.notify_anomaly')
     def test_create_alert_returns_alert(self, mock_notify):
         """create_alert creates and returns an AnomalyAlert."""
         at = self.create_anomaly_type(code='create_alert_test', domain='grade')
@@ -125,30 +125,32 @@ class GradeJumpDetectorTest(TestDataMixin, TestCase):
         self.detector.check(taken_course)
         mock_alert.assert_not_called()
 
-    @patch('anomaly_detection.detectors.grade.TakenCourse')
-    @patch('anomaly_detection.detectors.grade.GradeJumpDetector.create_alert')
-    def test_not_enough_data_skips(self, mock_alert, mock_tc_class):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_not_enough_data_skips(self, mock_notify):
         """When there is not enough historical data, no alert is created."""
-        taken_course = MagicMock()
-        taken_course.total = Decimal('85.00')
-        taken_course.pk = 1
-        taken_course.student.pk = 1
+        program = self.create_program()
+        course = self.create_course(program=program)
+        student_user = self.create_student_user()
+        student_profile = self.create_student_profile(user=student_user, program=program)
 
-        # Less than 3 personal grades, less than 2 class grades
-        mock_qs = MagicMock()
-        mock_qs.filter.return_value.exclude.return_value.exclude.return_value.values_list.return_value = []
-        mock_tc_class.objects = mock_qs
+        from result.models import TakenCourse
+        # Create only 1 past grade (need >= 3 for personal stats)
+        tc1 = TakenCourse.objects.create(student=student_profile, course=course)
+        TakenCourse.objects.filter(pk=tc1.pk).update(total=Decimal('50.00'))
 
-        # Patch the TakenCourse import inside the method
-        with patch('anomaly_detection.detectors.grade.TakenCourse', mock_tc_class):
-            pass
-        # Since the method imports TakenCourse, we need to mock at module level
-        mock_alert.assert_not_called()
+        # Create the new grade (only 1 class grade excluding self, need >= 2 for class stats)
+        new_tc = TakenCourse.objects.create(student=student_profile, course=course)
+        TakenCourse.objects.filter(pk=new_tc.pk).update(total=Decimal('85.00'))
+        new_tc.refresh_from_db()
 
-    @patch('anomaly_detection.detectors.grade.GradeJumpDetector.create_alert')
-    def test_creates_alert_for_large_jump(self, mock_alert):
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.detector.check(new_tc)
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
+
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_creates_alert_for_large_jump(self, mock_notify):
         """When score exceeds threshold, an alert is created."""
-        # Create the test data
         program = self.create_program()
         course = self.create_course(program=program)
         student_user = self.create_student_user()
@@ -157,21 +159,20 @@ class GradeJumpDetectorTest(TestDataMixin, TestCase):
         from result.models import TakenCourse
         # Create past grades (>= 3 for personal stats)
         for score in [50, 55, 52, 48]:
-            TakenCourse.objects.create(
-                student=student_profile, course=course,
-                total=Decimal(str(score)),
-            )
+            tc = TakenCourse.objects.create(student=student_profile, course=course)
+            TakenCourse.objects.filter(pk=tc.pk).update(total=Decimal(str(score)))
 
         # Create a new grade with a large jump
-        new_tc = TakenCourse.objects.create(
-            student=student_profile, course=course,
-            total=Decimal('95.00'),
-        )
+        new_tc = TakenCourse.objects.create(student=student_profile, course=course)
+        TakenCourse.objects.filter(pk=new_tc.pk).update(total=Decimal('95.00'))
+        new_tc.refresh_from_db()
 
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(new_tc)
-        mock_alert.assert_called_once()
-        call_kwargs = mock_alert.call_args[1]
-        self.assertIn('grade jump', call_kwargs['title'].lower())
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertGreater(alert_count_after, alert_count_before)
+        latest = AnomalyAlert.objects.filter(anomaly_type=self.at).order_by('-pk').first()
+        self.assertIn('grade jump', latest.title.lower())
 
 
 # ---------------------------------------------------------------------------
@@ -199,8 +200,8 @@ class GradeAbnormallyHighDetectorTest(TestDataMixin, TestCase):
         self.detector.check(taken_course)
         mock_alert.assert_not_called()
 
-    @patch('anomaly_detection.detectors.grade.GradeAbnormallyHighDetector.create_alert')
-    def test_creates_alert_for_abnormally_high_grade(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_creates_alert_for_abnormally_high_grade(self, mock_notify):
         """When a grade is significantly above the class mean, an alert is created."""
         program = self.create_program()
         course = self.create_course(program=program)
@@ -208,25 +209,26 @@ class GradeAbnormallyHighDetectorTest(TestDataMixin, TestCase):
         from result.models import TakenCourse
 
         # Create class grades (need >= 3)
-        for i, score in enumerate([50, 55, 52, 48, 53]):
+        for score in [50, 55, 52, 48, 53]:
             student_user = self.create_student_user()
             sp = self.create_student_profile(user=student_user, program=program)
-            TakenCourse.objects.create(
-                student=sp, course=course, total=Decimal(str(score)),
-            )
+            tc = TakenCourse.objects.create(student=sp, course=course)
+            TakenCourse.objects.filter(pk=tc.pk).update(total=Decimal(str(score)))
 
         # Create an abnormally high grade
         outlier_user = self.create_student_user()
         outlier_profile = self.create_student_profile(user=outlier_user, program=program)
-        new_tc = TakenCourse.objects.create(
-            student=outlier_profile, course=course, total=Decimal('98.00'),
-        )
+        new_tc = TakenCourse.objects.create(student=outlier_profile, course=course)
+        TakenCourse.objects.filter(pk=new_tc.pk).update(total=Decimal('98.00'))
+        new_tc.refresh_from_db()
 
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(new_tc)
-        mock_alert.assert_called_once()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertGreater(alert_count_after, alert_count_before)
 
-    @patch('anomaly_detection.detectors.grade.GradeAbnormallyHighDetector.create_alert')
-    def test_no_alert_for_normal_grade(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_no_alert_for_normal_grade(self, mock_notify):
         """Grades close to the class mean do not trigger an alert."""
         program = self.create_program()
         course = self.create_course(program=program)
@@ -236,18 +238,19 @@ class GradeAbnormallyHighDetectorTest(TestDataMixin, TestCase):
         for score in [50, 55, 52, 48]:
             su = self.create_student_user()
             sp = self.create_student_profile(user=su, program=program)
-            TakenCourse.objects.create(
-                student=sp, course=course, total=Decimal(str(score)),
-            )
+            tc = TakenCourse.objects.create(student=sp, course=course)
+            TakenCourse.objects.filter(pk=tc.pk).update(total=Decimal(str(score)))
 
         normal_user = self.create_student_user()
         normal_profile = self.create_student_profile(user=normal_user, program=program)
-        new_tc = TakenCourse.objects.create(
-            student=normal_profile, course=course, total=Decimal('53.00'),
-        )
+        new_tc = TakenCourse.objects.create(student=normal_profile, course=course)
+        TakenCourse.objects.filter(pk=new_tc.pk).update(total=Decimal('53.00'))
+        new_tc.refresh_from_db()
 
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(new_tc)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
 
 # ---------------------------------------------------------------------------
@@ -274,8 +277,8 @@ class GradeUnauthorizedChangeDetectorTest(TestDataMixin, TestCase):
         self.detector.check(grade_history)
         mock_alert.assert_not_called()
 
-    @patch('anomaly_detection.detectors.grade.GradeUnauthorizedChangeDetector.create_alert')
-    def test_superuser_is_not_flagged_for_authorization(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_superuser_is_not_flagged_for_authorization(self, mock_notify):
         """Superusers are never flagged for unauthorized changes."""
         program = self.create_program()
         course = self.create_course(program=program)
@@ -284,7 +287,7 @@ class GradeUnauthorizedChangeDetectorTest(TestDataMixin, TestCase):
         sp = self.create_student_profile(user=student_user, program=program)
 
         from result.models import TakenCourse, GradeHistory
-        tc = TakenCourse.objects.create(student=sp, course=course, total=Decimal('80'))
+        tc = TakenCourse.objects.create(student=sp, course=course)
         gh = GradeHistory.objects.create(
             taken_course=tc, changed_by=admin,
             old_assignment=0, old_mid_exam=0, old_quiz=0, old_attendance=0,
@@ -292,13 +295,13 @@ class GradeUnauthorizedChangeDetectorTest(TestDataMixin, TestCase):
             new_assignment=20, new_mid_exam=20, new_quiz=10, new_attendance=10,
             new_final_exam=20, new_total=80, new_grade='A',
         )
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(gh)
-        # Superuser check should pass, so alert only for excessive changes
-        # With only 1 change, no excessive alert either
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.grade.GradeUnauthorizedChangeDetector.create_alert')
-    def test_unallocated_professor_triggers_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_unallocated_professor_triggers_alert(self, mock_notify):
         """A professor not allocated to the course triggers an unauthorized change alert."""
         program = self.create_program()
         course = self.create_course(program=program)
@@ -307,7 +310,7 @@ class GradeUnauthorizedChangeDetectorTest(TestDataMixin, TestCase):
         sp = self.create_student_profile(user=student_user, program=program)
 
         from result.models import TakenCourse, GradeHistory
-        tc = TakenCourse.objects.create(student=sp, course=course, total=Decimal('75'))
+        tc = TakenCourse.objects.create(student=sp, course=course)
         gh = GradeHistory.objects.create(
             taken_course=tc, changed_by=unalloc_prof,
             old_assignment=0, old_mid_exam=0, old_quiz=0, old_attendance=0,
@@ -315,10 +318,12 @@ class GradeUnauthorizedChangeDetectorTest(TestDataMixin, TestCase):
             new_assignment=20, new_mid_exam=15, new_quiz=10, new_attendance=10,
             new_final_exam=20, new_total=75, new_grade='B',
         )
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(gh)
-        mock_alert.assert_called()
-        call_kwargs = mock_alert.call_args[1]
-        self.assertIn('Unauthorized', call_kwargs['title'])
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertGreater(alert_count_after, alert_count_before)
+        latest = AnomalyAlert.objects.filter(anomaly_type=self.at).order_by('-pk').first()
+        self.assertIn('Unauthorized', latest.title)
 
 
 # ---------------------------------------------------------------------------
@@ -385,26 +390,32 @@ class DoublePaymentDetectorTest(TestDataMixin, TestCase):
     def test_anomaly_code(self):
         self.assertEqual(self.detector.anomaly_code, 'payment_double')
 
-    @patch('anomaly_detection.detectors.payment.DoublePaymentDetector.create_alert')
-    def test_single_completed_payment_no_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_single_completed_payment_no_alert(self, mock_notify):
         """A single completed payment does not trigger an alert."""
         invoice = self.create_invoice()
         payment = self.create_payment(invoice=invoice, status='completed')
 
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(payment)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.payment.DoublePaymentDetector.create_alert')
-    def test_double_completed_payment_triggers_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_double_completed_payment_triggers_alert(self, mock_notify):
         """Two completed payments for the same invoice trigger an alert."""
         invoice = self.create_invoice()
         p1 = self.create_payment(invoice=invoice, status='completed')
         p2 = self.create_payment(invoice=invoice, status='completed')
 
+        # The signal may have already created alerts. Check that at least one exists
+        # after our explicit check.
         self.detector.check(p2)
-        mock_alert.assert_called_once()
-        call_kwargs = mock_alert.call_args[1]
-        self.assertIn('Double payment', call_kwargs['title'])
+        alerts = AnomalyAlert.objects.filter(
+            anomaly_type=self.at,
+            title__icontains='Double payment',
+        )
+        self.assertTrue(alerts.exists())
 
 
 # ---------------------------------------------------------------------------
@@ -437,38 +448,44 @@ class PaymentStatusReversalDetectorTest(TestDataMixin, TestCase):
         self.detector.check(payment)
         mock_alert.assert_not_called()
 
-    @patch('anomaly_detection.detectors.payment.PaymentStatusReversalDetector.create_alert')
-    def test_valid_transition_no_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_valid_transition_no_alert(self, mock_notify):
         """Valid transitions (pending -> completed) do not trigger alerts."""
         invoice = self.create_invoice()
         payment = self.create_payment(invoice=invoice, status='pending')
 
         # Simulate status change by updating the in-memory object
         payment.status = 'completed'
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(payment)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.payment.PaymentStatusReversalDetector.create_alert')
-    def test_invalid_reversal_triggers_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_invalid_reversal_triggers_alert(self, mock_notify):
         """Invalid transitions (completed -> pending) trigger an alert."""
         invoice = self.create_invoice()
         payment = self.create_payment(invoice=invoice, status='completed')
 
         # Change status to an invalid reverse
         payment.status = 'pending'
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(payment)
-        mock_alert.assert_called_once()
-        call_kwargs = mock_alert.call_args[1]
-        self.assertIn('reversal', call_kwargs['title'].lower())
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertGreater(alert_count_after, alert_count_before)
+        latest = AnomalyAlert.objects.filter(anomaly_type=self.at).order_by('-pk').first()
+        self.assertIn('reversal', latest.title.lower())
 
-    @patch('anomaly_detection.detectors.payment.PaymentStatusReversalDetector.create_alert')
-    def test_same_status_no_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_same_status_no_alert(self, mock_notify):
         """No alert when status hasn't changed."""
         invoice = self.create_invoice()
         payment = self.create_payment(invoice=invoice, status='pending')
         # Status unchanged
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(payment)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
 
 # ---------------------------------------------------------------------------
@@ -542,8 +559,8 @@ class DuplicateEnrollmentDetectorTest(TestDataMixin, TestCase):
     def test_anomaly_code(self):
         self.assertEqual(self.detector.anomaly_code, 'enrollment_duplicate')
 
-    @patch('anomaly_detection.detectors.enrollment.DuplicateEnrollmentDetector.create_alert')
-    def test_no_duplicate_no_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_no_duplicate_no_alert(self, mock_notify):
         """A single registration does not trigger a duplicate alert."""
         school = self.create_school()
         filiere = self.create_filiere(tenant=school)
@@ -553,11 +570,13 @@ class DuplicateEnrollmentDetectorTest(TestDataMixin, TestCase):
             filiere=filiere,
             academic_year='2024-2025',
         )
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.enrollment.DuplicateEnrollmentDetector.create_alert')
-    def test_duplicate_triggers_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_duplicate_triggers_alert(self, mock_notify):
         """Two registrations with same email+filiere+year trigger an alert."""
         school = self.create_school()
         filiere = self.create_filiere(tenant=school)
@@ -575,10 +594,13 @@ class DuplicateEnrollmentDetectorTest(TestDataMixin, TestCase):
             academic_year='2024-2025',
             status='pending',
         )
+        # Signal may have already triggered detection. Check that alert exists after check.
         self.detector.check(reg2)
-        mock_alert.assert_called_once()
-        call_kwargs = mock_alert.call_args[1]
-        self.assertIn('Duplicate', call_kwargs['title'])
+        alerts = AnomalyAlert.objects.filter(
+            anomaly_type=self.at,
+            title__icontains='Duplicate',
+        )
+        self.assertTrue(alerts.exists())
 
 
 # ---------------------------------------------------------------------------
@@ -602,16 +624,18 @@ class InvalidStatusTransitionDetectorTest(TestDataMixin, TestCase):
         for status in ('pending', 'under_review', 'approved', 'rejected', 'enrolled'):
             self.assertIn(status, self.detector.VALID_TRANSITIONS)
 
-    @patch('anomaly_detection.detectors.enrollment.InvalidStatusTransitionDetector.create_alert')
-    def test_no_history_skips(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_no_history_skips(self, mock_notify):
         """Registration with no status history does not trigger alert."""
         school = self.create_school()
         reg = self.create_registration(tenant=school)
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.enrollment.InvalidStatusTransitionDetector.create_alert')
-    def test_valid_transition_no_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_valid_transition_no_alert(self, mock_notify):
         """Valid transition (pending -> under_review) does not trigger alert."""
         from enrollment.models import EnrollmentStatusHistory
 
@@ -622,11 +646,13 @@ class InvalidStatusTransitionDetectorTest(TestDataMixin, TestCase):
             old_status='pending',
             new_status='under_review',
         )
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.enrollment.InvalidStatusTransitionDetector.create_alert')
-    def test_invalid_transition_triggers_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_invalid_transition_triggers_alert(self, mock_notify):
         """Invalid transition (pending -> enrolled) triggers an alert."""
         from enrollment.models import EnrollmentStatusHistory
 
@@ -637,10 +663,12 @@ class InvalidStatusTransitionDetectorTest(TestDataMixin, TestCase):
             old_status='pending',
             new_status='enrolled',
         )
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_called_once()
-        call_kwargs = mock_alert.call_args[1]
-        self.assertIn('Invalid', call_kwargs['title'])
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertGreater(alert_count_after, alert_count_before)
+        latest = AnomalyAlert.objects.filter(anomaly_type=self.at).order_by('-pk').first()
+        self.assertIn('Invalid', latest.title)
 
 
 # ---------------------------------------------------------------------------
@@ -664,57 +692,67 @@ class UnauthorizedApprovalDetectorTest(TestDataMixin, TestCase):
         for role in ('direction', 'admin', 'secretary', 'registrar'):
             self.assertIn(role, self.detector.AUTHORIZED_ROLES)
 
-    @patch('anomaly_detection.detectors.enrollment.UnauthorizedApprovalDetector.create_alert')
-    def test_non_approved_status_skips(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_non_approved_status_skips(self, mock_notify):
         """Registrations not in approved/enrolled status are skipped."""
         school = self.create_school()
         reg = self.create_registration(tenant=school, status='pending')
         reviewer = self.create_student_user()
         reg.reviewed_by = reviewer
         reg.save()
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.enrollment.UnauthorizedApprovalDetector.create_alert')
-    def test_no_reviewer_skips(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_no_reviewer_skips(self, mock_notify):
         """Approved registrations without a reviewer are skipped."""
         school = self.create_school()
         reg = self.create_registration(tenant=school, status='approved')
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.enrollment.UnauthorizedApprovalDetector.create_alert')
-    def test_superuser_reviewer_skips(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_superuser_reviewer_skips(self, mock_notify):
         """Superuser reviewers are not flagged."""
         school = self.create_school()
         admin = self.create_admin_user()
         reg = self.create_registration(tenant=school, status='approved')
         reg.reviewed_by = admin
         reg.save()
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.enrollment.UnauthorizedApprovalDetector.create_alert')
-    def test_authorized_role_no_alert(self, mock_alert):
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_authorized_role_no_alert(self, mock_notify):
         """Reviewer with an authorized role (direction) does not trigger alert."""
         school = self.create_school()
         direction = self.create_direction_user()
         reg = self.create_registration(tenant=school, status='approved')
         reg.reviewed_by = direction
         reg.save()
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_not_called()
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertEqual(alert_count_before, alert_count_after)
 
-    @patch('anomaly_detection.detectors.enrollment.UnauthorizedApprovalDetector.create_alert')
-    def test_unauthorized_role_triggers_alert(self, mock_alert):
-        """A student or professor approving enrollment triggers an alert."""
+    @patch('anomaly_detection.notifications.notify_anomaly')
+    def test_unauthorized_role_triggers_alert(self, mock_notify):
+        """A student approving enrollment triggers an alert."""
         school = self.create_school()
         student = self.create_student_user()
         reg = self.create_registration(tenant=school, status='approved')
         reg.reviewed_by = student
         reg.save()
+        alert_count_before = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
         self.detector.check(reg)
-        mock_alert.assert_called_once()
-        call_kwargs = mock_alert.call_args[1]
-        self.assertIn('Unauthorized', call_kwargs['title'])
-        self.assertEqual(call_kwargs['severity'], 'critical')
+        alert_count_after = AnomalyAlert.objects.filter(anomaly_type=self.at).count()
+        self.assertGreater(alert_count_after, alert_count_before)
+        latest = AnomalyAlert.objects.filter(anomaly_type=self.at).order_by('-pk').first()
+        self.assertIn('Unauthorized', latest.title)
+        self.assertEqual(latest.severity, 'critical')

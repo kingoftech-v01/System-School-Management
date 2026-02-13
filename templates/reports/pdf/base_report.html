@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{% block report_title %}Report{% endblock %}</title>
+    <style>
+        @page {
+            size: {% if page_orientation == 'landscape' %}landscape{% else %}portrait{% endif %};
+            margin: 2cm 1.5cm 2.5cm 1.5cm;
+
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                left: 50pt;
+                width: 512pt;
+                top: 30pt;
+                height: 60pt;
+            }
+
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 50pt;
+                width: 512pt;
+                bottom: 20pt;
+                height: 30pt;
+            }
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        h1 { font-size: 16pt; color: #1a1a1a; margin-bottom: 10pt; }
+        h2 { font-size: 13pt; color: #2c3e50; margin-top: 15pt; margin-bottom: 8pt; border-bottom: 1px solid #ddd; padding-bottom: 3pt; }
+        h3 { font-size: 11pt; color: #34495e; margin-top: 10pt; margin-bottom: 5pt; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
+        th, td { padding: 5pt 8pt; text-align: left; border: 1px solid #ddd; font-size: 9pt; }
+        th { background-color: #3498db; color: white; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+
+        .info-table { border: none; }
+        .info-table td, .info-table th { border: none; padding: 3pt 8pt; }
+        .info-table th { background-color: transparent; color: #666; font-weight: normal; text-align: right; width: 35%; }
+        .info-table td { color: #333; }
+
+        .badge { padding: 2pt 6pt; border-radius: 3pt; font-size: 8pt; font-weight: bold; color: white; }
+        .badge-danger { background-color: #e74c3c; }
+        .badge-warning { background-color: #f39c12; color: #333; }
+        .badge-info { background-color: #3498db; }
+        .badge-success { background-color: #27ae60; }
+        .badge-secondary { background-color: #95a5a6; }
+
+        .section { margin-bottom: 15pt; }
+        .text-muted { color: #999; font-size: 8pt; }
+        .text-right { text-align: right; }
+
+        {% if is_confidential %}
+        .watermark {
+            position: fixed;
+            top: 40%;
+            left: 15%;
+            font-size: 60pt;
+            color: rgba(231, 76, 60, 0.08);
+            transform: rotate(-45deg);
+            z-index: -1;
+            font-weight: bold;
+        }
+        {% endif %}
+
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div id="header_content">
+        <table style="width: 100%; border: none;">
+            <tr style="border: none;">
+                <td style="border: none; width: 70%;">
+                    <strong style="font-size: 11pt;">{{ school_name|default:"School Management System" }}</strong><br>
+                    {% if school_address %}<span style="font-size: 8pt; color: #666;">{{ school_address }}</span><br>{% endif %}
+                    {% if school_phone %}<span style="font-size: 8pt; color: #666;">{{ school_phone }}</span>{% endif %}
+                </td>
+                <td style="border: none; text-align: right; font-size: 8pt; color: #666;">
+                    {% block report_type_label %}Report{% endblock %}
+                </td>
+            </tr>
+        </table>
+        <hr style="border: 1px solid #3498db; margin: 3pt 0;">
+    </div>
+
+    <!-- Footer -->
+    <div id="footer_content">
+        <hr style="border: 0.5px solid #ddd; margin: 0 0 3pt 0;">
+        <table style="width: 100%; border: none; font-size: 7pt; color: #999;">
+            <tr style="border: none;">
+                <td style="border: none;">
+                    Generated: {{ generated_at|date:"M d, Y H:i" }} | By: {{ generated_by }}
+                    {% if is_confidential %} | <strong style="color: #e74c3c;">CONFIDENTIAL</strong>{% endif %}
+                </td>
+                <td style="border: none; text-align: right;">
+                    Page <pdf:pagenumber> of <pdf:pagecount>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    {% if is_confidential %}
+    <div class="watermark">CONFIDENTIAL</div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+</body>
+</html>

@@ -21,12 +21,13 @@ class DuplicateEnrollmentDetector(BaseDetector):
         ).exclude(pk=registration.pk)
 
         if duplicates.exists():
+            student_name = f"{registration.student_first_name} {registration.student_last_name}".strip()
             self.create_alert(
-                title=f"Duplicate enrollment: {registration.student_name} "
+                title=f"Duplicate enrollment: {student_name} "
                       f"({registration.email}) for {registration.filiere}",
                 details={
                     'registration_id': registration.pk,
-                    'student_name': registration.student_name,
+                    'student_name': student_name,
                     'email': registration.email,
                     'filiere': str(registration.filiere) if registration.filiere else '',
                     'academic_year': registration.academic_year,
@@ -66,15 +67,16 @@ class InvalidStatusTransitionDetector(BaseDetector):
 
         valid_next = self.VALID_TRANSITIONS.get(old_status, set())
         if new_status not in valid_next:
+            student_name = f"{registration.student_first_name} {registration.student_last_name}".strip()
             self.create_alert(
                 title=f"Invalid enrollment transition: {old_status} -> {new_status} "
-                      f"for {registration.student_name}",
+                      f"for {student_name}",
                 details={
                     'registration_id': registration.pk,
-                    'student_name': registration.student_name,
+                    'student_name': student_name,
                     'old_status': old_status,
                     'new_status': new_status,
-                    'changed_by': last_history.changed_by.get_full_name() if last_history.changed_by else 'Unknown',
+                    'changed_by': last_history.changed_by.get_full_name if last_history.changed_by else 'Unknown',
                     'valid_transitions': list(valid_next),
                 },
                 related_obj=registration,
@@ -100,13 +102,14 @@ class UnauthorizedApprovalDetector(BaseDetector):
             return
 
         if reviewer.role not in self.AUTHORIZED_ROLES:
+            student_name = f"{registration.student_first_name} {registration.student_last_name}".strip()
             self.create_alert(
-                title=f"Unauthorized enrollment approval by {reviewer.get_full_name()} "
-                      f"(role: {reviewer.role}) for {registration.student_name}",
+                title=f"Unauthorized enrollment approval by {reviewer.get_full_name} "
+                      f"(role: {reviewer.role}) for {student_name}",
                 details={
                     'registration_id': registration.pk,
-                    'student_name': registration.student_name,
-                    'reviewed_by': reviewer.get_full_name(),
+                    'student_name': student_name,
+                    'reviewed_by': reviewer.get_full_name,
                     'reviewer_role': reviewer.role,
                     'status': registration.status,
                     'authorized_roles': list(self.AUTHORIZED_ROLES),

@@ -17,9 +17,9 @@ class RegistrationFormModelTest(TestDataMixin, TestCase):
         self.assertEqual(reg.status, 'pending')
 
     def test_str_contains_name_and_status(self):
-        reg = self.create_registration(student_name='John Doe')
+        reg = self.create_registration(student_first_name='John', student_last_name='Doe')
         result = str(reg)
-        self.assertIn('John Doe', result)
+        self.assertIn('John', result)
         self.assertIn('Pending', result)
 
     def test_submitted_at_set(self):
@@ -89,7 +89,7 @@ class EnrollmentDocumentModelTest(TestDataMixin, TestCase):
         self.assertFalse(doc.is_verified)
 
     def test_str(self):
-        reg = self.create_registration(student_name='Alice')
+        reg = self.create_registration(student_first_name='Alice', student_last_name='Test')
         doc = EnrollmentDocument.objects.create(
             registration=reg,
             document_type='birth_certificate',
@@ -112,7 +112,7 @@ class EnrollmentStatusHistoryModelTest(TestDataMixin, TestCase):
         self.assertIsNotNone(history.pk)
 
     def test_str(self):
-        reg = self.create_registration(student_name='Bob')
+        reg = self.create_registration(student_first_name='Bob', student_last_name='Test')
         history = EnrollmentStatusHistory.objects.create(
             registration=reg,
             old_status='pending',

@@ -129,6 +129,13 @@ TENANT_APPS = [
 
     # Anomaly Detection
     'anomaly_detection',
+
+    # Safeguarding & Audit
+    'safeguarding',
+    'audit',
+
+    # Reports & Exports
+    'reports',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -147,6 +154,7 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'audit.middleware.AuditUserMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

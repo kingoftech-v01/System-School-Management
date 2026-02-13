@@ -83,7 +83,7 @@ factory-boy==3.3.1
 # django-anymail==13.1
 
 # Excel Export
-# openpyxl==3.1.5
+openpyxl==3.1.5
 django-import-export==4.4.0
 
 # Payment Integration (Optional)

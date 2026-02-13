@@ -45,8 +45,9 @@ class AnomalyTypeModelTest(TestDataMixin, TestCase):
 
     def test_ordering(self):
         """AnomalyType orders by domain, severity, code."""
-        AnomalyType.objects.create(code='z_code', name='Z', domain='payment', severity='high')
-        AnomalyType.objects.create(code='a_code', name='A', domain='grade', severity='low')
+        AnomalyType.objects.exclude(code__in=['z_code', 'a_code']).delete()
+        AnomalyType.objects.update_or_create(code='z_code', defaults={'name': 'Z', 'domain': 'payment', 'severity': 'high'})
+        AnomalyType.objects.update_or_create(code='a_code', defaults={'name': 'A', 'domain': 'grade', 'severity': 'low'})
         types = list(AnomalyType.objects.values_list('code', flat=True))
         # grade < payment alphabetically
         self.assertEqual(types[0], 'a_code')
@@ -125,9 +126,14 @@ class AnomalyAlertModelTest(TestDataMixin, TestCase):
 
     def test_alert_ordering_by_detected_at_desc(self):
         """Alerts are ordered by -detected_at."""
+        from django.utils import timezone
+        from datetime import timedelta
         at = self.create_anomaly_type(code='order_test', domain='grade')
         a1 = self.create_anomaly_alert(anomaly_type=at, title='First')
         a2 = self.create_anomaly_alert(anomaly_type=at, title='Second')
+        # Force distinct timestamps so ordering is deterministic
+        AnomalyAlert.objects.filter(pk=a1.pk).update(detected_at=timezone.now() - timedelta(hours=1))
+        AnomalyAlert.objects.filter(pk=a2.pk).update(detected_at=timezone.now())
         alerts = list(AnomalyAlert.objects.filter(anomaly_type=at))
         # Second created should appear first (more recent)
         self.assertEqual(alerts[0].pk, a2.pk)
