@@ -157,7 +157,7 @@ class ResultViewSet(viewsets.ModelViewSet):
 
         return Response({
             'student_id': student.id,
-            'student_name': student.student.get_full_name(),
+            'student_name': student.student.get_full_name,
             'current_gpa': round(current_gpa, 2),
             'cumulative_gpa': round(cgpa, 2),
             'total_credits': all_total_credits,

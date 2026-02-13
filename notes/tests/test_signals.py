@@ -143,23 +143,27 @@ class LogNoteCreationSignalTest(TestDataMixin, TestCase):
 
     def test_log_includes_professor_username(self):
         """Log message includes the professor's username."""
-        professor = self.create_professor_user(username='prof_jones')
+        professor = self.create_professor_user()
+        # Refresh from DB since post_save signal may auto-generate username
+        professor.refresh_from_db()
 
         with self.assertLogs('notes.signals', level='INFO') as cm:
             self.create_professor_note(professor=professor)
 
         log_output = '\n'.join(cm.output)
-        self.assertIn('prof_jones', log_output)
+        self.assertIn(professor.username, log_output)
 
     def test_log_includes_student_username(self):
         """Log message includes the student's username."""
-        student = self.create_student_user(username='student_smith')
+        student = self.create_student_user()
+        # Refresh from DB since post_save signal may auto-generate username
+        student.refresh_from_db()
 
         with self.assertLogs('notes.signals', level='INFO') as cm:
             self.create_professor_note(student=student)
 
         log_output = '\n'.join(cm.output)
-        self.assertIn('student_smith', log_output)
+        self.assertIn(student.username, log_output)
 
     def test_update_note_does_not_log_creation(self):
         """Updating an existing note does NOT log 'New note created'."""

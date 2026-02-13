@@ -62,20 +62,25 @@ class EnrollmentWizardDeepTest(TestDataMixin, TestCase):
     # ------- helpers -------
     def _step1_data(self, **kw):
         data = {
-            'student_name': 'Deep Test Student',
+            'student_first_name': 'Deep',
+            'student_last_name': 'Test Student',
             'date_of_birth': '2006-06-15',
             'gender': 'M',
             'nationality': 'Cameroon',
             'email': 'deep_enroll@test.com',
             'phone': '+237600000000',
-            'address': '99 Deep St, Douala',
+            'street_address': '99 Deep St',
+            'city': 'Douala',
+            'province': 'Littoral',
+            'country': 'Cameroon',
         }
         data.update(kw)
         return data
 
     def _step2_data(self, **kw):
         data = {
-            'parent_name': 'Deep Parent',
+            'parent_first_name': 'Deep',
+            'parent_last_name': 'Parent',
             'parent_email': 'deep_parent@test.com',
             'parent_phone': '+237600000001',
             'parent_relationship': 'mother',
@@ -115,11 +120,11 @@ class EnrollmentWizardDeepTest(TestDataMixin, TestCase):
         r = self.client.post('/enrollment/register/step1/', self._step1_data())
         self.assertIn(r.status_code, OK)
         # Verify a registration was created
-        self.assertTrue(RegistrationForm.objects.filter(student_name='Deep Test Student').exists())
+        self.assertTrue(RegistrationForm.objects.filter(student_first_name='Deep').exists())
 
     def test_step1_post_invalid_shows_form(self):
         """POST step1 with missing required fields re-renders form (line 47)."""
-        r = self.client.post('/enrollment/register/step1/', {'student_name': ''})
+        r = self.client.post('/enrollment/register/step1/', {'student_first_name': ''})
         self.assertIn(r.status_code, OK)
 
     def test_step1_post_duplicate_approved_email(self):
@@ -139,11 +144,12 @@ class EnrollmentWizardDeepTest(TestDataMixin, TestCase):
         self.assertIn(r.status_code, OK)
 
     def test_step2_post_empty_parent_name_invalid(self):
-        """POST step2 with missing parent_name triggers error (line 75)."""
+        """POST step2 with missing parent_first_name triggers error (line 75)."""
         reg = self.create_registration(tenant=self.school)
         self._set_session_reg(reg)
         r = self.client.post('/enrollment/register/step2/', {
-            'parent_name': '',
+            'parent_first_name': '',
+            'parent_last_name': '',
             'parent_email': '',
             'parent_phone': '',
             'parent_relationship': '',
@@ -273,7 +279,7 @@ class EnrollmentAdminDeepTest(TestDataMixin, TestCase):
     def test_enrollment_list_all_status_filters(self):
         """Exercise every filter field in enrollment_list."""
         self.create_registration(
-            tenant=self.school, student_name='FilterMe',
+            tenant=self.school, student_first_name='FilterMe',
             email='filter@test.com', status='pending',
             enrollment_type='new', academic_year='2025-2026',
             filiere=self.filiere, gender='F',
@@ -441,7 +447,7 @@ class EnrollmentAdminDeepTest(TestDataMixin, TestCase):
         self.assertIn(r.status_code, OK)
         if r.status_code == 200:
             content = r.content.decode('utf-8')
-            self.assertIn('Student Name', content)
+            self.assertIn('First Name', content)
 
     def test_export_csv_without_filiere(self):
         """CSV export when registration has no filiere outputs empty field."""
@@ -453,7 +459,7 @@ class EnrollmentAdminDeepTest(TestDataMixin, TestCase):
     def test_export_csv_with_filters(self):
         """CSV export with student_name and status filters."""
         self.create_registration(
-            tenant=self.school, student_name='CSV Export', status='approved'
+            tenant=self.school, student_first_name='CSV Export', status='approved'
         )
         self.client.force_login(self.admin)
         r = self.client.get('/enrollment/export/csv/', {

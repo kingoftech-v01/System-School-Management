@@ -153,7 +153,7 @@ def send_counseling_reminders():
 
         send_mail(
             subject=f"Counseling Reminder - {len(applications)} Pending Applications",
-            message=f"""Dear {counselor.get_full_name()},
+            message=f"""Dear {counselor.get_full_name},
 
 You have {len(applications)} applications pending counseling:
 

@@ -235,25 +235,41 @@ class PostViewSetTests(TestDataMixin, TestCase):
 # ============================================================================
 
 class TagViewSetTests(TestDataMixin, TestCase):
-    """Tests for TagViewSet (read-only)."""
+    """Tests for TagViewSet (read-only).
+
+    Note: TagViewSet doesn't override permission_classes, so it inherits
+    the global default of IsAuthenticated.
+    """
 
     def setUp(self):
         self.client = APIClient()
+        self.user = self.create_student_user()
         self.tag = Tag.objects.create(name='Django', description='Django framework')
 
+    def test_list_tags_unauthenticated(self):
+        """Tags require authentication (global default IsAuthenticated)."""
+        url = reverse('api:forums:tag-list')
+        resp = self.client.get(url)
+        self.assertIn(resp.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
     def test_list_tags(self):
+        self.client.force_authenticate(user=self.user)
         url = reverse('api:forums:tag-list')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(resp.data), 1)
+        # Handle paginated response
+        results = resp.data['results'] if isinstance(resp.data, dict) else resp.data
+        self.assertGreaterEqual(len(results), 1)
 
     def test_retrieve_tag(self):
+        self.client.force_authenticate(user=self.user)
         url = reverse('api:forums:tag-detail', kwargs={'pk': self.tag.pk})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data['name'], 'Django')
 
     def test_threads_action(self):
+        self.client.force_authenticate(user=self.user)
         url = reverse('api:forums:tag-threads', kwargs={'pk': self.tag.pk})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -288,7 +304,9 @@ class ThreadSubscriptionViewSetTests(TestDataMixin, TestCase):
         url = reverse('api:forums:subscription-list')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(resp.data), 1)
+        # Handle paginated response
+        results = resp.data['results'] if isinstance(resp.data, dict) else resp.data
+        self.assertEqual(len(results), 1)
 
     def test_only_own_subscriptions(self):
         other = self.create_student_user()
@@ -296,7 +314,9 @@ class ThreadSubscriptionViewSetTests(TestDataMixin, TestCase):
         url = reverse('api:forums:subscription-list')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(resp.data), 0)
+        # Handle paginated response
+        results = resp.data['results'] if isinstance(resp.data, dict) else resp.data
+        self.assertEqual(len(results), 0)
 
     def test_mark_read_action(self):
         self.client.force_authenticate(user=self.user)
@@ -340,7 +360,9 @@ class ReportViewSetTests(TestDataMixin, TestCase):
         url = reverse('api:forums:report-list')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(resp.data), 1)
+        # Handle paginated response
+        results = resp.data['results'] if isinstance(resp.data, dict) else resp.data
+        self.assertEqual(len(results), 1)
 
     def test_retrieve_report(self):
         self.client.force_authenticate(user=self.user)

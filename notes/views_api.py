@@ -58,9 +58,11 @@ class ProfessorNoteViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter notes based on user role."""
         user = self.request.user
-        queryset = ProfessorNote.objects.filter(
-            tenant=self.request.tenant
-        ).select_related('professor', 'student', 'subject', 'approved_by')
+        tenant = getattr(self.request, 'tenant', None)
+        queryset = ProfessorNote.objects.all()
+        if tenant is not None:
+            queryset = queryset.filter(tenant=tenant)
+        queryset = queryset.select_related('professor', 'student', 'subject', 'approved_by')
 
         # Professors can only see their own notes
         if getattr(user, 'role', '') not in ('direction', 'admin'):
@@ -80,9 +82,10 @@ class ProfessorNoteViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Set professor and tenant when creating note."""
+        tenant = getattr(self.request, 'tenant', None)
         note = serializer.save(
             professor=self.request.user,
-            tenant=self.request.tenant
+            tenant=tenant
         )
 
         # Create history record
@@ -206,6 +209,8 @@ class NoteHistoryViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Filter history by tenant."""
-        return NoteHistory.objects.filter(
-            note__tenant=self.request.tenant
-        ).select_related('note', 'changed_by')
+        tenant = getattr(self.request, 'tenant', None)
+        queryset = NoteHistory.objects.all()
+        if tenant is not None:
+            queryset = queryset.filter(note__tenant=tenant)
+        return queryset.select_related('note', 'changed_by')

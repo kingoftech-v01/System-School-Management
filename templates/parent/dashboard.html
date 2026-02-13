@@ -3,6 +3,10 @@
 
 {% block title %}{{ page_title }} - School Management{% endblock %}
 
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/apexchart/apexchart.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
@@ -110,6 +114,51 @@
                     <div class="icon-box bg-danger-light rounded-circle">
                         <i class="bi bi-exclamation-triangle text-danger fs-3"></i>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engagement Chart & At-Risk Status -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            {% include 'includes/charts/engagement_trend.html' %}
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            <div class="card">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="heading mb-0">Academic Risk Status</h4>
+                </div>
+                <div class="card-body">
+                    {% if at_risk_status %}
+                    <div class="text-center mb-3">
+                        <span class="badge fs-6 {% if at_risk_status.risk_level == 'critical' %}bg-danger{% elif at_risk_status.risk_level == 'high' %}bg-warning text-dark{% elif at_risk_status.risk_level == 'medium' %}bg-info{% else %}bg-success{% endif %} px-4 py-2">
+                            {{ at_risk_status.get_risk_level_display }} Risk
+                        </span>
+                        <h3 class="mt-2 mb-0">{{ at_risk_status.risk_score }}/100</h3>
+                        <small class="text-muted">Risk Score</small>
+                    </div>
+                    <ul class="list-group list-group-flush small">
+                        {% if at_risk_status.low_engagement %}
+                        <li class="list-group-item px-0"><i class="bi bi-exclamation-circle text-warning me-2"></i> Low engagement</li>
+                        {% endif %}
+                        {% if at_risk_status.low_attendance %}
+                        <li class="list-group-item px-0"><i class="bi bi-exclamation-circle text-warning me-2"></i> Low attendance</li>
+                        {% endif %}
+                        {% if at_risk_status.failing_grades %}
+                        <li class="list-group-item px-0"><i class="bi bi-exclamation-circle text-danger me-2"></i> Failing grades</li>
+                        {% endif %}
+                        {% if at_risk_status.no_recent_activity %}
+                        <li class="list-group-item px-0"><i class="bi bi-exclamation-circle text-warning me-2"></i> No recent activity</li>
+                        {% endif %}
+                    </ul>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-shield-check fs-1 text-success"></i>
+                        <p class="text-success mt-2 mb-0">No risk factors detected</p>
+                        <small class="text-muted">Your child is on track</small>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

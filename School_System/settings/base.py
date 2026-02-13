@@ -154,6 +154,7 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'analytics.middleware.ActivityLogMiddleware',
     'audit.middleware.AuditUserMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django_otp.middleware.OTPMiddleware',
@@ -356,6 +357,15 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@school-system.com')
 EMAIL_FROM_ADDRESS = config('EMAIL_FROM_ADDRESS', default='noreply@school-system.com')
+
+# ==============================================================================
+# SMS SETTINGS (TWILIO)
+# ==============================================================================
+
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+SMS_ENABLED = config('SMS_ENABLED', default=False, cast=bool)
 
 # ==============================================================================
 # SIGNUP / INVITATION SETTINGS

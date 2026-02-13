@@ -234,5 +234,5 @@ class BatchCertificateGenerationAdmin(admin.ModelAdmin):
     get_failed_count.short_description = 'Failed'
 
     def get_created_by(self, obj):
-        return obj.created_by.get_full_name() if obj.created_by else 'Unknown'
+        return obj.created_by.get_full_name if obj.created_by else 'Unknown'
     get_created_by.short_description = 'Created By'

@@ -135,7 +135,7 @@ class EventViewSetTests(TestDataMixin, TestCase):
     def test_filter_by_event_type(self):
         self._auth(self.admin)
         url = reverse('api:events:event-list')
-        response = self.client.get(url, {'event_type': 'academic'})
+        response = self.client.get(url, {'event_type': 'exam'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_search_events(self):

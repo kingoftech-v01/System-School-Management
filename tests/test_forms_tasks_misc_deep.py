@@ -254,36 +254,44 @@ class BulkScoreUploadFormDeepTest(TestDataMixin, TestCase):
 class RegistrationStep1DeepTest(TestDataMixin, TestCase):
     """Cover clean_date_of_birth and clean_email (lines 55-77)."""
 
+    def _step1_base(self, **overrides):
+        data = {
+            'student_first_name': 'John',
+            'student_last_name': 'Doe',
+            'date_of_birth': (date.today() - timedelta(days=365 * 18)).isoformat(),
+            'gender': 'M',
+            'email': 'new@test.com',
+            'phone': '123',
+            'street_address': '123 St',
+            'city': 'Douala',
+            'province': 'Littoral',
+            'country': 'Cameroon',
+        }
+        data.update(overrides)
+        return data
+
     def test_valid_dob(self):
         from enrollment.forms import RegistrationFormStep1
         dob = date.today() - timedelta(days=365 * 18)
-        form = RegistrationFormStep1(data={
-            'student_name': 'John Doe', 'date_of_birth': dob.isoformat(),
-            'gender': 'M', 'email': 'new@test.com', 'phone': '123',
-            'address': '123 St',
-        })
+        form = RegistrationFormStep1(data=self._step1_base(date_of_birth=dob.isoformat()))
         form.is_valid()
         self.assertNotIn('date_of_birth', form.errors)
 
     def test_too_young_dob(self):
         from enrollment.forms import RegistrationFormStep1
         dob = date.today() - timedelta(days=365 * 3)
-        form = RegistrationFormStep1(data={
-            'student_name': 'Child', 'date_of_birth': dob.isoformat(),
-            'gender': 'M', 'email': 'child@test.com', 'phone': '123',
-            'address': '123 St',
-        })
+        form = RegistrationFormStep1(data=self._step1_base(
+            date_of_birth=dob.isoformat(), email='child@test.com',
+        ))
         self.assertFalse(form.is_valid())
         self.assertIn('date_of_birth', form.errors)
 
     def test_too_old_dob(self):
         from enrollment.forms import RegistrationFormStep1
         dob = date.today() - timedelta(days=365 * 110)
-        form = RegistrationFormStep1(data={
-            'student_name': 'Old', 'date_of_birth': dob.isoformat(),
-            'gender': 'M', 'email': 'old@test.com', 'phone': '123',
-            'address': '123 St',
-        })
+        form = RegistrationFormStep1(data=self._step1_base(
+            date_of_birth=dob.isoformat(), email='old@test.com',
+        ))
         self.assertFalse(form.is_valid())
         self.assertIn('date_of_birth', form.errors)
 
@@ -293,22 +301,18 @@ class RegistrationStep1DeepTest(TestDataMixin, TestCase):
         school = self.create_school()
         self.create_registration(tenant=school, email='dup@test.com', status='approved')
         dob = date.today() - timedelta(days=365 * 18)
-        form = RegistrationFormStep1(data={
-            'student_name': 'Dup', 'date_of_birth': dob.isoformat(),
-            'gender': 'M', 'email': 'dup@test.com', 'phone': '123',
-            'address': '123 St',
-        })
+        form = RegistrationFormStep1(data=self._step1_base(
+            date_of_birth=dob.isoformat(), email='dup@test.com',
+        ))
         self.assertFalse(form.is_valid())
         self.assertIn('email', form.errors)
 
     def test_unique_email_passes(self):
         from enrollment.forms import RegistrationFormStep1
         dob = date.today() - timedelta(days=365 * 18)
-        form = RegistrationFormStep1(data={
-            'student_name': 'Unique', 'date_of_birth': dob.isoformat(),
-            'gender': 'M', 'email': 'unique_fresh@test.com', 'phone': '123',
-            'address': '123 St',
-        })
+        form = RegistrationFormStep1(data=self._step1_base(
+            date_of_birth=dob.isoformat(), email='unique_fresh@test.com',
+        ))
         form.is_valid()
         self.assertNotIn('email', form.errors)
 
@@ -317,7 +321,7 @@ class RegistrationStep2WidgetsTest(TestCase):
     def test_fields_present(self):
         from enrollment.forms import RegistrationFormStep2
         form = RegistrationFormStep2()
-        self.assertIn('parent_name', form.fields)
+        self.assertIn('parent_first_name', form.fields)
         self.assertIn('parent_email', form.fields)
         self.assertIn('parent_phone', form.fields)
 
@@ -832,7 +836,7 @@ class ProfileUpdateFormTest(TestDataMixin, TestCase):
     def test_fields(self):
         from accounts.forms import ProfileUpdateForm
         form = ProfileUpdateForm()
-        for fld in ['first_name', 'last_name', 'gender', 'email', 'phone', 'address']:
+        for fld in ['first_name', 'last_name', 'gender', 'email', 'phone', 'street_address']:
             self.assertIn(fld, form.fields)
 
 

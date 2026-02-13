@@ -3,6 +3,10 @@
 
 {% block title %}{{ title }} - School Management{% endblock %}
 
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/apexchart/apexchart.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
@@ -283,6 +287,15 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            {% include 'includes/charts/engagement_trend.html' %}
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            {% include 'includes/charts/risk_distribution.html' %}
         </div>
     </div>
     {% endif %}

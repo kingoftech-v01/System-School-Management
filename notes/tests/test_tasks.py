@@ -1,32 +1,15 @@
 """
 Tests for notes app Celery tasks.
-
-Note: The source code has a bug where get_full_name (a @property) is called
-as get_full_name() (a method call). We work around this by patching the
-User model's get_full_name to be callable in affected tests.
 """
 
 from decimal import Decimal
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 
 from django.test import TestCase
 
 from notes.models import ProfessorNote
 from notes.tasks import notify_note_status_change
 from tests.helpers import TestDataMixin
-
-
-def _make_get_full_name_callable(user):
-    """Patch user so get_full_name works both as property and as method call."""
-    class CallableStr(str):
-        def __call__(self):
-            return str(self)
-    original = user.get_full_name
-    user.__class__.get_full_name = property(
-        lambda self: CallableStr(
-            ' '.join(p for p in [self.first_name, self.last_name] if p) or self.username
-        )
-    )
 
 
 class TestNotifyNoteStatusChange(TestDataMixin, TestCase):
@@ -38,8 +21,6 @@ class TestNotifyNoteStatusChange(TestDataMixin, TestCase):
         self.student = self.create_student_user()
         self.filiere = self.create_filiere(tenant=self.school)
         self.course = self.create_course()
-        # Patch so get_full_name() works as both property and method call
-        _make_get_full_name_callable(self.student)
 
     def _create_note(self, **kwargs):
         """Helper to create a professor note with Decimal values."""

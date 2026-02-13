@@ -113,7 +113,7 @@ class ProfessorNoteViewSetTests(TestDataMixin, TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    @patch('notes.views_api.notify_note_status_change')
+    @patch('notes.tasks.notify_note_status_change')
     def test_approve_note(self, mock_task):
         """Direction user can approve a note."""
         mock_task.delay = lambda *a, **kw: None

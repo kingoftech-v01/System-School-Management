@@ -31,7 +31,7 @@ class ProfessorNoteSerializer(serializers.ModelSerializer):
         model = ProfessorNote
         fields = [
             'id', 'tenant', 'student', 'student_name', 'professor', 'professor_name',
-            'subject', 'subject_name', 'score', 'coefficient', 'note_type',
+            'filiere', 'subject', 'subject_name', 'score', 'coefficient', 'note_type',
             'note_type_display', 'comment', 'status', 'status_display',
             'approved_by', 'approved_by_name', 'approved_at', 'approval_notes',
             'is_deleted', 'created_at', 'updated_at'
@@ -64,7 +64,7 @@ class ProfessorNoteCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfessorNote
         fields = [
-            'student', 'subject', 'score', 'coefficient', 'note_type', 'comment', 'status'
+            'student', 'filiere', 'subject', 'score', 'coefficient', 'note_type', 'comment', 'status'
         ]
 
     def validate_score(self, value):

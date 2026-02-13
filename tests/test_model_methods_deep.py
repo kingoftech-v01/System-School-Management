@@ -1151,14 +1151,19 @@ class AccountsUtilsTest(TestCase):
 # ============================================================================
 
 class EnrollmentModelMethodsTest(TestDataMixin, TestCase):
-    def _make_registration(self, name='John Doe', email='john@test.com'):
+    def _make_registration(self, first_name='John', last_name='Doe', email='john@test.com'):
         from enrollment.models import RegistrationForm
         school = self.create_school()
         return RegistrationForm.objects.create(
-            tenant=school, student_name=name, email=email,
+            tenant=school,
+            student_first_name=first_name, student_last_name=last_name,
+            email=email,
             date_of_birth='2000-01-15', gender='M',
-            phone='1234567890', address='123 Test St',
-            parent_name='Parent Doe', parent_email='parent@test.com',
+            phone='1234567890',
+            street_address='123 Test St', city='Douala',
+            province='Littoral', country='Cameroon',
+            parent_first_name='Parent', parent_last_name='Doe',
+            parent_email='parent@test.com',
             parent_phone='0987654321', academic_year='2024-2025',
             status='pending',
         )
@@ -1169,7 +1174,7 @@ class EnrollmentModelMethodsTest(TestDataMixin, TestCase):
 
     def test_enrollment_document_str(self):
         from enrollment.models import EnrollmentDocument
-        reg = self._make_registration(name='Jane Doe', email='jane@test.com')
+        reg = self._make_registration(first_name='Jane', last_name='Doe', email='jane@test.com')
         f = SimpleUploadedFile('doc.pdf', b'content', content_type='application/pdf')
         doc = EnrollmentDocument.objects.create(
             registration=reg, document_type='id_card', file=f,

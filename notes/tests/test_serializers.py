@@ -59,13 +59,16 @@ class ProfessorNoteListSerializerTest(TestDataMixin, TestCase):
 
 class ProfessorNoteCreateSerializerTest(TestDataMixin, TestCase):
     def setUp(self):
+        self.school = self.create_school()
         self.student = self.create_student_user()
         self.course = self.create_course()
+        self.filiere = self.create_filiere(tenant=self.school)
 
     def test_valid_data(self):
         data = {
             'student': self.student.pk,
             'subject': self.course.pk,
+            'filiere': self.filiere.pk,
             'score': '15.00',
             'coefficient': '2.00',
             'note_type': 'final',

@@ -1,10 +1,62 @@
 import logging
 
+from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 logger = logging.getLogger(__name__)
 
+
+# ============================================================================
+# LOGIN ANOMALY DETECTION
+# ============================================================================
+
+@receiver(user_logged_in)
+def check_login_anomalies(sender, request, user, **kwargs):
+    """Run login anomaly detectors on successful login."""
+    try:
+        from anomaly_detection.detectors.login import (
+            UnusualLoginTimeDetector,
+            DeviceChangeDetector,
+        )
+        ua = request.META.get('HTTP_USER_AGENT', '') if request else ''
+        UnusualLoginTimeDetector().check(user)
+        DeviceChangeDetector().check(user, current_user_agent=ua)
+    except Exception:
+        logger.exception(
+            "Error in login anomaly detection for user %s",
+            getattr(user, 'pk', '?')
+        )
+
+
+@receiver(user_login_failed)
+def check_failed_login_anomalies(sender, credentials, request, **kwargs):
+    """Run brute force detection on failed logins."""
+    try:
+        from anomaly_detection.detectors.login import BruteForceDetector
+        ip = request.META.get('REMOTE_ADDR', '') if request else None
+        BruteForceDetector().check(user=None, ip_address=ip)
+    except Exception:
+        logger.exception("Error in failed login anomaly detection")
+
+
+# ============================================================================
+# ANOMALY TYPE CACHE INVALIDATION
+# ============================================================================
+
+@receiver(post_save, sender='anomaly_detection.AnomalyType')
+def clear_anomaly_type_cache(sender, instance, **kwargs):
+    """Clear cached AnomalyType when updated (fixes 5-min stale cache issue)."""
+    try:
+        from django.core.cache import cache
+        cache.delete(f'anomaly_type_{instance.code}')
+    except Exception:
+        logger.exception("Error clearing anomaly type cache for %s", instance.code)
+
+
+# ============================================================================
+# GRADE ANOMALY DETECTION
+# ============================================================================
 
 @receiver(post_save, sender='result.TakenCourse')
 def check_grade_anomalies(sender, instance, **kwargs):

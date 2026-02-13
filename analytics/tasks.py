@@ -199,7 +199,7 @@ def send_at_risk_notifications():
 
         for instructor in instructors:
             student_list = '\n'.join([
-                f'- {s.student.student.get_full_name()} ({s.get_risk_level_display()}): {s.risk_score}'
+                f'- {s.student.student.get_full_name} ({s.get_risk_level_display()}): {s.risk_score}'
                 for s in students
             ])
 
@@ -211,6 +211,20 @@ def send_at_risk_notifications():
                 fail_silently=True,
             )
             sent_count += 1
+
+    # SMS to parents of at-risk students
+    try:
+        from core.sms import send_sms_to_parent
+        for at_risk in critical_students:
+            name = at_risk.student.student.get_full_name
+            level = at_risk.get_risk_level_display()
+            sms_msg = (
+                f'Alert: {name} has been flagged as {level} risk '
+                f'in {at_risk.course.name}. Please contact the school.'
+            )
+            send_sms_to_parent(at_risk.student, sms_msg)
+    except Exception:
+        pass
 
     return f'Sent {sent_count} at-risk notifications to instructors'
 
@@ -335,6 +349,26 @@ def measure_learning_outcomes():
                         'score': submission.grade,
                         'max_score': submission.assignment.max_marks,
                         'assessed_at': submission.submitted_at
+                    }
+                )
+                measured_count += 1
+
+        elif outcome.assessment_method == 'exam':
+            from result.models import TakenCourse
+            recent_results = TakenCourse.objects.filter(
+                course=outcome.course,
+                updated_at__gte=timezone.now() - timedelta(days=30)
+            ).exclude(total=0).select_related('student')
+
+            for taken in recent_results:
+                OutcomeMeasurement.objects.get_or_create(
+                    outcome=outcome,
+                    student=taken.student,
+                    assessment_name=f"Exam: {outcome.course.name}",
+                    defaults={
+                        'score': float(taken.total),
+                        'max_score': 100.0,
+                        'assessed_at': taken.updated_at
                     }
                 )
                 measured_count += 1

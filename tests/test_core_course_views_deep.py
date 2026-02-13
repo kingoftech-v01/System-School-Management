@@ -932,10 +932,10 @@ class ProgramDeleteViewTest(ViewTestBase):
     """Tests for program_delete."""
 
     def test_delete_program(self):
-        """Professor can delete a program."""
+        """Direction user can delete a program (view requires @direction_only)."""
         from course.models import Program
         prog = self.create_program(title='To Delete Program')
-        self.client.force_login(self.professor_user)
+        self.client.force_login(self.direction_user)
         r = self.client.get(f'/courses/{prog.pk}/delete/')
         self.assertIn(r.status_code, OK_CODES)
         self.assertFalse(Program.objects.filter(pk=prog.pk).exists())
@@ -1086,12 +1086,12 @@ class CourseDeleteViewTest(ViewTestBase):
     """Tests for course_delete."""
 
     def test_delete_course(self):
-        """Professor can delete a course."""
+        """Direction user can delete a course (view requires @direction_only)."""
         from course.models import Course
         c = self.create_course(
             program=self.program, title='DeleteMe', code='DEL001'
         )
-        self.client.force_login(self.professor_user)
+        self.client.force_login(self.direction_user)
         r = self.client.get(f'/courses/course/delete/{c.slug}/')
         self.assertIn(r.status_code, OK_CODES)
         self.assertFalse(Course.objects.filter(pk=c.pk).exists())
@@ -1247,11 +1247,11 @@ class DeallocateCourseViewTest(ViewTestBase):
     """Tests for deallocate_course."""
 
     def test_deallocate(self):
-        """Professor can deallocate courses."""
+        """Direction user can deallocate courses (view requires @direction_only)."""
         from course.models import CourseAllocation
         alloc = CourseAllocation.objects.create(lecturer=self.professor_user)
         alloc.courses.add(self.course)
-        self.client.force_login(self.professor_user)
+        self.client.force_login(self.direction_user)
         r = self.client.get(f'/courses/course/{alloc.pk}/deallocate/')
         self.assertIn(r.status_code, OK_CODES)
         self.assertFalse(CourseAllocation.objects.filter(pk=alloc.pk).exists())
@@ -1385,9 +1385,12 @@ class FileDeleteViewTest(ViewTestBase):
         )
 
     def test_delete_file(self):
-        """Professor can delete a file."""
-        from course.models import Upload
+        """Allocated lecturer can delete a file."""
+        from course.models import Upload, CourseAllocation
         upload = self._create_upload()
+        # Create allocation so the professor is authorized for this course
+        alloc = CourseAllocation.objects.create(lecturer=self.professor_user)
+        alloc.courses.add(self.course)
         self.client.force_login(self.professor_user)
         r = self.client.get(
             f'/courses/course/{self.course.slug}/documentations/{upload.pk}/delete/'
@@ -1548,9 +1551,12 @@ class VideoDeleteViewTest(ViewTestBase):
         )
 
     def test_delete_video(self):
-        """Professor can delete a video."""
-        from course.models import UploadVideo
+        """Allocated lecturer can delete a video."""
+        from course.models import UploadVideo, CourseAllocation
         video = self._create_video()
+        # Create allocation so the professor is authorized for this course
+        alloc = CourseAllocation.objects.create(lecturer=self.professor_user)
+        alloc.courses.add(self.course)
         self.client.force_login(self.professor_user)
         r = self.client.get(
             f'/courses/course/{self.course.slug}/video_tutorials/{video.slug}/delete/'

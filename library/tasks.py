@@ -19,7 +19,7 @@ def send_overdue_reminders():
 
         send_mail(
             subject=f'[{record.tenant.name}] Overdue Book Reminder',
-            message=f'Dear {record.student.get_full_name()},\n\nThe book "{record.book.title}" is overdue. Please return it as soon as possible.',
+            message=f'Dear {record.student.get_full_name},\n\nThe book "{record.book.title}" is overdue. Please return it as soon as possible.',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[record.student.email],
             fail_silently=True

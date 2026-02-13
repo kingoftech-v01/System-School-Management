@@ -106,6 +106,11 @@ class Command(BaseCommand):
             action='store_true',
             help='Skip creating demo programs/filieres'
         )
+        parser.add_argument(
+            '--seed-initial-data',
+            action='store_true',
+            help='Seed initial/reference data after tenant creation (forums, library, scheduling, etc.)'
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -242,6 +247,13 @@ class Command(BaseCommand):
 
                 self.stdout.write(self.style.SUCCESS(f'Created {len(programs_data)} sample programs/filieres'))
 
+        # Seed initial data if requested
+        if options.get('seed_initial_data'):
+            self.stdout.write('')
+            self.stdout.write(self.style.NOTICE('Seeding initial/reference data...'))
+            from django.core.management import call_command
+            call_command('seed_initial_data', schema_name=school.schema_name)
+
         # Final summary
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS('=' * 70))
@@ -259,5 +271,6 @@ class Command(BaseCommand):
         self.stdout.write('Next steps:')
         self.stdout.write('  1. Access the school at: http://{}'.format(domain))
         self.stdout.write('  2. Login with the admin credentials above')
-        self.stdout.write('  3. Run: python manage.py create_demo_data --tenant {} (optional)'.format(school.schema_name))
+        self.stdout.write('  3. Run: python manage.py seed_initial_data --schema-name {} (initial reference data)'.format(school.schema_name))
+        self.stdout.write('  4. Run: python manage.py create_demo_data --tenant {} (optional demo data)'.format(school.schema_name))
         self.stdout.write(self.style.SUCCESS('=' * 70))

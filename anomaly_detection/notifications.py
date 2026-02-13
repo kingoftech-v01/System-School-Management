@@ -14,6 +14,10 @@ def notify_anomaly(alert):
         is_active=True,
     ).exclude(email='')
 
+    # Scope notifications to the same tenant as the alert user
+    if alert.user and getattr(alert.user, 'tenant_id', None):
+        recipients = recipients.filter(tenant_id=alert.user.tenant_id)
+
     emails = list(recipients.values_list('email', flat=True))
 
     if not emails:

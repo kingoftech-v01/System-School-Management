@@ -108,7 +108,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
         # Record verification
         CertificateVerification.objects.create(
             certificate=certificate,
-            verified_by=request.user.get_full_name() if request.user.is_authenticated else 'Anonymous',
+            verified_by=request.user.get_full_name if request.user.is_authenticated else 'Anonymous',
             verification_method='api',
             is_valid=True
         )
@@ -116,7 +116,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
         return Response({
             'valid': True,
             'certificate_number': certificate.certificate_number,
-            'student_name': certificate.student.student.get_full_name(),
+            'student_name': certificate.student.student.get_full_name,
             'course_name': certificate.course.name,
             'issue_date': certificate.issue_date,
             'grade': certificate.grade,
@@ -150,7 +150,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
         # Record verification
         CertificateVerification.objects.create(
             certificate=certificate,
-            verified_by=request.user.get_full_name() if request.user.is_authenticated else 'Anonymous',
+            verified_by=request.user.get_full_name if request.user.is_authenticated else 'Anonymous',
             verification_method='certificate_number',
             is_valid=True
         )
@@ -158,7 +158,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
         return Response({
             'valid': True,
             'certificate_number': certificate.certificate_number,
-            'student_name': certificate.student.student.get_full_name(),
+            'student_name': certificate.student.student.get_full_name,
             'course_name': certificate.course.name,
             'issue_date': certificate.issue_date
         }, status=status.HTTP_200_OK)

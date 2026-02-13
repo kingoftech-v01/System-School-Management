@@ -12,6 +12,11 @@ from django_filters.views import FilterView
 from django_ratelimit.decorators import ratelimit
 from xhtml2pdf import pisa
 
+import json
+from datetime import timedelta
+
+from django.utils import timezone
+
 from accounts.decorators import admin_required, role_required
 from accounts.filters import LecturerFilter, StudentFilter
 from accounts.forms import (
@@ -516,7 +521,7 @@ def dashboard_student(request):
     courses = TakenCourse.objects.filter(
         student=student,
         course__semester=current_semester
-    ).select_related('course', 'course__allocated_course')
+    ).select_related('course', 'course__program')
 
     # Get recent grades (last 5)
     recent_grades = TakenCourse.objects.filter(
@@ -578,6 +583,37 @@ def dashboard_student(request):
     except:
         pass
 
+    # --- Analytics data for student ---
+    engagement_dates = json.dumps([])
+    engagement_scores = json.dumps([])
+    completion_data = []
+
+    try:
+        from analytics.models import StudentEngagement
+        from django.db.models import Avg
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_qs = (
+            StudentEngagement.objects
+            .filter(student=student, date__gte=thirty_days_ago)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        dates_list = [e['date'].strftime('%b %d') for e in engagement_qs]
+        scores_list = [round(float(e['avg_score'] or 0), 1) for e in engagement_qs]
+        engagement_dates = json.dumps(dates_list)
+        engagement_scores = json.dumps(scores_list)
+    except Exception:
+        pass
+
+    try:
+        from analytics.models import CourseCompletion
+        completion_data = CourseCompletion.objects.filter(
+            student=student
+        ).select_related('course')[:10]
+    except Exception:
+        pass
+
     context = {
         'title': 'Student Dashboard',
         'student': student,
@@ -589,6 +625,10 @@ def dashboard_student(request):
         'attendance_summary': attendance_summary,
         'current_session': current_session,
         'current_semester': current_semester,
+        # Analytics
+        'engagement_dates': engagement_dates,
+        'engagement_scores': engagement_scores,
+        'completion_data': completion_data,
     }
 
     return render(request, 'accounts/dashboard_student.html', context)
@@ -663,6 +703,50 @@ def dashboard_professor(request):
         takencourse__course__in=my_courses
     ).distinct().count()
 
+    # --- Analytics chart data for professor ---
+    engagement_dates = json.dumps([])
+    engagement_scores = json.dumps([])
+    grade_labels = json.dumps(['A', 'B', 'C', 'D', 'F'])
+    grade_counts = json.dumps([0, 0, 0, 0, 0])
+
+    try:
+        from analytics.models import StudentEngagement
+        from django.db.models import Avg
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_qs = (
+            StudentEngagement.objects
+            .filter(date__gte=thirty_days_ago, course__in=my_courses)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        dates_list = [e['date'].strftime('%b %d') for e in engagement_qs]
+        scores_list = [round(float(e['avg_score'] or 0), 1) for e in engagement_qs]
+        engagement_dates = json.dumps(dates_list)
+        engagement_scores = json.dumps(scores_list)
+    except Exception:
+        pass
+
+    try:
+        from django.db.models import Count
+        grade_qs = (
+            TakenCourse.objects
+            .filter(course__in=my_courses)
+            .exclude(grade='')
+            .values('grade')
+            .annotate(count=Count('id'))
+        )
+        grade_map = {g['grade']: g['count'] for g in grade_qs}
+        grade_counts = json.dumps([
+            grade_map.get('A', 0),
+            grade_map.get('B', 0),
+            grade_map.get('C', 0),
+            grade_map.get('D', 0),
+            grade_map.get('F', 0),
+        ])
+    except Exception:
+        pass
+
     context = {
         'title': 'Professor Dashboard',
         'my_courses': my_courses,
@@ -673,6 +757,11 @@ def dashboard_professor(request):
         'today_attendance': today_attendance,
         'current_session': current_session,
         'current_semester': current_semester,
+        # Chart data
+        'engagement_dates': engagement_dates,
+        'engagement_scores': engagement_scores,
+        'grade_labels': grade_labels,
+        'grade_counts': grade_counts,
     }
 
     return render(request, 'accounts/dashboard_professor.html', context)
@@ -799,6 +888,80 @@ def dashboard_direction(request):
     except:
         pass
 
+    # --- Analytics chart data ---
+    engagement_dates = json.dumps([])
+    engagement_scores = json.dumps([])
+    risk_labels = json.dumps(['Low', 'Medium', 'High', 'Critical'])
+    risk_counts = json.dumps([0, 0, 0, 0])
+    attendance_labels = json.dumps([])
+    attendance_present = json.dumps([])
+    attendance_absent = json.dumps([])
+    grade_labels = json.dumps(['A', 'B', 'C', 'D', 'F'])
+    grade_counts = json.dumps([0, 0, 0, 0, 0])
+
+    try:
+        from analytics.models import StudentEngagement
+        from django.db.models import Avg
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_qs = (
+            StudentEngagement.objects
+            .filter(date__gte=thirty_days_ago)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        dates_list = [e['date'].strftime('%b %d') for e in engagement_qs]
+        scores_list = [round(float(e['avg_score'] or 0), 1) for e in engagement_qs]
+        engagement_dates = json.dumps(dates_list)
+        engagement_scores = json.dumps(scores_list)
+    except Exception:
+        pass
+
+    try:
+        from analytics.models import AtRiskStudent
+        risk_qs = AtRiskStudent.objects.filter(is_active=True)
+        risk_counts = json.dumps([
+            risk_qs.filter(risk_level='low').count(),
+            risk_qs.filter(risk_level='medium').count(),
+            risk_qs.filter(risk_level='high').count(),
+            risk_qs.filter(risk_level='critical').count(),
+        ])
+    except Exception:
+        pass
+
+    try:
+        from dailystat.models import DailyAttendanceStat
+        fourteen_days_ago = timezone.now().date() - timedelta(days=14)
+        att_qs = (
+            DailyAttendanceStat.objects
+            .filter(day__gte=fourteen_days_ago)
+            .order_by('day')
+        )
+        att_labels = [a.day.strftime('%b %d') for a in att_qs]
+        att_present_list = [a.total_present for a in att_qs]
+        att_absent_list = [a.total_absent for a in att_qs]
+        attendance_labels = json.dumps(att_labels)
+        attendance_present = json.dumps(att_present_list)
+        attendance_absent = json.dumps(att_absent_list)
+    except Exception:
+        pass
+
+    try:
+        from django.db.models import Count, Case, When, IntegerField
+        grade_qs = TakenCourse.objects.exclude(grade='').values('grade').annotate(
+            count=Count('id')
+        )
+        grade_map = {g['grade']: g['count'] for g in grade_qs}
+        grade_counts = json.dumps([
+            grade_map.get('A', 0),
+            grade_map.get('B', 0),
+            grade_map.get('C', 0),
+            grade_map.get('D', 0),
+            grade_map.get('F', 0),
+        ])
+    except Exception:
+        pass
+
     context = {
         'title': 'Direction Dashboard',
         'total_students': total_students,
@@ -815,6 +978,16 @@ def dashboard_direction(request):
         'recent_activities': recent_activities,
         'current_session': current_session,
         'current_semester': current_semester,
+        # Chart data
+        'engagement_dates': engagement_dates,
+        'engagement_scores': engagement_scores,
+        'risk_labels': risk_labels,
+        'risk_counts': risk_counts,
+        'attendance_labels': attendance_labels,
+        'attendance_present': attendance_present,
+        'attendance_absent': attendance_absent,
+        'grade_labels': grade_labels,
+        'grade_counts': grade_counts,
     }
 
     return render(request, 'accounts/dashboard_direction.html', context)

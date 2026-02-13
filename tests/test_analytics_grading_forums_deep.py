@@ -943,7 +943,9 @@ class GradingDeepCovTest(TestDataMixin, TestCase):
         self.assertIn(r.status_code, [200, 302, 403, 500])
 
     def test_grade_entry_detail_as_student_other_denied(self):
-        """Covers lines 412-414: student views other's grade (denied)."""
+        """Covers lines 412-414: student views other's grade (denied).
+        The view filters queryset by student before get_object_or_404,
+        so a non-owner student gets 404 rather than 403."""
         from grading.models import RubricGrade
         grade = RubricGrade.objects.create(
             rubric=self.rubric, student=self.student2,
@@ -952,7 +954,7 @@ class GradingDeepCovTest(TestDataMixin, TestCase):
         )
         self._login(self.student_user)
         r = self.client.get(f'/grading/grades/{grade.pk}/')
-        self.assertIn(r.status_code, [200, 302, 403, 500])
+        self.assertIn(r.status_code, [200, 302, 403, 404, 500])
 
     def test_grade_entry_detail_as_lecturer_own(self):
         """Covers lines 415-416: lecturer views grade they assigned."""
@@ -967,7 +969,9 @@ class GradingDeepCovTest(TestDataMixin, TestCase):
         self.assertIn(r.status_code, [200, 302, 403, 500])
 
     def test_grade_entry_detail_as_lecturer_other_denied(self):
-        """Covers lines 416-418: lecturer views grade assigned by other (denied)."""
+        """Covers lines 416-418: lecturer views grade assigned by other (denied).
+        The view filters queryset by graded_by=request.user for lecturers,
+        so a non-grader lecturer gets 404 rather than 403."""
         from grading.models import RubricGrade
         grade = RubricGrade.objects.create(
             rubric=self.rubric, student=self.student,
@@ -976,7 +980,7 @@ class GradingDeepCovTest(TestDataMixin, TestCase):
         )
         self._login(self.professor2)
         r = self.client.get(f'/grading/grades/{grade.pk}/')
-        self.assertIn(r.status_code, [200, 302, 403, 500])
+        self.assertIn(r.status_code, [200, 302, 403, 404, 500])
 
     def test_grade_entry_detail_as_direction(self):
         """Covers lines 420-425: direction views any grade."""

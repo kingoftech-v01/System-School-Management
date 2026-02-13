@@ -2,6 +2,9 @@
 Parent Portal Views - All views for the parent dashboard and child monitoring.
 """
 
+import json
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -136,6 +139,36 @@ def parent_dashboard(request):
     # GPA
     latest_result = Result.objects.filter(student=student).order_by('-id').first()
 
+    # --- Analytics data for parent ---
+    engagement_dates = json.dumps([])
+    engagement_scores = json.dumps([])
+    at_risk_status = None
+
+    try:
+        from analytics.models import StudentEngagement
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_qs = (
+            StudentEngagement.objects
+            .filter(student=student, date__gte=thirty_days_ago)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        dates_list = [e['date'].strftime('%b %d') for e in engagement_qs]
+        scores_list = [round(float(e['avg_score'] or 0), 1) for e in engagement_qs]
+        engagement_dates = json.dumps(dates_list)
+        engagement_scores = json.dumps(scores_list)
+    except Exception:
+        pass
+
+    try:
+        from analytics.models import AtRiskStudent
+        at_risk_status = AtRiskStudent.objects.filter(
+            student=student, is_active=True
+        ).order_by('-risk_score').first()
+    except Exception:
+        pass
+
     context = {
         **get_children_context(request),
         'page_title': _('Parent Dashboard'),
@@ -147,6 +180,10 @@ def parent_dashboard(request):
         'pending_slips': pending_slips,
         'unacked_discipline': unacked_discipline,
         'latest_result': latest_result,
+        # Analytics
+        'engagement_dates': engagement_dates,
+        'engagement_scores': engagement_scores,
+        'at_risk_status': at_risk_status,
     }
     return render(request, 'parent/dashboard.html', context)
 

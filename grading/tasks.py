@@ -33,6 +33,19 @@ def send_grade_notifications(rubric_grade_id):
             fail_silently=False,
         )
 
+        # SMS to parent
+        try:
+            from core.sms import send_sms_to_parent
+            name = grade.student.student.get_full_name
+            sms_msg = (
+                f'Grade posted for {name}: {grade.rubric.title} - '
+                f'{grade.total_points}/{grade.rubric.max_points} ({grade.percentage}%). '
+                f'Check the portal for details.'
+            )
+            send_sms_to_parent(grade.student, sms_msg)
+        except Exception:
+            pass
+
         return f'Sent grade notification for grade {rubric_grade_id}'
     except RubricGrade.DoesNotExist:
         return f'Rubric grade {rubric_grade_id} not found'
@@ -213,8 +226,8 @@ def notify_low_scores(threshold=60):
         # Notify advisor (if exists)
         if hasattr(grade.student, 'advisor') and grade.student.advisor:
             send_mail(
-                subject=f'Student Low Grade Alert: {grade.student.student.get_full_name()}',
-                message=f'{grade.student.student.get_full_name()} received {grade.percentage}% on {grade.rubric.title}.',
+                subject=f'Student Low Grade Alert: {grade.student.student.get_full_name}',
+                message=f'{grade.student.student.get_full_name} received {grade.percentage}% on {grade.rubric.title}.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[grade.student.advisor.email],
                 fail_silently=True,
