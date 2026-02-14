@@ -39,20 +39,9 @@ SHARED_APPS = [
     # Translation - CRITICAL: Must be BEFORE django.contrib.admin
     'modeltranslation',
 
-    'django.contrib.admin',
     'django.contrib.humanize',
 
-    # Third-party apps for all tenants
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.mfa',
-    'django_otp',
-    'django_otp.plugins.otp_totp',
-    'django_otp.plugins.otp_static',
-
     'rest_framework',
-    'rest_framework.authtoken',
     'rest_framework_simplejwt',
 
     'corsheaders',
@@ -61,7 +50,6 @@ SHARED_APPS = [
     'django_filters',
 
     # Security & Monitoring
-    'axes',
     'csp',
 
     # Celery
@@ -73,9 +61,6 @@ SHARED_APPS = [
 
     # File Storage
     'storages',
-
-    # Admin enhancements
-    'import_export',
 
     # New third-party packages
     'mptt',
@@ -94,6 +79,19 @@ SHARED_APPS = [
 TENANT_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
+    'django.contrib.admin',
+
+    # Apps that reference AUTH_USER_MODEL - must be in tenant schemas
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.mfa',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_static',
+    'rest_framework.authtoken',
+    'axes',
+    'import_export',
 
     # Custom apps - all tenant-specific
     'accounts',

@@ -141,13 +141,13 @@ urlpatterns = [
 # DEVELOPMENT SETTINGS
 # ============================================================================
 
-# Debug toolbar - include URLs whenever the module is installed
-# (must be outside DEBUG check so tests with DEBUG=False still resolve djdt namespace)
-try:
-    import debug_toolbar
-    urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
-except ImportError:
-    pass
+# Debug toolbar - only in DEBUG mode
+if settings.DEBUG:
+    try:
+        import debug_toolbar
+        urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
+    except ImportError:
+        pass
 
 # Static and media files in development
 if settings.DEBUG:

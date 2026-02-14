@@ -4,16 +4,28 @@ Security hardened for production deployment.
 """
 
 from .base import *
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
+
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    HAS_SENTRY = True
+except ImportError:
+    HAS_SENTRY = False
 
 # SECURITY
 DEBUG = False
 
 # Strict allowed hosts from environment
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://sms.jhpetitfrere.com',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 # Security settings
 SECURE_SSL_REDIRECT = True
@@ -40,8 +52,8 @@ LOGGING = {
             'style': '{',
         },
         'json': {
-            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
-            'format': '%(asctime)s %(name)s %(levelname)s %(message)s',
+            'format': '[{levelname}] {asctime} {name} {message}',
+            'style': '{',
         },
     },
     'handlers': {
@@ -115,7 +127,7 @@ LOGGING = {
 
 # Sentry configuration for error tracking
 SENTRY_DSN = config('SENTRY_DSN', default='')
-if SENTRY_DSN:
+if SENTRY_DSN and HAS_SENTRY:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[
@@ -184,22 +196,26 @@ SESSION_SAVE_EVERY_REQUEST = True
 # CORS - whitelist only
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Content Security Policy - strict (django-csp 4.0+ format)
+# Content Security Policy (django-csp 4.0+ format)
+# Allow unsafe-inline/eval needed by templates and vendor JS libraries
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
-        'script-src': ("'self'",),
-        'style-src': ("'self'",),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'",
+                       "https://cdn.jsdelivr.net", "https://cdn.datatables.net",
+                       "https://cdnjs.cloudflare.com"),
+        'style-src': ("'self'", "'unsafe-inline'",
+                      "https://cdn.jsdelivr.net", "https://cdn.datatables.net",
+                      "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"),
         'img-src': ("'self'", "data:", "https:"),
-        'font-src': ("'self'",),
+        'font-src': ("'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"),
         'connect-src': ("'self'",),
         'frame-ancestors': ("'none'",),
-        'report-uri': (config('CSP_REPORT_URI', default=''),) if config('CSP_REPORT_URI', default='') else None,
     }
 }
-# Remove None values
-if CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri'] is None:
-    del CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri']
+
+# Static files - use non-manifest storage to avoid source map reference errors
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Trust X-Forwarded-* headers from nginx
 USE_X_FORWARDED_HOST = True

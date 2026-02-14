@@ -12,9 +12,13 @@ echo "Starting production entrypoint script..."
 echo "Waiting for PostgreSQL to be ready..."
 python scripts/wait_for_db.py
 
-# Run migrations
-echo "Running database migrations..."
-python manage.py migrate --noinput
+# Run shared schema migrations first
+echo "Running shared schema migrations..."
+python manage.py migrate_schemas --shared --noinput || echo "[WARN] Shared migrations had errors (may be expected on first run)"
+
+# Run tenant schema migrations
+echo "Running tenant schema migrations..."
+python manage.py migrate_schemas --tenant --noinput || echo "[WARN] Tenant migrations had errors (may be expected if no tenants exist)"
 
 # Create superuser if none exists (only for initial setup)
 if [ "${CREATE_SUPERUSER:-false}" = "true" ]; then
