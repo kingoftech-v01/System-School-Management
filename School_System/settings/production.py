@@ -21,6 +21,13 @@ DEBUG = False
 # Strict allowed hosts from environment
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://sms.jhpetitfrere.com',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
 # Security settings
 # Allow SSL redirect to be disabled for Docker behind host reverse proxy
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
@@ -194,22 +201,26 @@ SESSION_SAVE_EVERY_REQUEST = True
 # CORS - whitelist only
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Content Security Policy - strict (django-csp 4.0+ format)
+# Content Security Policy (django-csp 4.0+ format)
+# Allow unsafe-inline/eval needed by templates and vendor JS libraries
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
-        'script-src': ("'self'",),
-        'style-src': ("'self'",),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'",
+                       "https://cdn.jsdelivr.net", "https://cdn.datatables.net",
+                       "https://cdnjs.cloudflare.com"),
+        'style-src': ("'self'", "'unsafe-inline'",
+                      "https://cdn.jsdelivr.net", "https://cdn.datatables.net",
+                      "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"),
         'img-src': ("'self'", "data:", "https:"),
-        'font-src': ("'self'",),
+        'font-src': ("'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"),
         'connect-src': ("'self'",),
         'frame-ancestors': ("'none'",),
-        'report-uri': (config('CSP_REPORT_URI', default=''),) if config('CSP_REPORT_URI', default='') else None,
     }
 }
-# Remove None values
-if CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri'] is None:
-    del CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri']
+
+# Static files - use non-manifest storage to avoid source map reference errors
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Trust X-Forwarded-* headers from nginx
 USE_X_FORWARDED_HOST = True
