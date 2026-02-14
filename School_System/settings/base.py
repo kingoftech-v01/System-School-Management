@@ -136,6 +136,9 @@ TENANT_APPS = [
 
     # Reports & Exports
     'reports',
+
+    # WebSocket (Django Channels)
+    'channels',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -517,6 +520,26 @@ CACHES = {
 # ==============================================================================
 
 CELERY_BROKER_URL = REDIS_URL
+
+# ==============================================================================
+# DJANGO CHANNELS (WebSocket)
+# ==============================================================================
+
+ASGI_APPLICATION = 'School_System.routing.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL],
+        },
+    },
+}
+
+# ==============================================================================
+# CELERY CONFIGURATION (continued)
+# ==============================================================================
+
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'

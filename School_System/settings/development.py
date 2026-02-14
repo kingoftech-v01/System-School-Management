@@ -97,7 +97,7 @@ CONTENT_SECURITY_POLICY = {
         'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.datatables.net", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"),
         'font-src': ("'self'", "https://fonts.gstatic.com"),
         'img-src': ("'self'", "data:", "https:"),
-        'connect-src': ("'self'",),
+        'connect-src': ("'self'", "ws:", "wss:"),
         'frame-ancestors': ("'none'",),
     }
 }
@@ -109,6 +109,13 @@ LOGGING['loggers']['accounts']['level'] = 'DEBUG'
 # Development-specific settings
 CELERY_TASK_ALWAYS_EAGER = False  # Set to True to run tasks synchronously in development
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Use in-memory channel layer for development (no Redis required)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Disable some security checks for development
 AXES_ENABLED = config('AXES_ENABLED', default=True, cast=bool)

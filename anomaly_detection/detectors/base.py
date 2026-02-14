@@ -69,6 +69,32 @@ class BaseDetector:
         except Exception:
             logger.exception("Failed to send notification for alert %s", alert.pk)
 
+        # Push real-time WebSocket notification to connected staff
+        try:
+            from channels.layers import get_channel_layer
+            from asgiref.sync import async_to_sync
+            channel_layer = get_channel_layer()
+            if channel_layer:
+                ws_data = {
+                    'type': 'alert.notification',
+                    'data': {
+                        'id': alert.pk,
+                        'title': alert.title,
+                        'details': alert.details[:200] if alert.details else '',
+                        'severity': alert_severity,
+                        'anomaly_type': self.anomaly_code,
+                    }
+                }
+                # Send to tenant-specific group
+                if user and getattr(user, 'tenant_id', None):
+                    async_to_sync(channel_layer.group_send)(
+                        f'alerts_tenant_{user.tenant_id}', ws_data
+                    )
+                # Always send to global group for super-admins
+                async_to_sync(channel_layer.group_send)('alerts_global', ws_data)
+        except Exception:
+            pass  # WebSocket is optional, never break alert creation
+
         return alert
 
     def check(self, instance):

@@ -374,3 +374,11 @@ def measure_learning_outcomes():
                 measured_count += 1
 
     return f'Measured {measured_count} learning outcomes'
+
+
+@shared_task(name='analytics.generate_insights')
+def generate_insights():
+    """Generate computed insights from analytics data. Runs weekly."""
+    from analytics.insights import generate_all_insights
+    count = generate_all_insights()
+    return f'Generated {count} insights'

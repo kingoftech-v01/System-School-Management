@@ -4,7 +4,7 @@ Admin configuration for analytics app.
 
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import StudentEngagement, CourseCompletion, LearningOutcome, OutcomeMeasurement, ActivityLog, AtRiskStudent
+from .models import StudentEngagement, CourseCompletion, LearningOutcome, OutcomeMeasurement, ActivityLog, AtRiskStudent, Insight
 
 
 @admin.register(StudentEngagement)
@@ -369,3 +369,23 @@ class AtRiskStudentAdmin(admin.ModelAdmin):
             icon, score, color, score, color, obj.get_risk_level_display()
         )
     get_risk_visual.short_description = 'Risk Level Visualization'
+
+
+@admin.register(Insight)
+class InsightAdmin(admin.ModelAdmin):
+    """Admin for computed insights."""
+    list_display = ('title', 'insight_type', 'severity', 'is_active', 'generated_at', 'dismissed_by')
+    list_filter = ('insight_type', 'severity', 'is_active', 'generated_at')
+    search_fields = ('title', 'description')
+    readonly_fields = ('generated_at',)
+    date_hierarchy = 'generated_at'
+    actions = ['dismiss_insights', 'reactivate_insights']
+
+    def dismiss_insights(self, request, queryset):
+        from django.utils import timezone
+        queryset.update(is_active=False, dismissed_by=request.user, dismissed_at=timezone.now())
+    dismiss_insights.short_description = "Dismiss selected insights"
+
+    def reactivate_insights(self, request, queryset):
+        queryset.update(is_active=True, dismissed_by=None, dismissed_at=None)
+    reactivate_insights.short_description = "Reactivate selected insights"

@@ -288,6 +288,21 @@ def parent_only(view_func):
     return role_required('parent')(view_func)
 
 
+def superuser_required(view_func):
+    """
+    Decorator that restricts access to superusers only.
+    Used for cross-tenant operations like the tenant comparison dashboard.
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "Access denied. This page is only available to super administrators.")
+            return redirect('/dashboard/')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 # Backward compatibility aliases
 def admin_required(function=None, redirect_to="/"):
     """Legacy decorator - use role_required('admin') instead."""

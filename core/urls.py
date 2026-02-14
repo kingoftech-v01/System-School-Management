@@ -11,6 +11,7 @@ from rest_framework.routers import DefaultRouter
 
 from . import views_frontend
 from . import views_api
+from . import views_import
 
 
 # ============================================================================
@@ -61,6 +62,11 @@ frontend_urlpatterns = [
     path('semester/add/', views_frontend.semester_add_view, name='add_semester'),
     path('semester/<int:pk>/edit/', views_frontend.semester_update_view, name='edit_semester'),
     path('semester/<int:pk>/delete/', views_frontend.semester_delete_view, name='delete_semester'),
+
+    # Data Import
+    path('import/', views_import.import_select, name='import_select'),
+    path('import/<str:import_type>/', views_import.import_upload, name='import_upload'),
+    path('import/<str:import_type>/confirm/', views_import.import_confirm, name='import_confirm'),
 ]
 
 

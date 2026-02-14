@@ -10,6 +10,7 @@ from django.urls import path, include
 
 from . import views_frontend
 from . import views_api
+from . import views_superadmin
 
 
 # ============================================================================
@@ -33,6 +34,7 @@ frontend_urlpatterns = [
     path('enrollment-stats/', views_frontend.enrollment_statistics, name='enrollment_stats'),
     path('library-stats/', views_frontend.library_statistics, name='library_stats'),
     path('export/csv/', views_frontend.export_dashboard_csv, name='export_csv'),
+    path('tenants/', views_superadmin.tenant_comparison, name='tenant_comparison'),
 ]
 
 

@@ -962,6 +962,14 @@ def dashboard_direction(request):
     except Exception:
         pass
 
+    # Computed insights
+    insights = []
+    try:
+        from analytics.models import Insight
+        insights = Insight.objects.filter(is_active=True).order_by('-severity', '-generated_at')[:10]
+    except Exception:
+        pass
+
     context = {
         'title': 'Direction Dashboard',
         'total_students': total_students,
@@ -988,6 +996,8 @@ def dashboard_direction(request):
         'attendance_absent': attendance_absent,
         'grade_labels': grade_labels,
         'grade_counts': grade_counts,
+        # Insights
+        'insights': insights,
     }
 
     return render(request, 'accounts/dashboard_direction.html', context)

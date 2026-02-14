@@ -2,7 +2,9 @@ from django.contrib import admin
 from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
+from import_export.admin import ImportExportModelAdmin
 from .models import User, Student, Parent, InvitationCode
+from .resources import StudentResource, ParentResource
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -186,13 +188,26 @@ class SecureAdminSite(admin.AdminSite):
 
 secure_admin_site = SecureAdminSite(name='secure_admin')
 
+class StudentAdmin(ImportExportModelAdmin):
+    resource_class = StudentResource
+    list_display = ['registration_number', 'student', 'level', 'program', 'is_alumni', 'is_dropped']
+    search_fields = ['registration_number', 'student__first_name', 'student__last_name', 'student__email']
+    list_filter = ['level', 'is_alumni', 'is_dropped', 'program']
+
+
+class ParentAdmin(ImportExportModelAdmin):
+    resource_class = ParentResource
+    list_display = ['user', 'student', 'relation_ship']
+    search_fields = ['user__first_name', 'user__last_name', 'student__registration_number']
+
+
 # Register with both default and secure admin
 admin.site.register(User, UserAdmin)
-admin.site.register(Student)
-admin.site.register(Parent)
+admin.site.register(Student, StudentAdmin)
+admin.site.register(Parent, ParentAdmin)
 admin.site.register(InvitationCode, InvitationCodeAdmin)
 
 secure_admin_site.register(User, UserAdmin)
-secure_admin_site.register(Student)
-secure_admin_site.register(Parent)
+secure_admin_site.register(Student, StudentAdmin)
+secure_admin_site.register(Parent, ParentAdmin)
 secure_admin_site.register(InvitationCode, InvitationCodeAdmin)
