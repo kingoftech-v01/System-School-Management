@@ -59,3 +59,11 @@ class ExportRateThrottle(UserRateThrottle):
     Allows 10 exports per hour.
     """
     scope = 'exports'
+
+
+class SearchRateThrottle(UserRateThrottle):
+    """
+    Rate limit for search endpoints.
+    Allows 50 searches per hour per authenticated user.
+    """
+    scope = 'search'

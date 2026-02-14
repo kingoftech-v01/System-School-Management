@@ -49,7 +49,7 @@ class GradingRubricForm(forms.ModelForm):
                 self.fields['course'].queryset = Course.objects.filter(
                     allocated_course__lecturer=self.user
                 ).distinct()
-            elif self.user.role == 'direction':
+            elif self.user.role in ('secretary', 'direction', 'admin'):
                 self.fields['course'].queryset = Course.objects.all()
 
     def clean(self):

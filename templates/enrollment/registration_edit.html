@@ -9,7 +9,7 @@
         <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:enrollment:enrollment_list' %}">Enrollments</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:enrollment:enrollment_detail' registration_id=registration.id %}">{{ registration.student_name }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:enrollment:enrollment_detail' registration_id=registration.id %}">{{ registration.student_full_name }}</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Edit</a></li>
     </ol>
 </div>
@@ -19,7 +19,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h4 class="card-title mb-0">{{ title }}</h4>
-                    <span class="badge bg-secondary fs-6">{{ registration.student_name }}</span>
+                    <span class="badge bg-secondary fs-6">{{ registration.student_full_name }}</span>
                 </div>
                 <div class="card-body">
                     <form method="post">

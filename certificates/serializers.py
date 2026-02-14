@@ -13,31 +13,18 @@ class CertificateTemplateSerializer(serializers.ModelSerializer):
     """Serializer for certificate templates."""
     class Meta:
         model = CertificateTemplate
-        fields = ['id', 'name', 'description', 'certificate_type', 'template_file',
-                 'background_image', 'logo', 'signature_image', 'signatory_name',
-                 'signatory_title', 'is_active', 'is_default', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'description', 'template_file',
+                 'background_image', 'title_text', 'body_template',
+                 'signature_1_name', 'signature_1_title', 'signature_1_image',
+                 'signature_2_name', 'signature_2_title', 'signature_2_image',
+                 'orientation', 'page_size', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
-
-    def validate(self, data):
-        """Ensure only one default template per type."""
-        if data.get('is_default'):
-            cert_type = data.get('certificate_type')
-            existing_default = CertificateTemplate.objects.filter(
-                certificate_type=cert_type,
-                is_default=True
-            ).exclude(id=self.instance.id if self.instance else None)
-
-            if existing_default.exists():
-                raise serializers.ValidationError(
-                    f"A default template already exists for {cert_type} certificates."
-                )
-        return data
 
 
 class CertificateSerializer(serializers.ModelSerializer):
     """Serializer for certificates."""
     student_name = serializers.CharField(source='student.student.get_full_name', read_only=True)
-    course_name = serializers.CharField(source='course.name', read_only=True)
+    course_name = serializers.CharField(source='course.title', read_only=True)
     template_name = serializers.CharField(source='template.name', read_only=True)
     verification_count = serializers.SerializerMethodField()
     is_valid = serializers.SerializerMethodField()
@@ -46,10 +33,10 @@ class CertificateSerializer(serializers.ModelSerializer):
         model = Certificate
         fields = ['id', 'student', 'student_name', 'course', 'course_name',
                  'template', 'template_name', 'certificate_number', 'issue_date',
-                 'grade', 'honors', 'additional_info', 'certificate_file',
-                 'hash_signature', 'blockchain_hash', 'qr_code', 'is_revoked',
-                 'revoked_at', 'revocation_reason', 'verification_count',
-                 'is_valid', 'created_at', 'updated_at']
+                 'completion_date', 'grade', 'gpa', 'credits', 'pdf_file',
+                 'hash_signature', 'blockchain_hash', 'qr_code', 'status',
+                 'is_revoked', 'revoked_at', 'revocation_reason',
+                 'verification_count', 'is_valid', 'created_at', 'updated_at']
         read_only_fields = ['certificate_number', 'hash_signature', 'blockchain_hash',
                            'qr_code', 'created_at', 'updated_at', 'revoked_at']
 
@@ -81,8 +68,8 @@ class CertificateVerificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CertificateVerification
         fields = ['id', 'certificate', 'certificate_number', 'student_name',
-                 'verified_by', 'verification_method', 'is_valid', 'ip_address',
-                 'user_agent', 'notes', 'verified_at']
+                 'verified_by_user', 'verification_method', 'is_valid', 'ip_address',
+                 'user_agent', 'verification_notes', 'verified_at']
         read_only_fields = ['verified_at']
 
     def create(self, validated_data):
@@ -104,20 +91,20 @@ class CertificateVerificationSerializer(serializers.ModelSerializer):
 
 class BatchCertificateGenerationSerializer(serializers.ModelSerializer):
     """Serializer for batch certificate generation."""
-    course_name = serializers.CharField(source='course.name', read_only=True)
+    course_name = serializers.CharField(source='course.title', read_only=True)
     template_name = serializers.CharField(source='template.name', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    initiated_by_name = serializers.CharField(source='initiated_by.get_full_name', read_only=True)
     progress_percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = BatchCertificateGeneration
         fields = ['id', 'course', 'course_name', 'template', 'template_name',
-                 'created_by', 'created_by_name', 'status', 'total_students',
-                 'processed_count', 'success_count', 'failed_count',
-                 'progress_percentage', 'grade_threshold', 'include_honors_only',
+                 'initiated_by', 'initiated_by_name', 'status', 'total_students',
+                 'processed_count', 'success_count', 'failure_count',
+                 'progress_percentage', 'min_grade', 'min_gpa',
                  'error_log', 'created_at', 'started_at', 'completed_at']
-        read_only_fields = ['created_by', 'status', 'total_students', 'processed_count',
-                           'success_count', 'failed_count', 'error_log', 'created_at',
+        read_only_fields = ['initiated_by', 'status', 'total_students', 'processed_count',
+                           'success_count', 'failure_count', 'error_log', 'created_at',
                            'started_at', 'completed_at']
 
     def get_progress_percentage(self, obj):
@@ -128,7 +115,7 @@ class BatchCertificateGenerationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create batch generation task."""
         request = self.context.get('request')
-        validated_data['created_by'] = request.user
+        validated_data['initiated_by'] = request.user
         validated_data['status'] = 'pending'
         return BatchCertificateGeneration.objects.create(**validated_data)
 

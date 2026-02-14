@@ -78,6 +78,7 @@ def notice_list(request):
         'total_count': paginator.count,
         'search': search,
         'priority': priority,
+        'priority_choices': Notice.PRIORITY_CHOICES,
         'show_expired': show_expired,
         'page_title': _('Notices & Announcements'),
         'meta_description': _('View all school notices and announcements'),

@@ -9,7 +9,7 @@
         <li><h5 class="bc-title">{{ title }}</h5></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
         <li class="breadcrumb-item"><a href="{% url 'frontend:enrollment:enrollment_list' %}">Enrollments</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'frontend:enrollment:enrollment_detail' registration_id=registration.id %}">{{ registration.student_name }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:enrollment:enrollment_detail' registration_id=registration.id %}">{{ registration.student_full_name }}</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">Delete</a></li>
     </ol>
 </div>
@@ -33,7 +33,7 @@
                         <table class="table table-sm table-borderless">
                             <tr>
                                 <th class="text-muted" style="width: 40%;">Student Name</th>
-                                <td>{{ registration.student_name }}</td>
+                                <td>{{ registration.student_full_name }}</td>
                             </tr>
                             <tr>
                                 <th class="text-muted">Email</th>

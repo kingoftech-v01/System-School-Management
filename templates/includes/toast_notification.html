@@ -1,0 +1,138 @@
+{% comment %}
+Toast notification container + WebSocket alert handler.
+Include this in the base admin template for direction/admin users.
+Requires Bootstrap 5 toast component (already available via w3crm).
+{% endcomment %}
+
+<!-- Toast notification container (fixed bottom-right) -->
+<div id="alert-toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+</div>
+
+<!-- Toast template (hidden, cloned by JS) -->
+<template id="alert-toast-template">
+    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="8000">
+        <div class="toast-header">
+            <span class="toast-icon me-2"></span>
+            <strong class="me-auto toast-title">Alert</strong>
+            <small class="toast-time text-muted">just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</template>
+
+<script>
+(function() {
+    'use strict';
+
+    // Determine WebSocket URL
+    var wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    var wsUrl = wsScheme + '://' + window.location.host + '/ws/alerts/';
+
+    var socket = null;
+    var reconnectAttempts = 0;
+    var maxReconnectAttempts = 10;
+    var reconnectDelay = 2000;
+
+    function connectWebSocket() {
+        try {
+            socket = new WebSocket(wsUrl);
+        } catch (e) {
+            console.log('[Alerts] WebSocket not available:', e.message);
+            return;
+        }
+
+        socket.onopen = function() {
+            console.log('[Alerts] WebSocket connected');
+            reconnectAttempts = 0;
+        };
+
+        socket.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                showToast(data);
+            } catch (e) {
+                console.error('[Alerts] Failed to parse message:', e);
+            }
+        };
+
+        socket.onclose = function(event) {
+            console.log('[Alerts] WebSocket closed (code: ' + event.code + ')');
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                var delay = reconnectDelay * Math.min(reconnectAttempts, 5);
+                console.log('[Alerts] Reconnecting in ' + delay + 'ms (attempt ' + reconnectAttempts + ')');
+                setTimeout(connectWebSocket, delay);
+            }
+        };
+
+        socket.onerror = function() {
+            // onclose will fire after this, which handles reconnection
+        };
+    }
+
+    function showToast(data) {
+        var container = document.getElementById('alert-toast-container');
+        var template = document.getElementById('alert-toast-template');
+        if (!container || !template) return;
+
+        var clone = template.content.cloneNode(true);
+        var toast = clone.querySelector('.toast');
+
+        // Set severity styling
+        var severity = data.severity || 'info';
+        var iconMap = {
+            'critical': '<i class="bi bi-exclamation-octagon-fill text-danger"></i>',
+            'high': '<i class="bi bi-exclamation-triangle-fill text-warning"></i>',
+            'medium': '<i class="bi bi-info-circle-fill text-info"></i>',
+            'low': '<i class="bi bi-check-circle-fill text-success"></i>'
+        };
+        var borderMap = {
+            'critical': 'border-danger',
+            'high': 'border-warning',
+            'medium': 'border-info',
+            'low': 'border-success'
+        };
+
+        toast.classList.add(borderMap[severity] || 'border-info');
+        toast.querySelector('.toast-icon').innerHTML = iconMap[severity] || iconMap['medium'];
+        toast.querySelector('.toast-title').textContent = data.title || 'System Alert';
+        toast.querySelector('.toast-body').textContent = data.details || '';
+
+        container.appendChild(clone);
+
+        // Initialize Bootstrap toast
+        var bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Play notification sound (subtle)
+        try {
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var oscillator = audioCtx.createOscillator();
+            var gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = severity === 'critical' ? 880 : 660;
+            gainNode.gain.value = 0.05;
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.15);
+        } catch (e) {
+            // Audio not available, skip silently
+        }
+
+        // Remove after hide
+        toast.addEventListener('hidden.bs.toast', function() {
+            toast.remove();
+        });
+
+        // Limit visible toasts to 5
+        var toasts = container.querySelectorAll('.toast');
+        if (toasts.length > 5) {
+            toasts[0].remove();
+        }
+    }
+
+    // Start connection
+    connectWebSocket();
+})();
+</script>

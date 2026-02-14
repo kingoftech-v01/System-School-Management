@@ -22,7 +22,7 @@ class QuizSerializer(serializers.ModelSerializer):
     """
     course_name = serializers.CharField(source='course.title', read_only=True)
     course_code = serializers.CharField(source='course.code', read_only=True)
-    question_count = serializers.IntegerField(read_only=True)
+    question_count = serializers.SerializerMethodField()
     category_display = serializers.CharField(source='get_category_display', read_only=True)
 
     class Meta:
@@ -35,6 +35,10 @@ class QuizSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['slug', 'timestamp']
 
+    def get_question_count(self, obj):
+        """Get the number of questions in this quiz."""
+        return obj.question_set.count()
+
 
 class QuizListSerializer(serializers.ModelSerializer):
     """
@@ -42,7 +46,7 @@ class QuizListSerializer(serializers.ModelSerializer):
     """
     course_name = serializers.CharField(source='course.title', read_only=True)
     category_display = serializers.CharField(source='get_category_display', read_only=True)
-    question_count = serializers.IntegerField(read_only=True)
+    question_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Quiz
@@ -50,6 +54,10 @@ class QuizListSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'course_name', 'category', 'category_display',
             'pass_mark', 'time_limit', 'question_count', 'draft'
         ]
+
+    def get_question_count(self, obj):
+        """Get the number of questions in this quiz."""
+        return obj.question_set.count()
 
 
 class QuizCreateSerializer(serializers.ModelSerializer):
@@ -79,14 +87,13 @@ class QuestionSerializer(serializers.ModelSerializer):
     """
     Base serializer for questions.
     """
-    quiz_title = serializers.CharField(source='quiz.title', read_only=True)
     figure_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = [
-            'id', 'quiz', 'quiz_title', 'figure', 'figure_url', 'content',
-            'explanation', 'order'
+            'id', 'quiz', 'figure', 'figure_url', 'content',
+            'explanation'
         ]
 
     def get_figure_url(self, obj):
@@ -102,18 +109,14 @@ class MCQuestionSerializer(serializers.ModelSerializer):
     """
     Serializer for multiple choice questions.
     """
-    quiz_title = serializers.CharField(source='quiz.title', read_only=True)
     figure_url = serializers.SerializerMethodField()
 
     class Meta:
         model = MCQuestion
         fields = [
-            'id', 'quiz', 'quiz_title', 'figure', 'figure_url', 'content',
-            'explanation', 'order', 'choice_order', 'answer'
+            'id', 'quiz', 'figure', 'figure_url', 'content',
+            'explanation', 'choice_order'
         ]
-        extra_kwargs = {
-            'answer': {'write_only': True}  # Don't expose correct answer in list
-        }
 
     def get_figure_url(self, obj):
         """Return figure URL if exists."""
@@ -128,12 +131,11 @@ class EssayQuestionSerializer(serializers.ModelSerializer):
     """
     Serializer for essay questions.
     """
-    quiz_title = serializers.CharField(source='quiz.title', read_only=True)
 
     class Meta:
         model = EssayQuestion
         fields = [
-            'id', 'quiz', 'quiz_title', 'content', 'explanation', 'order'
+            'id', 'quiz', 'content', 'explanation'
         ]
 
 
@@ -162,7 +164,7 @@ class SittingSerializer(serializers.ModelSerializer):
 
     def get_percentage(self, obj):
         """Calculate percentage score."""
-        return obj.get_percent_correct()
+        return obj.get_percent_correct
 
 
 class SittingListSerializer(serializers.ModelSerializer):
@@ -182,7 +184,7 @@ class SittingListSerializer(serializers.ModelSerializer):
 
     def get_percentage(self, obj):
         """Calculate percentage score."""
-        return obj.get_percent_correct()
+        return obj.get_percent_correct
 
 
 # ============================================================================
@@ -198,6 +200,6 @@ class ProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Progress
         fields = [
-            'id', 'user', 'user_name', 'score', 'timestamp'
+            'id', 'user', 'user_name', 'score'
         ]
-        read_only_fields = ['user', 'timestamp']
+        read_only_fields = ['user']

@@ -2,23 +2,26 @@
 
 ## Backend
 
-- [ ] Add parent list view -- currently only `ParentAdd` exists, no list or detail view
-- [ ] Add parent edit view -- no way to update parent info after creation
-- [ ] Add parent delete view -- no way to remove parent records
-- [ ] Add parent detail view -- no way to view parent profile individually
+- [x] Add parent list view (Completed as of 2026-02 -- `parent_list` in views_frontend.py)
+- [x] Add parent edit view (Completed as of 2026-02 -- `parent_edit` in views_frontend.py)
+- [x] Add parent delete view (Completed as of 2026-02 -- `parent_delete` in views_frontend.py)
+- [x] Add parent detail view (Completed as of 2026-02 -- `parent_detail` in views_frontend.py)
 - [ ] Add confirmation step to `delete_staff` and `delete_student` views -- currently deletes on GET request without confirmation
+- [ ] Add bulk student import from CSV/Excel
+- [ ] Add user account deactivation workflow (soft delete instead of hard delete)
 
 ## Frontend
 
-- [ ] Add parent list template for browsing all parents
-- [ ] Add parent edit template
+- [x] Add parent list template for browsing all parents (Completed as of 2026-02)
+- [x] Add parent edit template (Completed as of 2026-02)
 - [ ] Add delete confirmation modal for students and lecturers (POST-based confirmation)
 - [ ] Add student count badge to student list page header
 - [ ] Add lecturer count badge to lecturer list page header
+- [ ] Add profile completion indicator on user dashboard
 
 ## Sidebar
 
-- [ ] Add "Parents" submenu under ACADEMIC section with "Parent List" and "Add Parent" links
+- [x] Add "Parents" submenu under ACADEMIC section with "Parent List" and "Add Parent" links (Completed as of 2026-02)
 - [ ] Add "Staff List" link under Lecturers submenu (non-lecturer staff)
 
 ## Security
@@ -31,13 +34,26 @@
 - [ ] `email_utils.py:59` bare `except:` with undefined variable `e` -- fix exception handler
 - [ ] Username validation endpoint (views_api.py:130-156) allows user enumeration via timing differences
 
+## API
+
+- [ ] Add pagination to StudentViewSet and LecturerViewSet
+- [ ] Add parent portal API endpoints (messages, appointments, permission slips)
+- [ ] Add tenant-scoped filtering to all ViewSets
+
+## Testing
+
+- [ ] Add tests for invitation code workflow (generate, redeem, expiry)
+- [ ] Add tests for parent portal views (dashboard, messaging, appointments)
+- [ ] Add tests for account approval workflow
+- [ ] Add tests for force password change flow
+
 ## Unnecessary Files
 
 - [ ] Verify no duplicate empty `tests.py` exists alongside `accounts/tests/` test directory
 
 ## Documentation
 
-- [ ] Add module docstring to `models.py` (380 lines, no module docstring)
+- [ ] Add module docstring to `models.py` (665 lines, no module docstring)
 - [ ] Add module docstring to `views.py`
 - [ ] Add docstrings to User model methods
 - [ ] Replace 16+ bare `except:` clauses in views.py with specific exception types (e.g., `ObjectDoesNotExist`, `ValueError`)

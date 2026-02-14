@@ -88,5 +88,9 @@
     {% block additional_js %}
     {% endblock %}
 
+    {% if user.is_staff or user.role == 'direction' or user.role == 'admin' or user.role == 'prefet' %}
+    {% include 'includes/toast_notification.html' %}
+    {% endif %}
+
 </body>
 </html>

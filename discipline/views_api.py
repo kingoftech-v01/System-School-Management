@@ -75,13 +75,15 @@ class DisciplinaryActionViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Filter by tenant
-        queryset = DisciplinaryAction.objects.filter(
-            tenant=self.request.tenant
-        ).select_related('student', 'reported_by', 'updated_by')
+        tenant = getattr(self.request, 'tenant', None)
+        queryset = DisciplinaryAction.objects.all()
+        if tenant is not None:
+            queryset = queryset.filter(tenant=tenant)
+        queryset = queryset.select_related('student', 'reported_by', 'updated_by')
 
         # Filter by permissions
-        if user.is_staff or user.is_direction:
-            # Staff and direction can see all records
+        if user.is_staff or getattr(user, 'role', '') == 'direction' or getattr(user, 'role', '') == 'prefet':
+            # Staff, direction, and discipline officers can see all records
             return queryset
         elif user.is_student:
             # Students can only see their own records
@@ -104,8 +106,9 @@ class DisciplinaryActionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Set tenant and reported_by on create."""
+        tenant = getattr(self.request, 'tenant', None)
         serializer.save(
-            tenant=self.request.tenant,
+            tenant=tenant,
             reported_by=self.request.user
         )
 
@@ -135,10 +138,10 @@ class DisciplinaryActionViewSet(viewsets.ModelViewSet):
         """
         action = self.get_object()
 
-        # Permission check (only staff/direction)
-        if not (request.user.is_staff or request.user.is_direction):
+        # Permission check (only staff/direction/discipline officer)
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'direction' or getattr(request.user, 'role', '') == 'prefet'):
             return Response(
-                {'error': 'Only staff and direction can resolve disciplinary actions'},
+                {'error': 'Only staff, direction, and discipline officers can resolve disciplinary actions'},
                 status=status.HTTP_403_FORBIDDEN
             )
 

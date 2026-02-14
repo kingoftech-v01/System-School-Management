@@ -1,0 +1,11 @@
+{% if children|length > 1 %}
+<div class="alert alert-light border d-flex align-items-center flex-wrap gap-2 mb-4">
+    <i class="bi bi-people me-1"></i> <strong class="me-2">Viewing:</strong>
+    {% for child, prof in children %}
+    <a href="{% url 'frontend:accounts:parent_select_child' child.pk %}"
+       class="btn btn-sm {% if child.pk == active_child_id %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        {{ child.student.get_full_name }}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}

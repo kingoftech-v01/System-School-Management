@@ -193,7 +193,7 @@ class PeerReviewSerializer(serializers.ModelSerializer):
         """Return anonymous if review is anonymous, otherwise return name."""
         if obj.is_anonymous:
             return 'Anonymous'
-        return obj.reviewer.student.get_full_name()
+        return obj.reviewer.student.get_full_name
 
 
 class PeerReviewSubmitSerializer(serializers.Serializer):

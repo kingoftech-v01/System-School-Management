@@ -62,7 +62,7 @@ class CleanupOldThreadsTest(TestDataMixin, TestCase):
 class SendNewPostNotificationsTest(TestDataMixin, TestCase):
     @patch('forums.tasks.send_mail')
     def test_notifies_subscribers(self, mock_mail):
-        """Task calls get_full_name() but it's a property - causes TypeError."""
+        """Task sends email to thread subscribers on new post."""
         author = self.create_user(role='student')
         subscriber = self.create_user(role='student')
         category = ForumCategory.objects.create(
@@ -78,9 +78,9 @@ class SendNewPostNotificationsTest(TestDataMixin, TestCase):
         post = Post.objects.create(
             thread=thread, author=author, content='Reply content',
         )
-        # Task calls get_full_name() (with parens) but it's a @property - source bug
-        with self.assertRaises(TypeError):
-            send_new_post_notifications(post.pk)
+        result = send_new_post_notifications(post.pk)
+        self.assertTrue(mock_mail.called)
+        self.assertIn(str(post.pk), result)
 
     @patch('forums.tasks.send_mail')
     def test_excludes_post_author(self, mock_mail):

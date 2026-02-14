@@ -1,0 +1,160 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Incident Detail - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Incident Detail</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:safeguarding:incident_list' %}">Incidents</a></li>
+        <li class="breadcrumb-item active">Detail</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h4 class="card-title mb-0">{{ incident.title }}</h4>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'frontend:safeguarding:incident_edit' pk=incident.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href="{% url 'frontend:reports:incident_report_pdf' pk=incident.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted" style="width: 40%;">Type</th>
+                                    <td>{{ incident.get_incident_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Severity</th>
+                                    <td>
+                                        {% if incident.severity == 'critical' %}
+                                        <span class="badge bg-danger">Critical</span>
+                                        {% elif incident.severity == 'high' %}
+                                        <span class="badge bg-warning text-dark">High</span>
+                                        {% elif incident.severity == 'medium' %}
+                                        <span class="badge bg-info text-dark">Medium</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Low</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Status</th>
+                                    <td>{{ incident.get_status_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Date</th>
+                                    <td>{{ incident.incident_date|date:"M d, Y" }}{% if incident.incident_time %} at {{ incident.incident_time|time:"H:i" }}{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Location</th>
+                                    <td>{{ incident.location|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted" style="width: 40%;">Reported By</th>
+                                    <td>{{ incident.reported_by.get_full_name|default:incident.reported_by.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Created</th>
+                                    <td>{{ incident.created_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                {% if incident.updated_by %}
+                                <tr>
+                                    <th class="text-muted">Updated By</th>
+                                    <td>{{ incident.updated_by.get_full_name|default:incident.updated_by.username }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if incident.follow_up_needed %}
+                                <tr>
+                                    <th class="text-muted">Follow-up Date</th>
+                                    <td>{{ incident.follow_up_date|date:"M d, Y"|default:"Not set" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h5 class="mb-2">Description</h5>
+                    <p>{{ incident.description|linebreaksbr }}</p>
+
+                    {% if incident.students_involved.all %}
+                    <h5 class="mb-2 mt-4">Students Involved</h5>
+                    <ul>
+                        {% for s in incident.students_involved.all %}
+                        <li>{{ s.student.get_full_name|default:s.student.username }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if incident.staff_involved.all %}
+                    <h5 class="mb-2 mt-4">Staff Involved</h5>
+                    <ul>
+                        {% for u in incident.staff_involved.all %}
+                        <li>{{ u.get_full_name|default:u.username }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if incident.external_parties %}
+                    <h5 class="mb-2 mt-4">External Parties</h5>
+                    <p>{{ incident.external_parties|linebreaksbr }}</p>
+                    {% endif %}
+
+                    {% if incident.witnesses %}
+                    <h5 class="mb-2 mt-4">Witnesses</h5>
+                    <p>{{ incident.witnesses|linebreaksbr }}</p>
+                    {% endif %}
+
+                    {% if incident.actions_taken %}
+                    <h5 class="mb-2 mt-4">Actions Taken</h5>
+                    <p>{{ incident.actions_taken|linebreaksbr }}</p>
+                    {% endif %}
+
+                    {% if incident.follow_up_notes %}
+                    <h5 class="mb-2 mt-4">Follow-up Notes</h5>
+                    <p>{{ incident.follow_up_notes|linebreaksbr }}</p>
+                    {% endif %}
+
+                    {% if incident.resolution %}
+                    <h5 class="mb-2 mt-4">Resolution</h5>
+                    <p>{{ incident.resolution|linebreaksbr }}</p>
+                    {% endif %}
+
+                    {% if incident.attachments.all %}
+                    <h5 class="mb-2 mt-4">Attachments</h5>
+                    <ul class="list-group">
+                        {% for att in incident.attachments.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-paperclip"></i>
+                                {{ att.description|default:att.file.name }}
+                            </div>
+                            <a href="{{ att.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

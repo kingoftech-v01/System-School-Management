@@ -19,7 +19,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.utils import timezone
 from django_ratelimit.decorators import ratelimit
-from accounts.decorators import lecturer_required, direction_only, tenant_required
+from accounts.decorators import lecturer_required, prefet_allowed, role_required, tenant_required
 
 from .models import Student, Group, Subject, Attendance, AttendanceReport, Satus
 from .forms import AttendanceForm, AttendanceReportForm, StudentForm, GroupForm, SubjectForm
@@ -30,7 +30,7 @@ from .forms import AttendanceForm, AttendanceReportForm, StudentForm, GroupForm,
 # ============================================================================
 
 @login_required
-@lecturer_required
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def attendance_dashboard(request):
@@ -72,7 +72,7 @@ def attendance_dashboard(request):
 
 
 @login_required
-@lecturer_required
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def take_attendance(request):
@@ -96,7 +96,7 @@ def take_attendance(request):
 
 
 @login_required
-@lecturer_required
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def mark_attendance(request, pk):
@@ -143,6 +143,7 @@ def mark_attendance(request, pk):
 
 
 @login_required
+@lecturer_required
 @tenant_required
 def attendance_detail(request, pk):
     """View attendance session details."""
@@ -185,6 +186,23 @@ def student_attendance_report(request, student_id):
     """View attendance report for a specific student."""
     student = get_object_or_404(Student, pk=student_id)
 
+    # Permission check: students can only view their own attendance
+    user_role = getattr(request.user, 'role', '')
+    if user_role == 'student' or (hasattr(request.user, 'is_student') and request.user.is_student):
+        from accounts.models import Student as AccountStudent
+        try:
+            own_student = AccountStudent.objects.get(student=request.user)
+            # Compare by email since attendance Student is a different model
+            if student.email != request.user.email:
+                messages.error(request, "You can only view your own attendance report.")
+                return redirect("frontend:attendance:dashboard")
+        except AccountStudent.DoesNotExist:
+            messages.error(request, "Student profile not found.")
+            return redirect("frontend:attendance:dashboard")
+    elif user_role == 'parent':
+        messages.error(request, "Access denied.")
+        return redirect("frontend:core:dashboard")
+
     # Get all attendance reports for this student
     reports = AttendanceReport.objects.filter(
         student=student
@@ -219,7 +237,7 @@ def student_attendance_report(request, student_id):
 # ============================================================================
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 def student_list(request):
     """List all students."""
@@ -254,7 +272,7 @@ def student_list(request):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 def group_list(request):
     """List all groups."""
@@ -291,7 +309,7 @@ def subject_list(request):
 # ============================================================================
 
 @login_required
-@lecturer_required
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def attendance_edit(request, pk):
@@ -317,7 +335,7 @@ def attendance_edit(request, pk):
 
 
 @login_required
-@lecturer_required
+@role_required('professor', 'prefet', 'secretary', 'direction', 'admin')
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def attendance_delete(request, pk):
@@ -345,7 +363,7 @@ def attendance_delete(request, pk):
 # ============================================================================
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def student_create(request):
@@ -368,7 +386,7 @@ def student_create(request):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def student_edit(request, pk):
@@ -394,7 +412,7 @@ def student_edit(request, pk):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def student_delete(request, pk):
@@ -422,7 +440,7 @@ def student_delete(request, pk):
 # ============================================================================
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def group_create(request):
@@ -445,7 +463,7 @@ def group_create(request):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def group_edit(request, pk):
@@ -471,7 +489,7 @@ def group_edit(request, pk):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def group_delete(request, pk):
@@ -499,7 +517,7 @@ def group_delete(request, pk):
 # ============================================================================
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def subject_create(request):
@@ -522,7 +540,7 @@ def subject_create(request):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def subject_edit(request, pk):
@@ -548,7 +566,7 @@ def subject_edit(request, pk):
 
 
 @login_required
-@direction_only
+@prefet_allowed
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def subject_delete(request, pk):

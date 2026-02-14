@@ -28,7 +28,7 @@ from course.models import Course
 from accounts.models import Student
 from accounts.decorators import lecturer_required, student_required
 from django.core.paginator import Paginator
-from .models import TakenCourse, Result, GradeAppeal
+from .models import TakenCourse, Result, GradeAppeal, GradeHistory
 from .forms import GradeAppealForm
 
 
@@ -83,7 +83,12 @@ def add_score_for(request, id):
         courses = Course.objects.filter(
             allocated_course__lecturer__pk=request.user.id
         ).filter(semester=current_semester)
-        course = Course.objects.get(pk=id)
+        course = get_object_or_404(Course, pk=id)
+
+        # Verify the lecturer is allocated to this course
+        if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+            messages.error(request, "You are not authorized to grade this course.")
+            return redirect("frontend:result:add_score")
         # myclass = Class.objects.get(lecturer__pk=request.user.id)
         # myclass = get_object_or_404(Class, lecturer__pk=request.user.id)
 
@@ -111,6 +116,12 @@ def add_score_for(request, id):
         return render(request, "result/add_score_for.html", context)
 
     if request.method == "POST":
+        # Verify the lecturer is allocated to this course
+        course = get_object_or_404(Course, pk=id)
+        if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+            messages.error(request, "You are not authorized to grade this course.")
+            return redirect("frontend:result:add_score")
+
         ids = ()
         data = request.POST.copy()
         data.pop("csrfmiddlewaretoken", None)  # remove csrf_token
@@ -146,6 +157,16 @@ def add_score_for(request, id):
             attendance = score[3]
             final_exam = score[4]
             obj = TakenCourse.objects.get(pk=ids[s])  # get the current student data
+
+            # Capture old values for audit trail
+            old_assignment = obj.assignment or 0
+            old_mid_exam = obj.mid_exam or 0
+            old_quiz = obj.quiz or 0
+            old_attendance = obj.attendance or 0
+            old_final_exam = obj.final_exam or 0
+            old_total = obj.total or 0
+            old_grade = obj.grade or ''
+
             obj.assignment = assignment  # set current student assignment score
             obj.mid_exam = mid_exam  # set current student mid_exam score
             obj.quiz = quiz  # set current student quiz score
@@ -155,14 +176,36 @@ def add_score_for(request, id):
             obj.total = obj.get_total()
             obj.grade = obj.get_grade()
 
-            # obj.total = obj.get_total(assignment, mid_exam, quiz, attendance, final_exam)
-            # obj.grade = obj.get_grade(assignment, mid_exam, quiz, attendance, final_exam)
-
             obj.point = obj.get_point()
             obj.comment = obj.get_comment()
-            # obj.carry_over(obj.grade)
-            # obj.is_repeating()
             obj.save()
+
+            # Create audit trail entry
+            try:
+                GradeHistory.objects.create(
+                    taken_course=obj,
+                    old_assignment=old_assignment,
+                    old_mid_exam=old_mid_exam,
+                    old_quiz=old_quiz,
+                    old_attendance=old_attendance,
+                    old_final_exam=old_final_exam,
+                    old_total=old_total,
+                    old_grade=old_grade,
+                    new_assignment=obj.assignment,
+                    new_mid_exam=obj.mid_exam,
+                    new_quiz=obj.quiz,
+                    new_attendance=obj.attendance,
+                    new_final_exam=obj.final_exam,
+                    new_total=obj.total,
+                    new_grade=obj.grade,
+                    changed_by=request.user,
+                    change_reason='Score entry via add_score_for',
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).error(
+                    "Failed to create GradeHistory for TakenCourse %s", obj.pk, exc_info=True
+                )
             gpa = obj.calculate_gpa()
             cgpa = obj.calculate_cgpa()
 
@@ -280,10 +323,14 @@ def assessment_result(request):
 @login_required
 @lecturer_required
 def result_sheet_pdf_view(request, id):
+    course = get_object_or_404(Course, id=id)
+    # Verify the lecturer is allocated to this course
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to view results for this course.")
+        return redirect("frontend:result:add_score")
     current_semester = Semester.objects.get(is_current_semester=True)
     current_session = Session.objects.get(is_current_session=True)
     result = TakenCourse.objects.filter(course__pk=id)
-    course = get_object_or_404(Course, id=id)
     no_of_pass = TakenCourse.objects.filter(course__pk=id, comment="PASS").count()
     no_of_fail = TakenCourse.objects.filter(course__pk=id, comment="FAIL").count()
     fname = (

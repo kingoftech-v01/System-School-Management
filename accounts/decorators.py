@@ -80,8 +80,19 @@ def tenant_required(view_func):
     @wraps(view_func)
     @login_required
     def wrapper(request, *args, **kwargs):
-        # Skip check for superusers
+        # Superusers bypass tenant check but log cross-tenant access
         if request.user.is_superuser:
+            import logging
+            _logger = logging.getLogger('accounts.decorators')
+            user_tenant = getattr(request.user, 'tenant', None)
+            request_tenant = getattr(request, 'tenant', None)
+            if user_tenant and request_tenant and user_tenant != request_tenant:
+                _logger.warning(
+                    "SUPERUSER CROSS-TENANT ACCESS: user=%s user_tenant=%s "
+                    "request_tenant=%s path=%s ip=%s",
+                    request.user.username, user_tenant, request_tenant,
+                    request.path, request.META.get('REMOTE_ADDR')
+                )
             return view_func(request, *args, **kwargs)
 
         # Check if request has tenant
@@ -139,14 +150,106 @@ def rate_limit_by_role(group='default', key='user', rate='100/h', method='ALL'):
 
 def direction_only(view_func):
     """
-    Shortcut decorator for direction-only views.
+    Shortcut decorator for direction-level views.
+    Allows secretary, direction, and admin roles.
 
     Usage:
         @direction_only
         def monitoring_view(request):
             ...
     """
-    return role_required('direction', 'admin')(view_func)
+    return role_required('secretary', 'direction', 'admin')(view_func)
+
+
+def financial_only(view_func):
+    """
+    Shortcut decorator for financial/payment views.
+    Only direction and admin — excludes secretary.
+    Requires 2FA.
+
+    Usage:
+        @financial_only
+        def fee_structure_view(request):
+            ...
+    """
+    return require_2fa(role_required('direction', 'admin')(view_func))
+
+
+def prefet_allowed(view_func):
+    """
+    Shortcut decorator for views accessible to discipline officers, direction, and admin.
+    Use this for discipline and attendance views that the discipline officer should access.
+
+    Usage:
+        @prefet_allowed
+        def discipline_view(request):
+            ...
+    """
+    return role_required('secretary', 'direction', 'admin', 'prefet')(view_func)
+
+
+def prefet_only(view_func):
+    """
+    Shortcut decorator for discipline officer views. Also allows secretary, direction, and admin.
+
+    Usage:
+        @prefet_only
+        def prefet_dashboard_view(request):
+            ...
+    """
+    return role_required('prefet', 'secretary', 'direction', 'admin')(view_func)
+
+
+def accountant_allowed(view_func):
+    """
+    Shortcut decorator for views accessible to accountants, direction, and admin.
+    Use this for payment and financial views that the accountant should access.
+    Requires 2FA.
+
+    Usage:
+        @accountant_allowed
+        def payment_view(request):
+            ...
+    """
+    return require_2fa(role_required('direction', 'admin', 'accountant')(view_func))
+
+
+def accountant_only(view_func):
+    """
+    Shortcut decorator for accountant views. Also allows direction and admin.
+
+    Usage:
+        @accountant_only
+        def accountant_dashboard_view(request):
+            ...
+    """
+    return role_required('accountant', 'direction', 'admin')(view_func)
+
+
+def librarian_only(view_func):
+    """
+    Shortcut decorator for library management views.
+    Allows librarian, secretary, direction, and admin roles.
+
+    Usage:
+        @librarian_only
+        def book_management_view(request):
+            ...
+    """
+    return role_required('librarian', 'secretary', 'direction', 'admin')(view_func)
+
+
+def registrar_only(view_func):
+    """
+    Shortcut decorator for enrollment and certificate management views.
+    Allows registrar, secretary, direction, and admin roles.
+
+    Usage:
+        @registrar_only
+        def enrollment_view(request):
+            ...
+    """
+    return role_required('registrar', 'secretary', 'direction', 'admin')(view_func)
 
 
 def professor_only(view_func):
@@ -183,6 +286,21 @@ def parent_only(view_func):
             ...
     """
     return role_required('parent')(view_func)
+
+
+def superuser_required(view_func):
+    """
+    Decorator that restricts access to superusers only.
+    Used for cross-tenant operations like the tenant comparison dashboard.
+    """
+    @wraps(view_func)
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, "Access denied. This page is only available to super administrators.")
+            return redirect('/dashboard/')
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 # Backward compatibility aliases

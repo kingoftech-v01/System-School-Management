@@ -1,5 +1,5 @@
 {% extends 'w3crm/elements/layouts/admin.html' %}
-{% load static %}
+{% load static sanitize %}
 
 {% block title %}{{ notice.title }} - School Management{% endblock %}
 
@@ -48,7 +48,7 @@
                     </div>
 
                     <div class="notice-content">
-                        {{ notice.content|safe }}
+                        {{ notice.content|sanitize }}
                     </div>
 
                     <!-- File Attachments -->
@@ -94,7 +94,7 @@
                     </div>
 
                     <!-- Direction Actions -->
-                    {% if is_direction %}
+                    {% if is_direction or is_secretary %}
                     <div class="mt-3">
                         <a href="{% url 'frontend:notices:notice_update' notice.pk %}" class="btn btn-warning btn-sm">
                             <i class="bi bi-pencil me-1"></i> Edit
@@ -129,7 +129,7 @@
                     {% endif %}
 
                     <!-- Direction: list of users who acknowledged -->
-                    {% if is_direction and acknowledged_users %}
+                    {% if is_direction and acknowledged_users or is_secretary and acknowledged_users %}
                     <h6 class="mt-4 mb-3">Acknowledged by:</h6>
                     <ul class="list-group list-group-flush">
                         {% for response in acknowledged_users %}

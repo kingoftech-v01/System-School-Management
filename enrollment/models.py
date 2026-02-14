@@ -33,8 +33,10 @@ class RegistrationForm(models.Model):
         related_name='registration_forms'
     )
 
-    # Basic Information
-    student_name = models.CharField(max_length=200, verbose_name=_('Student Full Name'))
+    # Student Information
+    student_first_name = models.CharField(max_length=100, default='', verbose_name=_('First Name'))
+    student_middle_name = models.CharField(max_length=100, blank=True, default='', verbose_name=_('Middle Name'))
+    student_last_name = models.CharField(max_length=100, default='', verbose_name=_('Last Name'))
     date_of_birth = models.DateField(verbose_name=_('Date of Birth'))
     gender = models.CharField(max_length=1, choices=(('M', _('Male')), ('F', _('Female'))))
     nationality = models.CharField(max_length=100, default='', verbose_name=_('Nationality'))
@@ -42,10 +44,18 @@ class RegistrationForm(models.Model):
     # Contact Information
     email = models.EmailField(verbose_name=_('Email Address'))
     phone = models.CharField(max_length=20, verbose_name=_('Phone Number'))
-    address = models.TextField(verbose_name=_('Residential Address'))
+
+    # Residential Address
+    street_address = models.CharField(max_length=255, default='', verbose_name=_('Street Address'))
+    city = models.CharField(max_length=100, default='', verbose_name=_('City'))
+    province = models.CharField(max_length=100, default='', verbose_name=_('Province/State'))
+    country = models.CharField(max_length=100, default='', verbose_name=_('Country'))
+    postal_code = models.CharField(max_length=20, blank=True, default='', verbose_name=_('Postal Code'))
 
     # Parent/Guardian Information
-    parent_name = models.CharField(max_length=200, verbose_name=_('Parent/Guardian Name'))
+    parent_first_name = models.CharField(max_length=100, default='', verbose_name=_('Parent First Name'))
+    parent_middle_name = models.CharField(max_length=100, blank=True, default='', verbose_name=_('Parent Middle Name'))
+    parent_last_name = models.CharField(max_length=100, default='', verbose_name=_('Parent Last Name'))
     parent_email = models.EmailField(verbose_name=_('Parent Email'))
     parent_phone = models.CharField(max_length=20, verbose_name=_('Parent Phone'))
     parent_relationship = models.CharField(
@@ -117,6 +127,16 @@ class RegistrationForm(models.Model):
         verbose_name=_('Enrolled User Account')
     )
 
+    # Parent who submitted enrollment (if authenticated via dashboard)
+    parent_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='child_registrations',
+        verbose_name=_('Parent User Account'),
+    )
+
     # Timestamps
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -131,8 +151,23 @@ class RegistrationForm(models.Model):
             models.Index(fields=['submitted_at']),
         ]
 
+    @property
+    def student_full_name(self):
+        parts = [self.student_first_name, self.student_middle_name, self.student_last_name]
+        return ' '.join(p for p in parts if p)
+
+    @property
+    def parent_full_name(self):
+        parts = [self.parent_first_name, self.parent_middle_name, self.parent_last_name]
+        return ' '.join(p for p in parts if p)
+
+    @property
+    def full_address(self):
+        parts = [self.street_address, self.city, self.province, self.country, self.postal_code]
+        return ', '.join(p for p in parts if p)
+
     def __str__(self):
-        return f"{self.student_name} - {self.get_status_display()}"
+        return f"{self.student_full_name} - {self.get_status_display()}"
 
     def save(self, *args, **kwargs):
         """Override save to set reviewed_at when status changes."""
@@ -149,9 +184,11 @@ class RegistrationForm(models.Model):
     def get_completion_percentage(self):
         """Calculate form completion percentage."""
         required_fields = [
-            self.student_name, self.date_of_birth, self.gender,
-            self.email, self.phone, self.address,
-            self.parent_name, self.parent_email, self.parent_phone,
+            self.student_first_name, self.student_last_name,
+            self.date_of_birth, self.gender,
+            self.email, self.phone, self.street_address, self.city, self.country,
+            self.parent_first_name, self.parent_last_name,
+            self.parent_email, self.parent_phone,
             self.filiere, self.academic_year
         ]
         filled = sum(1 for field in required_fields if field)
@@ -212,7 +249,7 @@ class EnrollmentDocument(models.Model):
         verbose_name_plural = _('Enrollment Documents')
 
     def __str__(self):
-        return f"{self.get_document_type_display()} - {self.registration.student_name}"
+        return f"{self.get_document_type_display()} - {self.registration.student_full_name}"
 
     def get_file_size(self):
         """Get file size in MB."""
@@ -245,4 +282,4 @@ class EnrollmentStatusHistory(models.Model):
         verbose_name_plural = _('Enrollment Status Histories')
 
     def __str__(self):
-        return f"{self.registration.student_name}: {self.old_status} → {self.new_status}"
+        return f"{self.registration.student_full_name}: {self.old_status} → {self.new_status}"

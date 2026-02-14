@@ -17,13 +17,17 @@ from tests.helpers import TestDataMixin
 class RegistrationFormStep1Test(TestCase):
     def test_valid_form(self):
         form = RegistrationFormStep1(data={
-            'student_name': 'John Doe',
+            'student_first_name': 'John',
+            'student_last_name': 'Doe',
             'date_of_birth': date(2005, 1, 1),
             'gender': 'M',
             'nationality': 'French',
             'email': 'john@example.com',
             'phone': '+1234567890',
-            'address': '123 Test St',
+            'street_address': '123 Test St',
+            'city': 'Test City',
+            'province': 'Test Province',
+            'country': 'Test Country',
         })
         self.assertTrue(form.is_valid(), form.errors)
 
@@ -33,29 +37,40 @@ class RegistrationFormStep1Test(TestCase):
             'gender': 'M',
             'email': 'john@example.com',
             'phone': '+1234567890',
-            'address': '123 Test St',
+            'street_address': '123 Test St',
+            'city': 'Test City',
+            'province': 'Test Province',
+            'country': 'Test Country',
         })
         self.assertFalse(form.is_valid())
 
     def test_too_young(self):
         form = RegistrationFormStep1(data={
-            'student_name': 'Young Kid',
+            'student_first_name': 'Young',
+            'student_last_name': 'Kid',
             'date_of_birth': date.today() - timedelta(days=365),  # 1 year old
             'gender': 'M',
             'email': 'young@example.com',
             'phone': '+1234567890',
-            'address': '123 Test St',
+            'street_address': '123 Test St',
+            'city': 'Test City',
+            'province': 'Test Province',
+            'country': 'Test Country',
         })
         self.assertFalse(form.is_valid())
 
     def test_too_old(self):
         form = RegistrationFormStep1(data={
-            'student_name': 'Old Person',
+            'student_first_name': 'Old',
+            'student_last_name': 'Person',
             'date_of_birth': date(1900, 1, 1),
             'gender': 'F',
             'email': 'old@example.com',
             'phone': '+1234567890',
-            'address': '123 Test St',
+            'street_address': '123 Test St',
+            'city': 'Test City',
+            'province': 'Test Province',
+            'country': 'Test Country',
         })
         self.assertFalse(form.is_valid())
 
@@ -63,7 +78,8 @@ class RegistrationFormStep1Test(TestCase):
 class RegistrationFormStep2Test(TestCase):
     def test_valid_form(self):
         form = RegistrationFormStep2(data={
-            'parent_name': 'Jane Doe',
+            'parent_first_name': 'Jane',
+            'parent_last_name': 'Doe',
             'parent_email': 'jane@example.com',
             'parent_phone': '+0987654321',
             'parent_relationship': 'mother',

@@ -17,15 +17,29 @@
 					</form>
 				</div>
 				<ul class="navbar-nav header-right">
-					<!-- Notifications -->
+					<!-- Schedule Notifications -->
 					<li class="nav-item dropdown notification_dropdown">
-						<a class="nav-link bell dz-theme-mode" href="javascript:void(0);">
+						<a class="nav-link bell dz-theme-mode position-relative" href="{% url 'frontend:scheduling:notification_list' %}" id="schedule-bell">
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 								<path d="M13.73 21a2 2 0 01-3.46 0" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 							</svg>
+							<span class="badge bg-danger rounded-circle position-absolute d-none" id="notif-badge" style="top:2px;right:2px;font-size:10px;padding:2px 5px;">0</span>
 						</a>
 					</li>
+					{% if anomaly_alert_count %}
+					<!-- Anomaly Alerts -->
+					<li class="nav-item dropdown notification_dropdown">
+						<a class="nav-link bell dz-theme-mode position-relative" href="{% url 'frontend:anomaly_detection:dashboard' %}" title="Anomaly Alerts">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7L12 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+								<path d="M12 8v4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+								<circle cx="12" cy="16" r="1" fill="white"/>
+							</svg>
+							<span class="badge bg-warning rounded-circle position-absolute" style="top:2px;right:2px;font-size:10px;padding:2px 5px;">{{ anomaly_alert_count }}</span>
+						</a>
+					</li>
+					{% endif %}
 					<!-- User Profile Dropdown -->
 					<li class="nav-item dropdown header-profile">
 						<a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
@@ -55,3 +69,25 @@
 		</nav>
 	</div>
 </div>
+<script>
+(function() {
+	function pollNotifications() {
+		fetch('/api/v1/scheduling/notifications/unread_count/')
+			.then(function(r) { return r.json(); })
+			.then(function(data) {
+				var badge = document.getElementById('notif-badge');
+				if (badge && data.unread_count > 0) {
+					badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+					badge.classList.remove('d-none');
+				} else if (badge) {
+					badge.classList.add('d-none');
+				}
+			})
+			.catch(function() {});
+	}
+	if (document.getElementById('schedule-bell')) {
+		pollNotifications();
+		setInterval(pollNotifications, 30000);
+	}
+})();
+</script>

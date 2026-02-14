@@ -42,9 +42,8 @@ class SendAlumniNewsletterTest(AlumniTaskMixin, TestCase):
     def test_sends_to_subscriber(self, mock_mail):
         self._make_alumni()
         result = send_alumni_newsletter()
-        # Task has a bug calling get_full_name() (it's a property), but
-        # it catches exceptions, so it sends 0 but processes 1 alumni
         self.assertIn('alumni', result)
+        self.assertTrue(mock_mail.called)
 
     @patch('alumni.tasks.send_mail')
     def test_skips_inactive(self, mock_mail):
@@ -87,12 +86,8 @@ class SendEventRemindersAlumniTest(AlumniTaskMixin, TestCase):
             is_active=True,
         )
         event.attendees.add(alumni)
-        # get_full_name() bug causes exception but task re-raises
-        try:
-            result = send_event_reminders(event.id)
-            self.assertIn('attendees', result)
-        except TypeError:
-            pass  # get_full_name property called as method
+        result = send_event_reminders(event.id)
+        self.assertIn('attendees', result)
 
 
 class SendDonationThankYouTest(AlumniTaskMixin, TestCase):
@@ -108,11 +103,8 @@ class SendDonationThankYouTest(AlumniTaskMixin, TestCase):
             payment_method='stripe',
             donated_at=timezone.now(),
         )
-        try:
-            result = send_donation_thank_you(donation.id)
-            self.assertIn('Thank you sent', result)
-        except TypeError:
-            pass  # get_full_name property called as method
+        result = send_donation_thank_you(donation.id)
+        self.assertIn('Thank you sent', result)
 
     @patch('alumni.tasks.send_mail')
     def test_already_sent(self, mock_mail):
@@ -144,11 +136,8 @@ class SendDonationThankYouTest(AlumniTaskMixin, TestCase):
             donated_at=timezone.now(),
             is_anonymous=True,
         )
-        try:
-            result = send_donation_thank_you(donation.id)
-            self.assertIn('Thank you sent', result)
-        except TypeError:
-            pass  # get_full_name property called as method
+        result = send_donation_thank_you(donation.id)
+        self.assertIn('Thank you sent', result)
 
 
 class SendUpcomingEventNotificationsTest(AlumniTaskMixin, TestCase):

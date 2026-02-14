@@ -14,7 +14,7 @@ class CanCreateRubrics(permissions.BasePermission):
             return request.user and request.user.is_authenticated
 
         return (request.user and request.user.is_authenticated and
-                (request.user.is_staff or request.user.is_teacher))
+                (request.user.is_staff or request.user.is_lecturer))
 
 
 class CanGradeSubmissions(permissions.BasePermission):
@@ -23,7 +23,7 @@ class CanGradeSubmissions(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         return (request.user and request.user.is_authenticated and
-                (request.user.is_staff or request.user.is_teacher))
+                (request.user.is_staff or request.user.is_lecturer))
 
 
 class CanApplyCurves(permissions.BasePermission):
@@ -32,7 +32,7 @@ class CanApplyCurves(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         return (request.user and request.user.is_authenticated and
-                (request.user.is_staff or request.user.is_teacher))
+                (request.user.is_staff or request.user.is_lecturer))
 
 
 class IsReviewerOrReadOnly(permissions.BasePermission):
@@ -58,7 +58,7 @@ class CanViewGrades(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Staff and instructors can view all
-        if request.user.is_staff or request.user.is_teacher:
+        if request.user.is_staff or request.user.is_lecturer:
             return True
 
         # Students can only view their own grades

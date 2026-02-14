@@ -5,8 +5,9 @@ from django.contrib.auth.forms import (
     UserChangeForm,
 )
 from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.password_validation import validate_password
 from course.models import Program
-from .models import User, Student, Parent, RELATION_SHIP, LEVEL, GENDERS
+from .models import User, Student, Parent, InvitationCode, RELATION_SHIP, LEVEL, GENDERS
 
 
 class StaffAddForm(UserCreationForm):
@@ -53,15 +54,54 @@ class StaffAddForm(UserCreationForm):
         ),
     )
 
-    address = forms.CharField(
-        max_length=30,
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
-        label="Address",
+        label="Middle Name",
+    )
+
+    street_address = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    country = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Country"}
+        ),
+        label="Country",
+    )
+
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
     )
 
     phone = forms.CharField(
@@ -118,9 +158,13 @@ class StaffAddForm(UserCreationForm):
         user = super().save(commit=False)
         user.is_lecturer = True
         user.first_name = self.cleaned_data.get("first_name")
+        user.middle_name = self.cleaned_data.get("middle_name", "")
         user.last_name = self.cleaned_data.get("last_name")
         user.phone = self.cleaned_data.get("phone")
-        user.address = self.cleaned_data.get("address")
+        user.street_address = self.cleaned_data.get("street_address", "")
+        user.city = self.cleaned_data.get("city", "")
+        user.province = self.cleaned_data.get("province", "")
+        user.postal_code = self.cleaned_data.get("postal_code", "")
         user.email = self.cleaned_data.get("email")
 
         if commit:
@@ -138,48 +182,79 @@ class StudentAddForm(UserCreationForm):
         label="Username",
         required=False,
     )
-    address = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Address",
-    )
-
-    phone = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Mobile No.",
-    )
 
     first_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="First name",
+    )
+
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Middle name",
     )
 
     last_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="Last name",
+    )
+
+    street_address = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    country = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Country"}
+        ),
+        label="Country",
+    )
+
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
+    )
+
+    phone = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Mobile No.",
     )
 
     gender = forms.CharField(
@@ -255,11 +330,14 @@ class StudentAddForm(UserCreationForm):
         user = super().save(commit=False)
         user.is_student = True
         user.first_name = self.cleaned_data.get("first_name")
+        user.middle_name = self.cleaned_data.get("middle_name", "")
         user.last_name = self.cleaned_data.get("last_name")
         user.gender = self.cleaned_data.get("gender")
-        user.address = self.cleaned_data.get("address")
+        user.street_address = self.cleaned_data.get("street_address", "")
+        user.city = self.cleaned_data.get("city", "")
+        user.province = self.cleaned_data.get("province", "")
+        user.postal_code = self.cleaned_data.get("postal_code", "")
         user.phone = self.cleaned_data.get("phone")
-        user.address = self.cleaned_data.get("address")
         user.email = self.cleaned_data.get("email")
 
         if commit:
@@ -323,25 +401,59 @@ class ProfileUpdateForm(UserChangeForm):
         label="Phone No.",
     )
 
-    address = forms.CharField(
+    middle_name = forms.CharField(
+        required=False,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
-        label="Address / city",
+        label="Middle Name",
+    )
+
+    street_address = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    postal_code = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
     )
 
     class Meta:
         model = User
         fields = [
             "first_name",
+            "middle_name",
             "last_name",
             "gender",
             "email",
             "phone",
-            "address",
+            "street_address",
+            "city",
+            "province",
+            "postal_code",
             "picture",
         ]
 
@@ -373,63 +485,88 @@ class ParentAddForm(UserCreationForm):
     username = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="Username",
-    )
-    address = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Address",
-    )
-
-    phone = forms.CharField(
-        max_length=30,
-        widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
-        ),
-        label="Mobile No.",
     )
 
     first_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="First name",
+    )
+
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Middle name",
     )
 
     last_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "text",
-                "class": "form-control",
-            }
+            attrs={"type": "text", "class": "form-control"}
         ),
         label="Last name",
     )
 
+    street_address = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Street address"}
+        ),
+        label="Street Address",
+    )
+
+    city = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "City"}
+        ),
+        label="City",
+    )
+
+    province = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Province / State"}
+        ),
+        label="Province",
+    )
+
+    country = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Country"}
+        ),
+        label="Country",
+    )
+
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control", "placeholder": "Postal code"}
+        ),
+        label="Postal Code",
+    )
+
+    phone = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(
+            attrs={"type": "text", "class": "form-control"}
+        ),
+        label="Mobile No.",
+    )
+
     email = forms.EmailField(
         widget=forms.TextInput(
-            attrs={
-                "type": "email",
-                "class": "form-control",
-            }
+            attrs={"type": "email", "class": "form-control"}
         ),
         label="Email Address",
     )
@@ -454,10 +591,7 @@ class ParentAddForm(UserCreationForm):
     password1 = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "password",
-                "class": "form-control",
-            }
+            attrs={"type": "password", "class": "form-control"}
         ),
         label="Password",
     )
@@ -465,18 +599,10 @@ class ParentAddForm(UserCreationForm):
     password2 = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
-            attrs={
-                "type": "password",
-                "class": "form-control",
-            }
+            attrs={"type": "password", "class": "form-control"}
         ),
         label="Password Confirmation",
     )
-
-    # def validate_email(self):
-    #     email = self.cleaned_data['email']
-    #     if User.objects.filter(email__iexact=email, is_active=True).exists():
-    #         raise forms.ValidationError("Email has taken, try another email address. ")
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -486,8 +612,12 @@ class ParentAddForm(UserCreationForm):
         user = super().save(commit=False)
         user.is_parent = True
         user.first_name = self.cleaned_data.get("first_name")
+        user.middle_name = self.cleaned_data.get("middle_name", "")
         user.last_name = self.cleaned_data.get("last_name")
-        user.address = self.cleaned_data.get("address")
+        user.street_address = self.cleaned_data.get("street_address", "")
+        user.city = self.cleaned_data.get("city", "")
+        user.province = self.cleaned_data.get("province", "")
+        user.postal_code = self.cleaned_data.get("postal_code", "")
         user.phone = self.cleaned_data.get("phone")
         user.email = self.cleaned_data.get("email")
         user.save()
@@ -498,3 +628,524 @@ class ParentAddForm(UserCreationForm):
         )
         parent.save()
         return user
+
+
+# ########################################################
+# Signup Flow Forms
+# ########################################################
+
+
+class StudentActivationForm(forms.Form):
+    """Step 1: Student enters registration number + name to start activation."""
+
+    registration_number = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "e.g., 24-CS-001",
+            }
+        ),
+        label="Registration Number",
+    )
+    first_name = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "First Name",
+            }
+        ),
+        label="First Name",
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Last Name",
+            }
+        ),
+        label="Last Name",
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        reg_number = cleaned_data.get("registration_number")
+        first_name = cleaned_data.get("first_name")
+        last_name = cleaned_data.get("last_name")
+
+        if not all([reg_number, first_name, last_name]):
+            return cleaned_data
+
+        try:
+            student = Student.objects.select_related("student").get(
+                registration_number=reg_number
+            )
+        except Student.DoesNotExist:
+            raise forms.ValidationError(
+                "No student found with this registration number. "
+                "Please check your details or contact the school administration."
+            )
+
+        user = student.student
+        if user.first_name.lower() != first_name.lower() or user.last_name.lower() != last_name.lower():
+            raise forms.ValidationError(
+                "The name you entered does not match our records. "
+                "Please enter your name exactly as registered by the school."
+            )
+
+        if user.has_usable_password() and not user.must_change_password:
+            raise forms.ValidationError(
+                "This student account has already been activated. "
+                "Please sign in instead."
+            )
+
+        self.student = student
+        return cleaned_data
+
+
+class StudentVerifyParentForm(forms.Form):
+    """Step 2: Student enters verification code sent to parent's email."""
+
+    verification_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control form-control-lg text-center",
+                "placeholder": "000000",
+                "maxlength": "6",
+                "style": "letter-spacing: 0.5em; font-size: 1.5em;",
+            }
+        ),
+        label="Verification Code",
+    )
+
+
+class StudentSetPasswordForm(forms.Form):
+    """Step 3: Student sets email and password to complete activation."""
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "your@email.com",
+            }
+        ),
+        label="Email Address",
+    )
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Password",
+            }
+        ),
+        label="Password",
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Confirm Password",
+            }
+        ),
+        label="Confirm Password",
+    )
+
+    def __init__(self, *args, user_pk=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._user_pk = user_pk
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        qs = User.objects.filter(email__iexact=email)
+        if self._user_pk:
+            qs = qs.exclude(pk=self._user_pk)
+        if qs.exists():
+            raise forms.ValidationError("This email address is already in use.")
+        return email
+
+    def clean_password1(self):
+        password = self.cleaned_data["password1"]
+        validate_password(password)
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords do not match.")
+        return cleaned_data
+
+
+class InvitationCodeForm(forms.Form):
+    """Enter and validate an invitation code."""
+
+    code = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control form-control-lg text-center",
+                "placeholder": "XXXX-XXXX",
+                "style": "letter-spacing: 0.3em; font-size: 1.2em;",
+            }
+        ),
+        label="Invitation Code",
+    )
+
+    def clean_code(self):
+        code = self.cleaned_data["code"].strip().upper()
+        try:
+            invitation = InvitationCode.objects.get(code=code)
+        except InvitationCode.DoesNotExist:
+            raise forms.ValidationError("Invalid invitation code.")
+
+        if not invitation.is_valid:
+            if invitation.used_at:
+                raise forms.ValidationError("This invitation code has already been used.")
+            raise forms.ValidationError("This invitation code has expired.")
+
+        self.invitation = invitation
+        return code
+
+
+class ParentInvitationSignupForm(forms.Form):
+    """Parent fills in details after validating invitation code."""
+
+    first_name = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}),
+        label="First Name",
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}),
+        label="Last Name",
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "your@email.com"}),
+        label="Email Address",
+    )
+    phone = forms.CharField(
+        max_length=60,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone Number"}),
+        label="Phone",
+    )
+    relation_ship = forms.ChoiceField(
+        choices=RELATION_SHIP,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Relationship to Student",
+    )
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}),
+        label="Password",
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Confirm Password"}),
+        label="Confirm Password",
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("This email address is already in use.")
+        return email
+
+    def clean_password1(self):
+        password = self.cleaned_data["password1"]
+        validate_password(password)
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords do not match.")
+        return cleaned_data
+
+
+class ParentSelfSignupForm(forms.Form):
+    """Parent self-registration form (no invitation code needed)."""
+
+    first_name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}),
+        label="First Name",
+    )
+    middle_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Middle Name (optional)"}),
+        label="Middle Name",
+    )
+    last_name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}),
+        label="Last Name",
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "your@email.com"}),
+        label="Email Address",
+    )
+    phone = forms.CharField(
+        max_length=60,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone Number"}),
+        label="Phone",
+    )
+    street_address = forms.CharField(
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Street Address"}),
+        label="Street Address",
+    )
+    city = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "City"}),
+        label="City",
+    )
+    province = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Province / State"}),
+        label="Province",
+    )
+    country = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Country"}),
+        label="Country",
+    )
+    postal_code = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Postal Code (optional)"}),
+        label="Postal Code",
+    )
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}),
+        label="Password",
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Confirm Password"}),
+        label="Confirm Password",
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("This email address is already in use.")
+        return email
+
+    def clean_password1(self):
+        password = self.cleaned_data["password1"]
+        validate_password(password)
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords do not match.")
+        return cleaned_data
+
+
+class StaffInvitationSignupForm(forms.Form):
+    """Staff fills in details after validating invitation code."""
+
+    first_name = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}),
+        label="First Name",
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}),
+        label="Last Name",
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "your@email.com"}),
+        label="Email Address",
+    )
+    phone = forms.CharField(
+        max_length=60,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone Number"}),
+        label="Phone",
+    )
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}),
+        label="Password",
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Confirm Password"}),
+        label="Confirm Password",
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("This email address is already in use.")
+        return email
+
+    def clean_password1(self):
+        password = self.cleaned_data["password1"]
+        validate_password(password)
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords do not match.")
+        return cleaned_data
+
+
+class ForcePasswordResetForm(forms.Form):
+    """Form for forced password reset on first login."""
+
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "New Password"}),
+        label="New Password",
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Confirm New Password"}),
+        label="Confirm New Password",
+    )
+
+    def clean_password1(self):
+        password = self.cleaned_data["password1"]
+        validate_password(password)
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords do not match.")
+        return cleaned_data
+
+
+# ============================================================================
+# Parent Portal Forms
+# ============================================================================
+
+class ParentMessageForm(forms.Form):
+    """Form for parents to send messages to teachers."""
+
+    recipient = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Teacher",
+    )
+    subject = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Subject"}),
+    )
+    body = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 5, "placeholder": "Your message..."}),
+    )
+
+    def __init__(self, *args, student=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if student:
+            from course.models import CourseAllocation
+            lecturer_ids = CourseAllocation.objects.filter(
+                courses__program=student.program
+            ).values_list('lecturer_id', flat=True).distinct()
+            self.fields['recipient'].queryset = User.objects.filter(
+                pk__in=lecturer_ids
+            ).order_by('last_name', 'first_name')
+
+
+class AppointmentRequestForm(forms.Form):
+    """Form for parents to request appointments with teachers."""
+
+    teacher = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Teacher",
+    )
+    preferred_date = forms.DateField(
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        label="Preferred Date",
+    )
+    preferred_time = forms.ChoiceField(
+        choices=[
+            ('08:00-08:30', '08:00 - 08:30'),
+            ('08:30-09:00', '08:30 - 09:00'),
+            ('09:00-09:30', '09:00 - 09:30'),
+            ('09:30-10:00', '09:30 - 10:00'),
+            ('10:00-10:30', '10:00 - 10:30'),
+            ('10:30-11:00', '10:30 - 11:00'),
+            ('11:00-11:30', '11:00 - 11:30'),
+            ('11:30-12:00', '11:30 - 12:00'),
+            ('13:00-13:30', '13:00 - 13:30'),
+            ('13:30-14:00', '13:30 - 14:00'),
+            ('14:00-14:30', '14:00 - 14:30'),
+            ('14:30-15:00', '14:30 - 15:00'),
+            ('15:00-15:30', '15:00 - 15:30'),
+            ('15:30-16:00', '15:30 - 16:00'),
+        ],
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Preferred Time Slot",
+    )
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Reason for the meeting..."}),
+    )
+
+    def __init__(self, *args, student=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if student:
+            from course.models import CourseAllocation
+            lecturer_ids = CourseAllocation.objects.filter(
+                courses__program=student.program
+            ).values_list('lecturer_id', flat=True).distinct()
+            self.fields['teacher'].queryset = User.objects.filter(
+                pk__in=lecturer_ids
+            ).order_by('last_name', 'first_name')
+
+
+class DisciplineAcknowledgmentForm(forms.Form):
+    """Form for parents to acknowledge disciplinary actions."""
+
+    response = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control", "rows": 4,
+            "placeholder": "Your response (optional)..."
+        }),
+        label="Response",
+    )
+
+
+class PermissionSlipSignForm(forms.Form):
+    """Form for parents to sign or decline permission slips."""
+
+    ACTION_CHOICES = [
+        ('sign', 'Sign / Approve'),
+        ('decline', 'Decline'),
+    ]
+
+    action = forms.ChoiceField(
+        choices=ACTION_CHOICES,
+        widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+        label="Your Decision",
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control", "rows": 3,
+            "placeholder": "Additional notes (optional)..."
+        }),
+        label="Notes",
+    )

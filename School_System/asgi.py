@@ -9,8 +9,7 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 
 import os
 
-from django.core.asgi import get_asgi_application
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "School_System.settings")
 
-application = get_asgi_application()
+# Import the Channels routing application which handles both HTTP and WebSocket
+from School_System.routing import application  # noqa: E402, F401

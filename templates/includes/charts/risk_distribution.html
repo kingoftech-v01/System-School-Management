@@ -1,0 +1,51 @@
+{% comment %}
+At-Risk Student Distribution Donut Chart (ApexCharts)
+Context variables:
+  - risk_labels: JSON list of labels, e.g. ["Low", "Medium", "High", "Critical"]
+  - risk_counts: JSON list of counts, e.g. [5, 3, 2, 1]
+  - chart_id: unique DOM id (default: "risk-distribution-chart")
+{% endcomment %}
+<div class="card">
+    <div class="card-header border-0 pb-0">
+        <h4 class="heading mb-0">At-Risk Students</h4>
+    </div>
+    <div class="card-body">
+        <div id="{{ chart_id|default:'risk-distribution-chart' }}" style="min-height: 300px;"></div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var labels = {{ risk_labels|safe }};
+    var counts = {{ risk_counts|safe }};
+    var total = counts.reduce(function(a, b) { return a + b; }, 0);
+    if (total === 0) {
+        document.getElementById("{{ chart_id|default:'risk-distribution-chart' }}").innerHTML =
+            '<div class="text-center text-muted py-5">No at-risk students detected.</div>';
+        return;
+    }
+    var options = {
+        chart: { type: 'donut', height: 300 },
+        series: counts,
+        labels: labels,
+        colors: ['#28a745', '#ffc107', '#fd7e14', '#dc3545'],
+        legend: { position: 'bottom' },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '55%',
+                    labels: {
+                        show: true,
+                        total: { show: true, label: 'Total At-Risk', fontSize: '14px' }
+                    }
+                }
+            }
+        },
+        tooltip: { y: { formatter: function(val) { return val + ' students'; } } }
+    };
+    var chart = new ApexCharts(
+        document.querySelector("#{{ chart_id|default:'risk-distribution-chart' }}"), options
+    );
+    chart.render();
+})();
+</script>

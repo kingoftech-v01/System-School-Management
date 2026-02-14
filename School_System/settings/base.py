@@ -125,6 +125,22 @@ TENANT_APPS = [
     'grading',
     'analytics',
     'dailystat',
+
+    # Scheduling & Timetable
+    'scheduling',
+
+    # Anomaly Detection
+    'anomaly_detection',
+
+    # Safeguarding & Audit
+    'safeguarding',
+    'audit',
+
+    # Reports & Exports
+    'reports',
+
+    # WebSocket (Django Channels)
+    'channels',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -143,11 +159,14 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'analytics.middleware.ActivityLogMiddleware',
+    'audit.middleware.AuditUserMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'accounts.middleware.TenantMiddleware',
     'accounts.middleware.RoleMiddleware',
+    'accounts.middleware.ForcePasswordResetMiddleware',
     'accounts.middleware.Enforce2FAMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',
@@ -204,6 +223,7 @@ TEMPLATES = [
                 'accounts.context_processors.app_settings_context',
                 'accounts.context_processors.navigation_context',
                 'accounts.context_processors.permissions_context',
+                'anomaly_detection.context_processors.anomaly_alert_count',
                 'custom_context_processor.dz_static',
             ],
         },
@@ -345,17 +365,32 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@school-system
 EMAIL_FROM_ADDRESS = config('EMAIL_FROM_ADDRESS', default='noreply@school-system.com')
 
 # ==============================================================================
+# SMS SETTINGS (TWILIO)
+# ==============================================================================
+
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+SMS_ENABLED = config('SMS_ENABLED', default=False, cast=bool)
+
+# ==============================================================================
+# SIGNUP / INVITATION SETTINGS
+# ==============================================================================
+
+INVITATION_CODE_EXPIRY_DAYS = 7
+STUDENT_VERIFICATION_CODE_EXPIRY_MINUTES = 15
+STUDENT_VERIFICATION_MAX_ATTEMPTS = 3
+
+# ==============================================================================
 # DJANGO-ALLAUTH CONFIGURATION
 # ==============================================================================
 
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+ACCOUNT_RATE_LIMITS = {"login_failed": "5/5m"}
 
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
@@ -390,7 +425,7 @@ SESSION_COOKIE_AGE = 1209600  # 2 weeks
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Strict'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
@@ -400,7 +435,7 @@ SESSION_CACHE_ALIAS = 'default'
 
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Strict'
 CSRF_USE_SESSIONS = False
 
 # Trusted origins for CSRF (required for Django 4.0+ with HTTPS proxy)
@@ -432,7 +467,7 @@ if not DEBUG:
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1  # hours
 AXES_LOCK_OUT_AT_FAILURE = True
-AXES_USE_USER_AGENT = True
+AXES_LOCKOUT_PARAMETERS = [["ip_address", "user_agent"]]
 AXES_LOCKOUT_TEMPLATE = 'accounts/account_locked.html'
 AXES_RESET_ON_SUCCESS = True
 AXES_NEVER_LOCKOUT_WHITELIST = []
@@ -446,13 +481,14 @@ AXES_IP_WHITELIST = []
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
-        'script-src': ("'self'", "'unsafe-inline'"),
+        'script-src': ("'self'",),  # Removed unsafe-inline; use nonce for inline scripts
         'style-src': ("'self'", "'unsafe-inline'"),
         'img-src': ("'self'", "data:", "https:"),
         'font-src': ("'self'",),
         'connect-src': ("'self'",),
         'frame-ancestors': ("'none'",),
-    }
+    },
+    'EXCLUDE_URL_PREFIXES': ('/admin/',),  # Admin uses inline scripts
 }
 
 # ==============================================================================
@@ -494,6 +530,26 @@ CACHES = {
 # ==============================================================================
 
 CELERY_BROKER_URL = REDIS_URL
+
+# ==============================================================================
+# DJANGO CHANNELS (WebSocket)
+# ==============================================================================
+
+ASGI_APPLICATION = 'School_System.routing.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL],
+        },
+    },
+}
+
+# ==============================================================================
+# CELERY CONFIGURATION (continued)
+# ==============================================================================
+
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -505,12 +561,23 @@ CELERY_RESULT_EXTENDED = True
 CELERY_RESULT_EXPIRES = 60 * 60 * 24  # 24 hours
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
+# Celery beat schedule
+from celery.schedules import crontab  # noqa: E402
+
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-inactive-parents': {
+        'task': 'accounts.tasks.cleanup_inactive_parent_accounts',
+        'schedule': crontab(hour=2, minute=0),  # daily at 2 AM
+    },
+}
+
 # Celery task routing
 CELERY_TASK_ROUTES = {
     'attendance.tasks.*': {'queue': 'attendance'},
     'payments.tasks.*': {'queue': 'payments'},
     'result.tasks.*': {'queue': 'results'},
     'events.tasks.*': {'queue': 'events'},
+    'accounts.tasks.*': {'queue': 'default'},
 }
 
 # ==============================================================================
@@ -687,12 +754,17 @@ ROLE_CHOICES = (
     ('parent', 'Parent'),
     ('student', 'Student'),
     ('professor', 'Professor'),
+    ('prefet', 'Discipline Officer'),
+    ('accountant', 'Accountant'),
+    ('secretary', 'Secretary'),
+    ('librarian', 'Librarian'),
+    ('registrar', 'Registrar'),
     ('direction', 'Direction Member'),
     ('admin', 'System Administrator'),
 )
 
 # Roles requiring 2FA
-ROLES_REQUIRING_2FA = ['professor', 'direction', 'admin']
+ROLES_REQUIRING_2FA = ['professor', 'prefet', 'accountant', 'secretary', 'librarian', 'registrar', 'direction', 'admin']
 
 # Pagination settings
 DEFAULT_PAGE_SIZE = 25
@@ -716,6 +788,9 @@ RATE_LIMITS = {
     'parent': '300/hour',
     'student': '300/hour',
     'professor': '500/hour',
+    'librarian': '500/hour',
+    'registrar': '500/hour',
+    'secretary': '1000/hour',
     'direction': '1000/hour',
     'admin': '2000/hour',
 }
@@ -737,7 +812,17 @@ CKEDITOR_CONFIGS = {
             'image2',
         ]),
         'removePlugins': 'stylesheetparser',
-        'allowedContent': True,
+        'allowedContent': (
+            'h1 h2 h3 h4 h5 h6 p blockquote pre;'
+            'a[!href,target];'
+            'img[!src,alt,width,height];'
+            'strong em u s sub sup;'
+            'ul ol li;'
+            'table thead tbody tr th td[colspan,rowspan];'
+            'br hr;'
+            'span{color,background-color,font-size};'
+            'div{text-align};'
+        ),
         'forcePasteAsPlainText': False,
     },
 }

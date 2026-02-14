@@ -136,22 +136,31 @@ def render_student_dashboard(request, base_context):
 
 def render_parent_dashboard(request, base_context):
     """Render parent-specific dashboard with child monitoring data."""
-    try:
-        parent = Parent.objects.select_related('student').get(user=request.user)
-        student = parent.student
-    except Parent.DoesNotExist:
-        context = {
-            **base_context,
-            'title': 'Parent Dashboard',
-            'error': 'Parent profile not found. Please contact administration.'
-        }
-        return render(request, 'dashboards/parent_dashboard.html', context)
+    parent_profiles = Parent.objects.select_related('student').filter(user=request.user)
+    linked_profiles = parent_profiles.filter(student__isnull=False)
+
+    # If no profiles or no linked children, redirect to parent portal (has empty state)
+    if not linked_profiles.exists():
+        return redirect('frontend:accounts:parent_dashboard')
+
+    # Support multi-child: use session-selected child or default to first
+    active_child_id = request.session.get('active_child_id')
+    parent = None
+    if active_child_id:
+        parent = linked_profiles.filter(student_id=active_child_id).first()
+    if not parent:
+        parent = linked_profiles.first()
+
+    student = parent.student
+    children = [p.student for p in linked_profiles]
 
     context = {
         **base_context,
         'title': 'Parent Dashboard',
         'parent': parent,
         'student': student,
+        'children': children,
+        'active_child_id': parent.student_id if parent.student else None,
     }
 
     return render(request, 'dashboards/parent_dashboard.html', context)

@@ -2,9 +2,16 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from audit.mixins import AuditedModelMixin
 
-class DisciplinaryAction(models.Model):
+
+class DisciplinaryAction(AuditedModelMixin, models.Model):
     """Disciplinary actions with immutable audit trail."""
+
+    AUDITED_FIELDS = [
+        'incident_type', 'description', 'action_taken', 'severity',
+        'is_resolved', 'parent_acknowledged', 'parent_response',
+    ]
 
     SEVERITY_CHOICES = (
         ('minor', _('Minor')),
@@ -38,6 +45,17 @@ class DisciplinaryAction(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name='discipline_updates'
+    )
+
+    # Parent acknowledgment fields
+    parent_acknowledged = models.BooleanField(
+        default=False, verbose_name=_('Parent Acknowledged')
+    )
+    parent_acknowledged_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=_('Acknowledged At')
+    )
+    parent_response = models.TextField(
+        blank=True, verbose_name=_('Parent Response')
     )
 
     class Meta:

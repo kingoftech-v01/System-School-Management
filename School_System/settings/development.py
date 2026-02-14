@@ -93,11 +93,11 @@ DEBUG_TOOLBAR_CONFIG = {
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'"),
-        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"),
-        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://cdn.datatables.net"),
+        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.datatables.net", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"),
+        'font-src': ("'self'", "https://fonts.gstatic.com"),
         'img-src': ("'self'", "data:", "https:"),
-        'font-src': ("'self'",),
-        'connect-src': ("'self'",),
+        'connect-src': ("'self'", "ws:", "wss:"),
         'frame-ancestors': ("'none'",),
     }
 }
@@ -109,6 +109,13 @@ LOGGING['loggers']['accounts']['level'] = 'DEBUG'
 # Development-specific settings
 CELERY_TASK_ALWAYS_EAGER = False  # Set to True to run tasks synchronously in development
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Use in-memory channel layer for development (no Redis required)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Disable some security checks for development
 AXES_ENABLED = config('AXES_ENABLED', default=True, cast=bool)
@@ -123,6 +130,16 @@ STRIPE_SECRET_KEY = 'sk_test_placeholder'
 
 # Development file storage
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# Disable default throttling in development/tests to avoid 429 errors,
+# but keep rates defined so view-level throttle_classes still work.
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {
+        'search': '50/hour',
+    },
+}
 
 # Use simple static files storage (no manifest needed, no collectstatic required)
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

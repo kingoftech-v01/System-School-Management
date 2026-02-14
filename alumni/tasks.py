@@ -33,7 +33,7 @@ def send_alumni_newsletter():
             try:
                 send_mail(
                     subject="Alumni Newsletter - Latest Updates",
-                    message=f"""Dear {alumni.student.student.get_full_name()},
+                    message=f"""Dear {alumni.student.student.get_full_name},
 
 Here are the latest updates from our alumni network:
 
@@ -77,7 +77,7 @@ def send_event_reminders(event_id):
             if alumni.personal_email:
                 send_mail(
                     subject=f"Event Reminder: {event.title}",
-                    message=f"""Dear {alumni.student.student.get_full_name()},
+                    message=f"""Dear {alumni.student.student.get_full_name},
 
 This is a reminder about the upcoming alumni event:
 
@@ -118,7 +118,7 @@ def send_donation_thank_you(donation_id):
         if donation.thank_you_sent or not donation.alumni.personal_email:
             return "Thank you already sent or no email"
 
-        recipient_name = donation.alumni.student.student.get_full_name()
+        recipient_name = donation.alumni.student.student.get_full_name
 
         # Don't include name in email if anonymous donation
         if donation.is_anonymous:
@@ -196,7 +196,7 @@ def send_upcoming_event_notifications():
                 try:
                     send_mail(
                         subject=f"Upcoming Alumni Event: {event.title}",
-                        message=f"""Dear {alumni.student.student.get_full_name()},
+                        message=f"""Dear {alumni.student.student.get_full_name},
 
 We'd like to invite you to an upcoming alumni event:
 
@@ -255,7 +255,7 @@ def generate_donation_receipts():
             try:
                 send_mail(
                     subject=f"Tax Receipt - Donation {receipt_number}",
-                    message=f"""Dear {donation.alumni.student.student.get_full_name()},
+                    message=f"""Dear {donation.alumni.student.student.get_full_name},
 
 Please find your tax receipt for your donation:
 
@@ -301,7 +301,7 @@ def update_alumni_career_data():
             try:
                 send_mail(
                     subject="Update Your Alumni Profile",
-                    message=f"""Dear {alumni.student.student.get_full_name()},
+                    message=f"""Dear {alumni.student.student.get_full_name},
 
 It's been a while since you last updated your alumni profile. Please take a moment to update your:
 

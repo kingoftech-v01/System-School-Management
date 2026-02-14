@@ -20,7 +20,7 @@ from django.contrib import messages
 from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from django_ratelimit.decorators import ratelimit
-from accounts.decorators import direction_only, lecturer_required, tenant_required
+from accounts.decorators import registrar_only, lecturer_required, tenant_required
 
 from .models import (
     CertificateTemplate, Certificate, CertificateVerification,
@@ -37,7 +37,7 @@ from .forms import (
 # ============================================================================
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def template_list(request):
@@ -68,7 +68,7 @@ def template_list(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def template_detail(request, pk):
@@ -90,7 +90,7 @@ def template_detail(request, pk):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def template_create(request):
@@ -115,7 +115,7 @@ def template_create(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def template_update(request, pk):
@@ -143,7 +143,7 @@ def template_update(request, pk):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def template_delete(request, pk):
@@ -247,7 +247,7 @@ def certificate_detail(request, pk):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def certificate_create(request):
@@ -276,7 +276,7 @@ def certificate_create(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def certificate_edit(request, pk):
@@ -305,7 +305,7 @@ def certificate_edit(request, pk):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def certificate_reissue(request, pk):
@@ -334,7 +334,7 @@ def certificate_reissue(request, pk):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def certificate_revoke(request, pk):
@@ -464,7 +464,7 @@ def certificate_verify(request):
 # ============================================================================
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def batch_generation_list(request):
@@ -498,7 +498,7 @@ def batch_generation_list(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def batch_generation_create(request):
@@ -538,7 +538,7 @@ def batch_generation_create(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def batch_generation_detail(request, pk):
@@ -566,7 +566,7 @@ def batch_generation_detail(request, pk):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def batch_generation_start(request, pk):

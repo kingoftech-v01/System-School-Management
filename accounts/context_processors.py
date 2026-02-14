@@ -36,6 +36,11 @@ def user_role_context(request):
         'is_student': False,
         'is_professor': False,
         'is_parent': False,
+        'is_prefet': False,
+        'is_accountant': False,
+        'is_secretary': False,
+        'is_librarian': False,
+        'is_registrar': False,
         'is_direction': False,
         'is_admin': False,
     }
@@ -127,6 +132,49 @@ def navigation_context(request):
             {'name': 'Students', 'url': '/search/students/', 'icon': 'fas fa-user-graduate'},
         ])
 
+    elif user_role == 'prefet':
+        nav_items.extend([
+            {'name': 'Discipline', 'url': '/discipline/', 'icon': 'fas fa-gavel'},
+            {'name': 'Attendance', 'url': '/attendance/', 'icon': 'fas fa-calendar-check'},
+            {'name': 'Students', 'url': '/search/students/', 'icon': 'fas fa-user-graduate'},
+        ])
+
+    elif user_role == 'accountant':
+        nav_items.extend([
+            {'name': 'Students', 'url': '/search/students/', 'icon': 'fas fa-user-graduate'},
+            {'name': 'Fee Structures', 'url': '/payments/fee-structures/', 'icon': 'fas fa-list-alt'},
+            {'name': 'Payments', 'url': '/payments/', 'icon': 'fas fa-credit-card'},
+            {'name': 'Analytics', 'url': '/analytics/', 'icon': 'fas fa-chart-line'},
+        ])
+
+    elif user_role == 'secretary':
+        nav_items.extend([
+            {'name': 'Monitoring', 'url': '/monitoring/', 'icon': 'fas fa-chart-bar'},
+            {'name': 'Search', 'url': '/search/', 'icon': 'fas fa-search'},
+            {'name': 'Enrollment', 'url': '/enrollment/', 'icon': 'fas fa-user-plus'},
+            {'name': 'Courses', 'url': '/courses/', 'icon': 'fas fa-book'},
+            {'name': 'Attendance', 'url': '/attendance/', 'icon': 'fas fa-calendar-check'},
+            {'name': 'Results', 'url': '/results/', 'icon': 'fas fa-chart-line'},
+            {'name': 'Library', 'url': '/library/', 'icon': 'fas fa-book-reader'},
+            {'name': 'Events', 'url': '/events/', 'icon': 'fas fa-calendar-alt'},
+            {'name': 'Discipline', 'url': '/discipline/', 'icon': 'fas fa-gavel'},
+            {'name': 'Filieres', 'url': '/filieres/', 'icon': 'fas fa-graduation-cap'},
+        ])
+
+    elif user_role == 'librarian':
+        nav_items.extend([
+            {'name': 'Library', 'url': '/library/', 'icon': 'fas fa-book-reader'},
+            {'name': 'Add Book', 'url': '/library/create/', 'icon': 'fas fa-plus'},
+            {'name': 'Overdue Books', 'url': '/library/overdue/', 'icon': 'fas fa-exclamation-triangle'},
+        ])
+
+    elif user_role == 'registrar':
+        nav_items.extend([
+            {'name': 'Enrollment', 'url': '/enrollment/', 'icon': 'fas fa-user-plus'},
+            {'name': 'Certificates', 'url': '/certificates/', 'icon': 'fas fa-certificate'},
+            {'name': 'Statistics', 'url': '/enrollment/statistics/', 'icon': 'fas fa-chart-bar'},
+        ])
+
     elif user_role in ['direction', 'admin']:
         nav_items.extend([
             {'name': 'Monitoring', 'url': '/monitoring/', 'icon': 'fas fa-chart-bar'},
@@ -181,9 +229,34 @@ def permissions_context(request):
             'can_manage_discipline': True,
             'can_export_data': True,
         }
+    elif user_role == 'secretary':
+        # Secretary has all direction permissions EXCEPT financial
+        context = {
+            'can_view_all_students': True,
+            'can_manage_payments': False,
+            'can_manage_enrollment': True,
+            'can_view_monitoring': True,
+            'can_manage_discipline': True,
+            'can_export_data': True,
+        }
     elif user_role == 'professor':
         # Professors have limited permissions
         context['can_view_monitoring'] = False  # Can see limited stats
         context['can_manage_discipline'] = True  # Can report incidents
+    elif user_role == 'prefet':
+        # Discipline officers can manage discipline and view students
+        context['can_view_all_students'] = True
+        context['can_manage_discipline'] = True
+    elif user_role == 'accountant':
+        # Accountants can view students (read-only) and manage payments
+        context['can_view_all_students'] = True
+        context['can_manage_payments'] = True
+    elif user_role == 'librarian':
+        # Librarians can manage library only
+        context['can_manage_library'] = True
+    elif user_role == 'registrar':
+        # Registrars can manage enrollment and certificates
+        context['can_manage_enrollment'] = True
+        context['can_export_data'] = True
 
     return context

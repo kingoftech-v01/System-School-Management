@@ -232,15 +232,15 @@ class ProfessorNote(models.Model):
     def can_edit(self, user):
         """Check if user can edit this note."""
         if self.status == 'approved':
-            # Only direction can edit approved notes
-            return user.role == 'direction' or user.is_superuser
-        return self.professor == user or user.role == 'direction' or user.is_superuser
+            # Only direction/secretary can edit approved notes
+            return user.role in ('secretary', 'direction') or user.is_superuser
+        return self.professor == user or user.role in ('secretary', 'direction') or user.is_superuser
 
     def can_delete(self, user):
         """Check if user can delete this note."""
         if self.status == 'approved':
             return False  # Cannot delete approved notes
-        return self.professor == user or user.role == 'direction' or user.is_superuser
+        return self.professor == user or user.role in ('secretary', 'direction') or user.is_superuser
 
     def submit_for_approval(self):
         """Submit note for approval."""

@@ -1,0 +1,257 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+{% load scheduling_tags %}
+
+{% block title %}Accountant Dashboard - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Accountant Dashboard</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Dashboard</a></li>
+    </ol>
+</div>
+<div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Stat Cards Row -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-primary d-block mb-1">TOTAL BILLED</span>
+                        <h2 class="mb-0">{{ total_billed|floatformat:0 }}</h2>
+                    </div>
+                    <div class="icon-box bg-primary-light rounded-circle">
+                        <i class="bi bi-currency-exchange text-primary fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-success d-block mb-1">TOTAL COLLECTED</span>
+                        <h2 class="mb-0">{{ total_collected|floatformat:0 }}</h2>
+                    </div>
+                    <div class="icon-box bg-success-light rounded-circle">
+                        <i class="bi bi-check-circle text-success fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-danger d-block mb-1">OUTSTANDING</span>
+                        <h2 class="mb-0">{{ total_outstanding|floatformat:0 }}</h2>
+                    </div>
+                    <div class="icon-box bg-danger-light rounded-circle">
+                        <i class="bi bi-exclamation-triangle text-danger fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between">
+                    <div>
+                        <span class="text-info d-block mb-1">COLLECTION RATE</span>
+                        <h2 class="mb-0">{{ collection_rate }}%</h2>
+                    </div>
+                    <div class="icon-box bg-info-light rounded-circle">
+                        <i class="bi bi-graph-up text-info fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Invoice Summary -->
+    <div class="row mb-4">
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title">Quick Actions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{% url 'frontend:payments:fee_structure_list' %}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-list-ul d-block fs-3 mb-1"></i>
+                                Fee Structures
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'frontend:payments:create_invoice' %}" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-file-earmark-plus d-block fs-3 mb-1"></i>
+                                Create Invoice
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'frontend:accounts:student_list' %}" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-people d-block fs-3 mb-1"></i>
+                                Students
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'frontend:analytics:analytics_dashboard' %}" class="btn btn-outline-warning w-100 py-3">
+                                <i class="bi bi-bar-chart d-block fs-3 mb-1"></i>
+                                Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title">Invoice Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 rounded text-center bg-primary-light">
+                                <h3 class="mb-1">{{ total_invoices|default:"0" }}</h3>
+                                <span>Total Invoices</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded text-center bg-success-light">
+                                <h3 class="mb-1">{{ paid_invoices|default:"0" }}</h3>
+                                <span>Paid</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded text-center bg-warning-light">
+                                <h3 class="mb-1">{{ unpaid_invoices|default:"0" }}</h3>
+                                <span>Unpaid</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded text-center bg-danger-light">
+                                <h3 class="mb-1">{{ overdue_invoices|default:"0" }}</h3>
+                                <span>Overdue</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Invoices -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Overdue Invoices</h4>
+                    <span class="badge bg-danger">{{ overdue_invoices }} overdue</span>
+                </div>
+                <div class="card-body">
+                    {% if overdue_invoice_list %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Invoice Code</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Days Overdue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in overdue_invoice_list %}
+                                <tr>
+                                    <td>{{ invoice.user.get_full_name|default:invoice.user.username }}</td>
+                                    <td><code>{{ invoice.invoice_code|truncatechars:12 }}</code></td>
+                                    <td>{{ invoice.amount|floatformat:2 }}</td>
+                                    <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+                                    <td><span class="badge bg-danger">{{ invoice.due_date|timesince }} ago</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No overdue invoices.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Recent Payments</h4>
+                    <a href="{% url 'frontend:payments:payment_gateways' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Amount</th>
+                                    <th>Gateway</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.invoice.user.get_full_name|default:payment.invoice.user.username }}</td>
+                                    <td>{{ payment.amount|floatformat:2 }}</td>
+                                    <td><span class="badge bg-secondary">{{ payment.payment_gateway }}</span></td>
+                                    <td>
+                                        {% if payment.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif payment.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif payment.status == 'failed' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                        <span class="badge bg-info">{{ payment.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ payment.payment_date|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No recent payments.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Schedule Widget -->
+    <div class="row mt-3">
+        <div class="col-xl-6 mb-4">
+            {% todays_schedule %}
+        </div>
+    </div>
+</div>
+{% endblock %}

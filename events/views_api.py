@@ -74,16 +74,18 @@ class EventViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Filter by tenant
-        queryset = Event.objects.filter(
-            tenant=self.request.tenant
-        ).select_related('created_by')
+        tenant = getattr(self.request, 'tenant', None)
+        queryset = Event.objects.all()
+        if tenant is not None:
+            queryset = queryset.filter(tenant=tenant)
+        queryset = queryset.select_related('created_by')
 
         # Filter by target audience
         if user.is_student:
             queryset = queryset.filter(target_audience__in=['all', 'students'])
         elif user.is_parent:
             queryset = queryset.filter(target_audience__in=['all', 'parents'])
-        elif user.is_lecturer or user.is_professor:
+        elif user.is_lecturer or getattr(user, 'role', '') == 'professor':
             queryset = queryset.filter(target_audience__in=['all', 'staff'])
         # Direction and staff can see all events
 
@@ -99,8 +101,9 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Set tenant and created_by on create."""
+        tenant = getattr(self.request, 'tenant', None)
         serializer.save(
-            tenant=self.request.tenant,
+            tenant=tenant,
             created_by=self.request.user
         )
 

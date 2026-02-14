@@ -45,6 +45,7 @@ django-storages==1.14.6
 boto3==1.42.0
 
 # Security & Rate Limiting
+nh3==0.2.18
 django-ratelimit==4.1.0
 django-axes==6.4.0
 argon2-cffi==23.1.0
@@ -81,8 +82,15 @@ factory-boy==3.3.1
 # Email
 django-anymail==13.1
 
+# SMS
+twilio==9.4.2
+
+# WebSocket (Real-time alerts)
+channels==4.2.0
+channels-redis==4.2.1
+
 # Excel Export
-# openpyxl==3.1.5
+openpyxl==3.1.5
 django-import-export==4.4.0
 
 # Payment Integration

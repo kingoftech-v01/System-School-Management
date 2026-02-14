@@ -25,7 +25,7 @@ def send_new_thread_notifications(thread_id):
             if subscriber != thread.author:
                 send_mail(
                     subject=f'New Thread: {thread.title}',
-                    message=f'{thread.author.get_full_name()} created a new thread in {thread.category.name}:\n\n{thread.title}\n\n{thread.body[:200]}...',
+                    message=f'{thread.author.get_full_name} created a new thread in {thread.category.name}:\n\n{thread.title}\n\n{thread.content[:200]}...',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[subscriber.email],
                     fail_silently=True,
@@ -52,7 +52,7 @@ def send_new_post_notifications(post_id):
         for subscription in subscriptions:
             send_mail(
                 subject=f'New Reply: {thread.title}',
-                message=f'{post.author.get_full_name()} replied to "{thread.title}":\n\n{post.body[:200]}...',
+                message=f'{post.author.get_full_name} replied to "{thread.title}":\n\n{post.content[:200]}...',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[subscription.user.email],
                 fail_silently=True,

@@ -164,7 +164,7 @@ class RubricGradeViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Staff and teachers can see all grades
-        if user.is_staff or user.is_teacher:
+        if user.is_staff or user.is_lecturer:
             return self.queryset
 
         # Students can only see their own grades
@@ -253,7 +253,7 @@ class PeerReviewViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Staff and teachers can see all reviews
-        if user.is_staff or user.is_teacher:
+        if user.is_staff or user.is_lecturer:
             return self.queryset
 
         # Students can see reviews they wrote or received

@@ -3,6 +3,10 @@
 
 {% block title %}{{ title|default:"Student Dashboard" }} - School Management{% endblock %}
 
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/apexchart/apexchart.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
@@ -72,6 +76,37 @@
                     <div class="icon-box bg-info-light rounded-circle">
                         <i class="bi bi-calendar3 fs-3 text-info"></i>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engagement Chart -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            {% include 'includes/charts/engagement_trend.html' %}
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            <div class="card">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="heading mb-0">Course Completion</h4>
+                </div>
+                <div class="card-body">
+                    {% if completion_data %}
+                    {% for item in completion_data %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small><strong>{{ item.course.title|truncatechars:30 }}</strong></small>
+                            <small>{{ item.completion_percentage|default:"0" }}%</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if item.is_completed %}bg-success{% elif item.completion_percentage >= 50 %}bg-primary{% else %}bg-warning{% endif %}" style="width: {{ item.completion_percentage|default:0 }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center text-muted py-4">No completion data yet.</div>
+                    {% endif %}
                 </div>
             </div>
         </div>

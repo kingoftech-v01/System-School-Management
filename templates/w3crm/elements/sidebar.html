@@ -25,15 +25,156 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:core:home' %}">All Posts</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:core:add_item' %}">Add Post</a></li>
 					{% endif %}
 				</ul>
 			</li>
 
-			<li class="menu-title">ACADEMIC</li>
+			{% if is_parent %}
+		<li class="menu-title">MY CHILDREN</li>
+		<!-- Parent Dashboard -->
+		<li><a href="{% url 'frontend:accounts:parent_dashboard' %}" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M2.5 7.5L10 1.667L17.5 7.5V16.667C17.5 17.109 17.324 17.533 17.012 17.845C16.699 18.158 16.275 18.333 15.833 18.333H4.167C3.725 18.333 3.301 18.158 2.988 17.845C2.676 17.533 2.5 17.109 2.5 16.667V7.5Z" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M7.5 18.333V10H12.5V18.333" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Child Dashboard</span>
+		</a></li>
+		<!-- Child Academic -->
+		<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M18.333 13.75V5.5C18.333 5.014 18.14 4.547 17.796 4.204C17.453 3.86 16.986 3.667 16.5 3.667H5.5C5.014 3.667 4.547 3.86 4.204 4.204C3.86 4.547 3.667 5.014 3.667 5.5V16.5C3.667 16.986 3.86 17.453 4.204 17.796C4.547 18.14 5.014 18.333 5.5 18.333H11" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M7.333 8.25H14.667" stroke="#888888" stroke-linecap="round"/>
+					<path d="M7.333 11.917H11" stroke="#888888" stroke-linecap="round"/>
+					<path d="M15.583 18.333L17.417 20.167L20.167 15.583" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Academics</span>
+		</a>
+			<ul aria-expanded="false">
+				<li><a href="{% url 'frontend:accounts:parent_child_grades' %}">Grades & Results</a></li>
+				<li><a href="{% url 'frontend:accounts:parent_child_attendance' %}">Attendance</a></li>
+				<li><a href="{% url 'frontend:scheduling:parent_child_timetable' %}">Timetable</a></li>
+				<li><a href="{% url 'frontend:scheduling:schedule_calendar' %}">Calendar</a></li>
+			</ul>
+		</li>
+		<!-- Child Financial -->
+		<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="1.833" y="3.667" width="18.333" height="14.667" rx="2" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M1.833 9.167H20.167" stroke="#888888" stroke-linecap="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Payments</span>
+		</a>
+			<ul aria-expanded="false">
+				<li><a href="{% url 'frontend:accounts:parent_child_invoices' %}">Invoices</a></li>
+				<li><a href="{% url 'frontend:accounts:parent_child_payment_history' %}">Payment History</a></li>
+			</ul>
+		</li>
+		<!-- Discipline -->
+		<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M9.167 1.833L2.75 12.833H11L9.167 20.167L18.333 9.167H11L12.833 1.833" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Discipline</span>
+		</a>
+			<ul aria-expanded="false">
+				<li><a href="{% url 'frontend:accounts:parent_disciplinary_records' %}">Records</a></li>
+				<li><a href="{% url 'frontend:accounts:parent_permission_slips' %}">Permission Slips</a></li>
+			</ul>
+		</li>
+
+		<li class="menu-title">COMMUNICATION</li>
+		<!-- Messages -->
+		<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M19.25 14.208C19.25 14.695 19.057 15.161 18.713 15.505C18.369 15.849 17.903 16.042 17.417 16.042H6.417L2.75 19.708V4.583C2.75 4.097 2.943 3.631 3.287 3.287C3.631 2.943 4.097 2.75 4.583 2.75H17.417C17.903 2.75 18.369 2.943 18.713 3.287C19.057 3.631 19.25 4.097 19.25 4.583V14.208Z" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Messages</span>
+		</a>
+			<ul aria-expanded="false">
+				<li><a href="{% url 'frontend:accounts:parent_messages_inbox' %}">Inbox</a></li>
+				<li><a href="{% url 'frontend:accounts:parent_messages_compose' %}">Compose</a></li>
+			</ul>
+		</li>
+		<!-- Appointments -->
+		<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="3.667" y="3.667" width="14.667" height="16.5" rx="2" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M14.667 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M7.333 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M3.667 9.167H18.333" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Appointments</span>
+		</a>
+			<ul aria-expanded="false">
+				<li><a href="{% url 'frontend:accounts:parent_appointments' %}">My Appointments</a></li>
+				<li><a href="{% url 'frontend:accounts:parent_appointment_request' %}">Request</a></li>
+			</ul>
+		</li>
+		<!-- Parent Events -->
+		<li><a href="{% url 'frontend:accounts:parent_events' %}" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="3.667" y="3.667" width="14.667" height="16.5" rx="2" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M14.667 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M7.333 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M3.667 9.167H18.333" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Events</span>
+		</a></li>
+		{% endif %}
+
+		{% if not is_parent %}
+		<li class="menu-title">SCHEDULE</li>
+		<!-- Schedule Calendar -->
+		<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+			<div class="menu-icon">
+				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="3.667" y="3.667" width="14.667" height="16.5" rx="2" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M14.667 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M7.333 1.833V5.5" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+					<path d="M3.667 9.167H18.333" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</div>
+			<span class="nav-text">Schedule</span>
+		</a>
+			<ul aria-expanded="false">
+				<li><a href="{% url 'frontend:scheduling:schedule_calendar' %}">Calendar</a></li>
+				<li><a href="{% url 'frontend:scheduling:my_schedule' %}">My Schedule</a></li>
+				{% if is_professor %}
+				<li><a href="{% url 'frontend:scheduling:professor_schedule' %}">Teaching Schedule</a></li>
+				<li><a href="{% url 'frontend:scheduling:my_substitution_requests' %}">My Substitutions</a></li>
+				{% endif %}
+				{% if is_direction or is_secretary or is_admin %}
+				<li><a href="{% url 'frontend:scheduling:schedule_editor' %}">Schedule Editor</a></li>
+				<li><a href="{% url 'frontend:scheduling:room_list' %}">Rooms</a></li>
+				<li><a href="{% url 'frontend:scheduling:timeslot_config' %}">Time Slots</a></li>
+				<li><a href="{% url 'frontend:scheduling:timetable_wizard_step1' %}">Auto-Generate</a></li>
+				<li><a href="{% url 'frontend:scheduling:conflict_list' %}">Conflicts</a></li>
+				<li><a href="{% url 'frontend:scheduling:substitution_list' %}">Substitutions</a></li>
+				<li><a href="{% url 'frontend:scheduling:room_utilization_report' %}">Utilization Report</a></li>
+				<li><a href="{% url 'frontend:scheduling:export_timetable_pdf' %}">Export PDF</a></li>
+				{% endif %}
+			</ul>
+		</li>
+
+		<li class="menu-title">ACADEMIC</li>
 			<!-- Students -->
-			{% if is_professor or is_direction or is_admin %}
+			{% if is_professor or is_direction or is_secretary or is_admin or is_prefet or is_accountant %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -45,14 +186,15 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:accounts:student_list' %}">Student List</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:accounts:add_student' %}">Add Student</a></li>
 					{% endif %}
 				</ul>
 			</li>
 			{% endif %}
+			{% if not is_prefet and not is_accountant %}
 			<!-- Lecturers -->
-			{% if is_direction or is_admin %}
+			{% if is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -95,9 +237,11 @@
 				<span class="nav-text">Courses</span>
 			</a>
 				<ul aria-expanded="false">
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:course:programs' %}">Programs</a></li>
+					{% endif %}
 					<li><a href="{% url 'frontend:course:course_list_all' %}">All Courses</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:course:course_allocation_view' %}">Allocations</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:course:course_registration' %}">Registration</a></li>
@@ -115,7 +259,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:filieres:filiere_list' %}">All Filieres</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:filieres:filiere_create' %}">Create Filiere</a></li>
 					{% endif %}
 				</ul>
@@ -131,17 +275,19 @@
 				<span class="nav-text">Enrollment</span>
 			</a>
 				<ul aria-expanded="false">
-					{% if is_direction or is_admin %}
+					{% if is_registrar or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:enrollment:enrollment_list' %}">Enrollments</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:enrollment:register_step1' %}">New Registration</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_registrar or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:enrollment:enrollment_statistics' %}">Statistics</a></li>
 					<li><a href="{% url 'frontend:enrollment:export_enrollments_csv' %}">Export CSV</a></li>
 					{% endif %}
 				</ul>
 			</li>
+			{% endif %}{# end if not is_prefet and not is_accountant for courses/filieres/enrollment #}
 
+			{% if not is_accountant %}
 			<li class="menu-title">EVALUATION</li>
 			<!-- Attendance -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
@@ -155,7 +301,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:attendance:dashboard' %}">Dashboard</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin or is_prefet %}
 					<li><a href="{% url 'frontend:attendance:take_attendance' %}">Take Attendance</a></li>
 					<li><a href="{% url 'frontend:attendance:student_list' %}">Students</a></li>
 					<li><a href="{% url 'frontend:attendance:group_list' %}">Groups</a></li>
@@ -163,6 +309,8 @@
 					{% endif %}
 				</ul>
 			</li>
+			{% endif %}{# end if not is_accountant for evaluation #}
+			{% if not is_prefet and not is_accountant %}
 			<!-- Results -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -176,7 +324,7 @@
 				<span class="nav-text">Results</span>
 			</a>
 				<ul aria-expanded="false">
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:result:add_score' %}">Add Score</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:result:grade_results' %}">Grade Results</a></li>
@@ -195,10 +343,14 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:grading:dashboard' %}">Dashboard</a></li>
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:grading:rubric_list' %}">Rubrics</a></li>
 					<li><a href="{% url 'frontend:grading:grade_entry_list' %}">Grade Entries</a></li>
+					{% endif %}
 					<li><a href="{% url 'frontend:grading:peer_review_list' %}">Peer Reviews</a></li>
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:grading:grade_curve_list' %}">Grade Curves</a></li>
+					{% endif %}
 					{% if is_student %}
 					<li><a href="{% url 'frontend:grading:student_gradebook' %}">My Gradebook</a></li>
 					{% endif %}
@@ -217,13 +369,16 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:quiz:quiz_progress' %}">My Progress</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:quiz:quiz_marking' %}">Quiz Marking</a></li>
 					{% endif %}
 				</ul>
 			</li>
+			{% endif %}{# end if not is_prefet and not is_accountant for results/grading/quiz #}
 
+			{% if not is_prefet %}
 			<li class="menu-title">MANAGEMENT</li>
+			{% if not is_accountant %}
 			<!-- Admissions -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -237,13 +392,14 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:admissions:home' %}">Overview</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:admissions:admission_list' %}">Applications</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:admissions:apply' %}">Apply</a></li>
 					<li><a href="{% url 'frontend:admissions:check_status' %}">Check Status</a></li>
 				</ul>
 			</li>
+			{% endif %}{# end if not is_accountant for admissions #}
 			<!-- Payments -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -257,11 +413,12 @@
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:payments:payment_gateways' %}">Payment Gateway</a></li>
 					<li><a href="{% url 'frontend:payments:create_invoice' %}">My Invoices</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_admin or is_accountant %}
 					<li><a href="{% url 'frontend:payments:fee_structure_list' %}">Fee Structure</a></li>
 					{% endif %}
 				</ul>
 			</li>
+			{% if not is_accountant %}
 			<!-- Library -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
@@ -275,6 +432,10 @@
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:library:book_list' %}">Browse Books</a></li>
 					<li><a href="{% url 'frontend:library:my_borrowed_books' %}">My Books</a></li>
+					{% if is_librarian or is_direction or is_secretary or is_admin %}
+					<li><a href="{% url 'frontend:library:book_create' %}">Add Book</a></li>
+					<li><a href="{% url 'frontend:library:overdue_books' %}">Overdue Books</a></li>
+					{% endif %}
 				</ul>
 			</li>
 			<!-- Events -->
@@ -291,13 +452,15 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:events:event_list' %}">All Events</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:events:event_create' %}">Create Event</a></li>
 					{% endif %}
 				</ul>
 			</li>
+			{% endif %}{# end if not is_accountant for library/events #}
+			{% endif %}{# end if not is_prefet for management #}
 			<!-- Discipline -->
-			{% if is_professor or is_direction or is_admin %}
+			{% if is_professor or is_direction or is_secretary or is_admin or is_prefet %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -308,14 +471,14 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:discipline:action_list' %}">All Actions</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin or is_prefet %}
 					<li><a href="{% url 'frontend:discipline:action_create' %}">Create Action</a></li>
 					{% endif %}
 				</ul>
 			</li>
 			{% endif %}
 			<!-- Certificates -->
-			{% if is_direction or is_admin %}
+			{% if is_registrar or is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -337,6 +500,7 @@
 			</li>
 			{% endif %}
 
+			{% if not is_prefet and not is_accountant %}
 			<li class="menu-title">COMMUNITY</li>
 			<!-- Notes -->
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
@@ -350,7 +514,7 @@
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:notes:note_list' %}">My Notes</a></li>
 					<li><a href="{% url 'frontend:notes:note_create' %}">Create Note</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:notes:notes_pending' %}">Pending Approval</a></li>
 					<li><a href="{% url 'frontend:notes:note_list_all' %}">All Notes</a></li>
 					{% endif %}
@@ -369,7 +533,7 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:notices:notice_list' %}">All Notices</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:notices:notice_create' %}">Create Notice</a></li>
 					{% endif %}
 				</ul>
@@ -404,7 +568,7 @@
 					<li><a href="{% url 'frontend:alumni:directory' %}">Directory</a></li>
 					<li><a href="{% url 'frontend:alumni:events' %}">Events</a></li>
 					<li><a href="{% url 'frontend:alumni:achievements' %}">Achievements</a></li>
-					{% if is_direction or is_admin %}
+					{% if is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:alumni:alumni_create' %}">Add Alumni</a></li>
 					{% endif %}
 				</ul>
@@ -423,16 +587,20 @@
 			</a>
 				<ul aria-expanded="false">
 					<li><a href="{% url 'frontend:articles:article_list' %}">All Articles</a></li>
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:articles:article_create' %}">Write Article</a></li>
 					{% endif %}
 					<li><a href="{% url 'frontend:articles:newsletter' %}">Newsletter</a></li>
 				</ul>
 			</li>
+			{% endif %}{# end if not is_prefet and not is_accountant for community #}
 
+			{% endif %}{# end if not is_parent #}
+
+			{% if not is_parent and not is_prefet %}
 			<li class="menu-title">ANALYTICS</li>
 			<!-- Analytics -->
-			{% if is_professor or is_direction or is_admin %}
+			{% if is_professor or is_direction or is_secretary or is_admin or is_accountant %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -453,7 +621,7 @@
 			</li>
 			{% endif %}
 			<!-- Monitoring -->
-			{% if is_direction or is_admin %}
+			{% if is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -471,7 +639,7 @@
 			</li>
 			{% endif %}
 			<!-- Daily Stats -->
-			{% if is_professor or is_direction or is_admin %}
+			{% if is_professor or is_direction or is_secretary or is_admin %}
 			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
 				<div class="menu-icon">
 					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -487,6 +655,28 @@
 					<li><a href="{% url 'frontend:dailystat:dashboard' %}">Dashboard</a></li>
 					<li><a href="{% url 'frontend:dailystat:trends' %}">Trends</a></li>
 					<li><a href="{% url 'frontend:dailystat:export_csv' %}">Export CSV</a></li>
+				</ul>
+			</li>
+			{% endif %}
+			{% endif %}{# end if not is_parent and not is_prefet for analytics #}
+
+			{% if is_direction or is_admin %}
+			<!-- Anomaly Detection -->
+			<li class="menu-title">SECURITY</li>
+			<li><a class="has-arrow" href="javascript:void(0);" aria-expanded="false">
+				<div class="menu-icon">
+					<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M11 1.833L2.75 5.5V10.083C2.75 15.18 6.27 19.943 11 20.167C15.73 19.943 19.25 15.18 19.25 10.083V5.5L11 1.833Z" stroke="#888888" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M11 7.333V11" stroke="#888888" stroke-linecap="round"/>
+						<circle cx="11" cy="14.667" r="0.5" fill="#888888"/>
+					</svg>
+				</div>
+				<span class="nav-text">Anomaly Detection</span>
+				{% if anomaly_alert_count %}<span class="badge badge-danger badge-sm float-end">{{ anomaly_alert_count }}</span>{% endif %}
+			</a>
+				<ul aria-expanded="false">
+					<li><a href="{% url 'frontend:anomaly_detection:dashboard' %}">Dashboard</a></li>
+					<li><a href="{% url 'frontend:anomaly_detection:alert_list' %}">All Alerts</a></li>
 				</ul>
 			</li>
 			{% endif %}
@@ -509,7 +699,7 @@
 					{% if is_admin %}
 					<li><a href="{% url 'frontend:accounts:admin_panel' %}">Admin Panel</a></li>
 					{% endif %}
-					{% if is_professor or is_direction or is_admin %}
+					{% if is_professor or is_direction or is_secretary or is_admin %}
 					<li><a href="{% url 'frontend:core:session_list' %}">Sessions</a></li>
 					<li><a href="{% url 'frontend:core:semester_list' %}">Semesters</a></li>
 					{% endif %}

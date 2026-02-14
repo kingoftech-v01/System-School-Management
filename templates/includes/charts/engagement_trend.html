@@ -1,0 +1,45 @@
+{% comment %}
+Engagement Trend Line Chart (ApexCharts)
+Context variables:
+  - engagement_dates: JSON list of date strings, e.g. ["2025-01-01", ...]
+  - engagement_scores: JSON list of score numbers, e.g. [45, 67, ...]
+  - chart_id: unique DOM id (default: "engagement-trend-chart")
+{% endcomment %}
+<div class="card">
+    <div class="card-header border-0 pb-0">
+        <h4 class="heading mb-0">Engagement Trend (30 Days)</h4>
+    </div>
+    <div class="card-body">
+        <div id="{{ chart_id|default:'engagement-trend-chart' }}" style="min-height: 300px;"></div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var dates = {{ engagement_dates|safe }};
+    var scores = {{ engagement_scores|safe }};
+    if (!dates || dates.length === 0) {
+        document.getElementById("{{ chart_id|default:'engagement-trend-chart' }}").innerHTML =
+            '<div class="text-center text-muted py-5">No engagement data available yet.</div>';
+        return;
+    }
+    var options = {
+        chart: { type: 'area', height: 300, toolbar: { show: true }, zoom: { enabled: true } },
+        series: [{ name: 'Engagement Score', data: scores }],
+        xaxis: {
+            categories: dates,
+            labels: { rotate: -45, rotateAlways: dates.length > 15, style: { fontSize: '11px' } }
+        },
+        yaxis: { min: 0, max: 100, title: { text: 'Score' } },
+        colors: ['#4e73df'],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1 } },
+        stroke: { curve: 'smooth', width: 2 },
+        dataLabels: { enabled: false },
+        tooltip: { y: { formatter: function(val) { return val.toFixed(1) + ' / 100'; } } }
+    };
+    var chart = new ApexCharts(
+        document.querySelector("#{{ chart_id|default:'engagement-trend-chart' }}"), options
+    );
+    chart.render();
+})();
+</script>

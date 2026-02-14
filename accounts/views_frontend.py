@@ -9,18 +9,32 @@ from django.template.loader import get_template, render_to_string
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django_filters.views import FilterView
+from django_ratelimit.decorators import ratelimit
 from xhtml2pdf import pisa
 
-from accounts.decorators import admin_required
+import json
+from datetime import timedelta
+
+from django.utils import timezone
+
+from accounts.decorators import admin_required, role_required
 from accounts.filters import LecturerFilter, StudentFilter
 from accounts.forms import (
+    ForcePasswordResetForm,
+    InvitationCodeForm,
     ParentAddForm,
+    ParentInvitationSignupForm,
+    ParentSelfSignupForm,
     ProfileUpdateForm,
     ProgramUpdateForm,
     StaffAddForm,
+    StaffInvitationSignupForm,
+    StudentActivationForm,
     StudentAddForm,
+    StudentSetPasswordForm,
+    StudentVerifyParentForm,
 )
-from accounts.models import Parent, Student, User
+from accounts.models import InvitationCode, Parent, Student, User
 from core.models import Semester, Session
 from course.models import Course
 from result.models import TakenCourse
@@ -46,6 +60,7 @@ def render_to_pdf(template_name, context):
 # ########################################################
 
 
+@login_required
 def validate_username(request):
     username = request.GET.get("username", None)
     data = {"is_taken": User.objects.filter(username__iexact=username).exists()}
@@ -337,7 +352,7 @@ def edit_student(request, pk):
     )
 
 
-@method_decorator([login_required, admin_required], name="dispatch")
+@method_decorator([login_required, role_required('admin', 'direction', 'secretary', 'prefet', 'accountant')], name="dispatch")
 class StudentListView(FilterView):
     queryset = Student.objects.all()
     filterset_class = StudentFilter
@@ -506,7 +521,7 @@ def dashboard_student(request):
     courses = TakenCourse.objects.filter(
         student=student,
         course__semester=current_semester
-    ).select_related('course', 'course__allocated_course')
+    ).select_related('course', 'course__program')
 
     # Get recent grades (last 5)
     recent_grades = TakenCourse.objects.filter(
@@ -568,6 +583,37 @@ def dashboard_student(request):
     except:
         pass
 
+    # --- Analytics data for student ---
+    engagement_dates = json.dumps([])
+    engagement_scores = json.dumps([])
+    completion_data = []
+
+    try:
+        from analytics.models import StudentEngagement
+        from django.db.models import Avg
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_qs = (
+            StudentEngagement.objects
+            .filter(student=student, date__gte=thirty_days_ago)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        dates_list = [e['date'].strftime('%b %d') for e in engagement_qs]
+        scores_list = [round(float(e['avg_score'] or 0), 1) for e in engagement_qs]
+        engagement_dates = json.dumps(dates_list)
+        engagement_scores = json.dumps(scores_list)
+    except Exception:
+        pass
+
+    try:
+        from analytics.models import CourseCompletion
+        completion_data = CourseCompletion.objects.filter(
+            student=student
+        ).select_related('course')[:10]
+    except Exception:
+        pass
+
     context = {
         'title': 'Student Dashboard',
         'student': student,
@@ -579,116 +625,13 @@ def dashboard_student(request):
         'attendance_summary': attendance_summary,
         'current_session': current_session,
         'current_semester': current_semester,
+        # Analytics
+        'engagement_dates': engagement_dates,
+        'engagement_scores': engagement_scores,
+        'completion_data': completion_data,
     }
 
     return render(request, 'accounts/dashboard_student.html', context)
-
-
-@login_required
-@parent_only
-def dashboard_parent(request):
-    """Parent dashboard with children's academic information."""
-    parent = get_object_or_404(Parent, user=request.user)
-    student = parent.student
-    current_session = Session.objects.filter(is_current_session=True).first()
-    current_semester = Semester.objects.filter(
-        is_current_semester=True, session=current_session
-    ).first()
-
-    # Get student's recent grades
-    recent_grades = TakenCourse.objects.filter(
-        student=student,
-        total__isnull=False
-    ).order_by('-id')[:10]
-
-    # Calculate GPA
-    gpa = TakenCourse.objects.filter(
-        student=student,
-        total__isnull=False
-    ).aggregate(Avg('total'))['total__avg'] or 0.0
-
-    # Get attendance summary
-    attendance_summary = {}
-    try:
-        from attendance.models import AttendanceRecord
-        total_classes = AttendanceRecord.objects.filter(
-            student=student.student,
-            session=current_session
-        ).count()
-        present_classes = AttendanceRecord.objects.filter(
-            student=student.student,
-            session=current_session,
-            status='present'
-        ).count()
-        if total_classes > 0:
-            attendance_percentage = (present_classes / total_classes) * 100
-        else:
-            attendance_percentage = 0
-        attendance_summary = {
-            'total': total_classes,
-            'present': present_classes,
-            'percentage': round(attendance_percentage, 2)
-        }
-    except:
-        pass
-
-    # Get payment status
-    payment_status = {}
-    try:
-        from payments.models import PaymentRecord
-        total_fees = PaymentRecord.objects.filter(
-            student=student.student,
-            session=current_session
-        ).aggregate(
-            total=models.Sum('amount'),
-            paid=models.Sum('amount', filter=Q(status='paid'))
-        )
-        payment_status = {
-            'total': total_fees['total'] or 0,
-            'paid': total_fees['paid'] or 0,
-            'balance': (total_fees['total'] or 0) - (total_fees['paid'] or 0)
-        }
-    except:
-        pass
-
-    # Get upcoming events
-    upcoming_events = []
-    try:
-        from events.models import Event
-        upcoming_events = Event.objects.filter(
-            tenant=request.tenant,
-            start_date__gte=timezone.now(),
-            target_audience__in=['all', 'parents']
-        ).order_by('start_date')[:5]
-    except:
-        pass
-
-    # Get disciplinary actions (if any)
-    disciplinary_actions = []
-    try:
-        from discipline.models import DisciplinaryAction
-        disciplinary_actions = DisciplinaryAction.objects.filter(
-            tenant=request.tenant,
-            student=student.student
-        ).order_by('-incident_date')[:5]
-    except:
-        pass
-
-    context = {
-        'title': 'Parent Dashboard',
-        'parent': parent,
-        'student': student,
-        'recent_grades': recent_grades,
-        'gpa': round(gpa, 2),
-        'attendance_summary': attendance_summary,
-        'payment_status': payment_status,
-        'upcoming_events': upcoming_events,
-        'disciplinary_actions': disciplinary_actions,
-        'current_session': current_session,
-        'current_semester': current_semester,
-    }
-
-    return render(request, 'accounts/dashboard_parent.html', context)
 
 
 @login_required
@@ -760,6 +703,50 @@ def dashboard_professor(request):
         takencourse__course__in=my_courses
     ).distinct().count()
 
+    # --- Analytics chart data for professor ---
+    engagement_dates = json.dumps([])
+    engagement_scores = json.dumps([])
+    grade_labels = json.dumps(['A', 'B', 'C', 'D', 'F'])
+    grade_counts = json.dumps([0, 0, 0, 0, 0])
+
+    try:
+        from analytics.models import StudentEngagement
+        from django.db.models import Avg
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_qs = (
+            StudentEngagement.objects
+            .filter(date__gte=thirty_days_ago, course__in=my_courses)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        dates_list = [e['date'].strftime('%b %d') for e in engagement_qs]
+        scores_list = [round(float(e['avg_score'] or 0), 1) for e in engagement_qs]
+        engagement_dates = json.dumps(dates_list)
+        engagement_scores = json.dumps(scores_list)
+    except Exception:
+        pass
+
+    try:
+        from django.db.models import Count
+        grade_qs = (
+            TakenCourse.objects
+            .filter(course__in=my_courses)
+            .exclude(grade='')
+            .values('grade')
+            .annotate(count=Count('id'))
+        )
+        grade_map = {g['grade']: g['count'] for g in grade_qs}
+        grade_counts = json.dumps([
+            grade_map.get('A', 0),
+            grade_map.get('B', 0),
+            grade_map.get('C', 0),
+            grade_map.get('D', 0),
+            grade_map.get('F', 0),
+        ])
+    except Exception:
+        pass
+
     context = {
         'title': 'Professor Dashboard',
         'my_courses': my_courses,
@@ -770,6 +757,11 @@ def dashboard_professor(request):
         'today_attendance': today_attendance,
         'current_session': current_session,
         'current_semester': current_semester,
+        # Chart data
+        'engagement_dates': engagement_dates,
+        'engagement_scores': engagement_scores,
+        'grade_labels': grade_labels,
+        'grade_counts': grade_counts,
     }
 
     return render(request, 'accounts/dashboard_professor.html', context)
@@ -896,6 +888,88 @@ def dashboard_direction(request):
     except:
         pass
 
+    # --- Analytics chart data ---
+    engagement_dates = json.dumps([])
+    engagement_scores = json.dumps([])
+    risk_labels = json.dumps(['Low', 'Medium', 'High', 'Critical'])
+    risk_counts = json.dumps([0, 0, 0, 0])
+    attendance_labels = json.dumps([])
+    attendance_present = json.dumps([])
+    attendance_absent = json.dumps([])
+    grade_labels = json.dumps(['A', 'B', 'C', 'D', 'F'])
+    grade_counts = json.dumps([0, 0, 0, 0, 0])
+
+    try:
+        from analytics.models import StudentEngagement
+        from django.db.models import Avg
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_qs = (
+            StudentEngagement.objects
+            .filter(date__gte=thirty_days_ago)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        dates_list = [e['date'].strftime('%b %d') for e in engagement_qs]
+        scores_list = [round(float(e['avg_score'] or 0), 1) for e in engagement_qs]
+        engagement_dates = json.dumps(dates_list)
+        engagement_scores = json.dumps(scores_list)
+    except Exception:
+        pass
+
+    try:
+        from analytics.models import AtRiskStudent
+        risk_qs = AtRiskStudent.objects.filter(is_active=True)
+        risk_counts = json.dumps([
+            risk_qs.filter(risk_level='low').count(),
+            risk_qs.filter(risk_level='medium').count(),
+            risk_qs.filter(risk_level='high').count(),
+            risk_qs.filter(risk_level='critical').count(),
+        ])
+    except Exception:
+        pass
+
+    try:
+        from dailystat.models import DailyAttendanceStat
+        fourteen_days_ago = timezone.now().date() - timedelta(days=14)
+        att_qs = (
+            DailyAttendanceStat.objects
+            .filter(day__gte=fourteen_days_ago)
+            .order_by('day')
+        )
+        att_labels = [a.day.strftime('%b %d') for a in att_qs]
+        att_present_list = [a.total_present for a in att_qs]
+        att_absent_list = [a.total_absent for a in att_qs]
+        attendance_labels = json.dumps(att_labels)
+        attendance_present = json.dumps(att_present_list)
+        attendance_absent = json.dumps(att_absent_list)
+    except Exception:
+        pass
+
+    try:
+        from django.db.models import Count, Case, When, IntegerField
+        grade_qs = TakenCourse.objects.exclude(grade='').values('grade').annotate(
+            count=Count('id')
+        )
+        grade_map = {g['grade']: g['count'] for g in grade_qs}
+        grade_counts = json.dumps([
+            grade_map.get('A', 0),
+            grade_map.get('B', 0),
+            grade_map.get('C', 0),
+            grade_map.get('D', 0),
+            grade_map.get('F', 0),
+        ])
+    except Exception:
+        pass
+
+    # Computed insights
+    insights = []
+    try:
+        from analytics.models import Insight
+        insights = Insight.objects.filter(is_active=True).order_by('-severity', '-generated_at')[:10]
+    except Exception:
+        pass
+
     context = {
         'title': 'Direction Dashboard',
         'total_students': total_students,
@@ -912,6 +986,18 @@ def dashboard_direction(request):
         'recent_activities': recent_activities,
         'current_session': current_session,
         'current_semester': current_semester,
+        # Chart data
+        'engagement_dates': engagement_dates,
+        'engagement_scores': engagement_scores,
+        'risk_labels': risk_labels,
+        'risk_counts': risk_counts,
+        'attendance_labels': attendance_labels,
+        'attendance_present': attendance_present,
+        'attendance_absent': attendance_absent,
+        'grade_labels': grade_labels,
+        'grade_counts': grade_counts,
+        # Insights
+        'insights': insights,
     }
 
     return render(request, 'accounts/dashboard_direction.html', context)
@@ -923,6 +1009,7 @@ def dashboard_direction(request):
 
 
 @login_required
+@ratelimit(key='user', rate='5/m', method='POST')
 def setup_2fa(request):
     """
     Setup TOTP-based Two-Factor Authentication for users.
@@ -1042,6 +1129,543 @@ def manage_2fa(request):
     }
 
     return render(request, 'auth/2fa/manage.html', context)
+
+
+# ########################################################
+# Signup Flow Views
+# ########################################################
+
+import random
+import logging
+from django.conf import settings as django_settings
+from django.core.mail import send_mail
+from django.db import transaction
+
+logger = logging.getLogger(__name__)
+
+
+def signup_hub(request):
+    """Main signup page with role selection cards."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+    return render(request, "account/signup.html", {"title": "Create Your Account"})
+
+
+@ratelimit(key='ip', rate='5/h', method='POST')
+def student_activate(request):
+    """Step 1: Student enters registration number + name."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = StudentActivationForm(request.POST)
+        if form.is_valid():
+            student = form.student
+
+            # Generate 8-digit verification code (10^8 = 100M combinations)
+            code = f"{random.randint(0, 99999999):08d}"
+
+            # Store in session with timestamp for expiry
+            request.session["activation_student_id"] = student.pk
+            request.session["activation_code"] = code
+            request.session["activation_attempts"] = 0
+            request.session["activation_timestamp"] = timezone.now().isoformat()
+
+            # Send code to parent(s) email
+            parents = Parent.objects.filter(student=student)
+            parent_emails = [p.email for p in parents if p.email]
+            parent_emails += [p.user.email for p in parents if p.user and p.user.email]
+            parent_emails = list(set(filter(None, parent_emails)))
+
+            if not parent_emails:
+                messages.error(
+                    request,
+                    "No parent/guardian email on file. "
+                    "Please contact the school administration to complete your registration.",
+                )
+                return render(request, "account/student_activate.html", {
+                    "form": form, "title": "Activate Student Account",
+                })
+
+            try:
+                student_name = student.student.get_full_name
+                from_email = getattr(
+                    django_settings, "EMAIL_FROM_ADDRESS",
+                    getattr(django_settings, "DEFAULT_FROM_EMAIL", "noreply@school.local"),
+                )
+                send_mail(
+                    subject="Student Account Verification Code",
+                    message=(
+                        f"Dear Parent/Guardian,\n\n"
+                        f"Your child {student_name} is activating their school account.\n\n"
+                        f"Verification Code: {code}\n\n"
+                        f"If you did not expect this request, please contact the school "
+                        f"administration immediately.\n\n"
+                        f"This code expires in 15 minutes."
+                    ),
+                    from_email=from_email,
+                    recipient_list=parent_emails,
+                    fail_silently=False,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send verification email: {e}")
+                messages.error(
+                    request,
+                    "Failed to send the verification code. Please try again later.",
+                )
+                return render(request, "account/student_activate.html", {
+                    "form": form, "title": "Activate Student Account",
+                })
+
+            messages.success(
+                request,
+                "A verification code has been sent to your parent/guardian's email.",
+            )
+            return redirect("frontend:accounts:student_verify_parent")
+    else:
+        form = StudentActivationForm()
+
+    return render(request, "account/student_activate.html", {
+        "form": form, "title": "Activate Student Account",
+    })
+
+
+@ratelimit(key='ip', rate='10/h', method='POST')
+def student_verify_parent(request):
+    """Step 2: Student enters verification code sent to parent's email."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    student_id = request.session.get("activation_student_id")
+    stored_code = request.session.get("activation_code")
+
+    if not student_id or not stored_code:
+        messages.error(request, "Please start the activation process from the beginning.")
+        return redirect("frontend:accounts:student_activate")
+
+    # Check session expiry (15 minutes)
+    timestamp_str = request.session.get("activation_timestamp")
+    if timestamp_str:
+        try:
+            created_at = timezone.datetime.fromisoformat(timestamp_str)
+            if timezone.is_naive(created_at):
+                created_at = timezone.make_aware(created_at)
+            expiry_minutes = getattr(django_settings, "STUDENT_VERIFICATION_CODE_EXPIRY_MINUTES", 15)
+            if timezone.now() > created_at + timedelta(minutes=expiry_minutes):
+                for key in [
+                    "activation_student_id", "activation_code",
+                    "activation_attempts", "activation_verified", "activation_timestamp",
+                ]:
+                    request.session.pop(key, None)
+                messages.error(request, "Your verification code has expired. Please start over.")
+                return redirect("frontend:accounts:student_activate")
+        except (ValueError, TypeError):
+            pass
+
+    if request.method == "POST":
+        form = StudentVerifyParentForm(request.POST)
+        if form.is_valid():
+            entered_code = form.cleaned_data["verification_code"]
+            attempts = request.session.get("activation_attempts", 0)
+            max_attempts = getattr(django_settings, "STUDENT_VERIFICATION_MAX_ATTEMPTS", 3)
+
+            if entered_code == stored_code:
+                request.session["activation_verified"] = True
+                return redirect("frontend:accounts:student_set_password")
+            else:
+                attempts += 1
+                request.session["activation_attempts"] = attempts
+
+                if attempts >= max_attempts:
+                    for key in [
+                        "activation_student_id", "activation_code",
+                        "activation_attempts", "activation_verified",
+                        "activation_timestamp",
+                    ]:
+                        request.session.pop(key, None)
+                    messages.error(
+                        request,
+                        "Too many incorrect attempts. Please start the activation process again.",
+                    )
+                    return redirect("frontend:accounts:student_activate")
+
+                remaining = max_attempts - attempts
+                messages.error(
+                    request,
+                    f"Incorrect verification code. {remaining} attempt(s) remaining.",
+                )
+    else:
+        form = StudentVerifyParentForm()
+
+    return render(request, "account/student_verify_parent.html", {
+        "form": form, "title": "Verify Your Identity",
+    })
+
+
+def student_set_password(request):
+    """Step 3: Student sets email and password to complete activation."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    student_id = request.session.get("activation_student_id")
+    verified = request.session.get("activation_verified")
+
+    if not student_id or not verified:
+        messages.error(request, "Please complete the verification step first.")
+        return redirect("frontend:accounts:student_activate")
+
+    # Check session expiry (15 minutes)
+    timestamp_str = request.session.get("activation_timestamp")
+    if timestamp_str:
+        try:
+            created_at = timezone.datetime.fromisoformat(timestamp_str)
+            if timezone.is_naive(created_at):
+                created_at = timezone.make_aware(created_at)
+            expiry_minutes = getattr(django_settings, "STUDENT_VERIFICATION_CODE_EXPIRY_MINUTES", 15)
+            if timezone.now() > created_at + timedelta(minutes=expiry_minutes):
+                for key in [
+                    "activation_student_id", "activation_code",
+                    "activation_attempts", "activation_verified", "activation_timestamp",
+                ]:
+                    request.session.pop(key, None)
+                messages.error(request, "Your session has expired. Please start the activation process again.")
+                return redirect("frontend:accounts:student_activate")
+        except (ValueError, TypeError):
+            pass
+
+    student = get_object_or_404(Student, pk=student_id)
+    user = student.student
+
+    if request.method == "POST":
+        form = StudentSetPasswordForm(request.POST, user_pk=user.pk)
+        if form.is_valid():
+            user.email = form.cleaned_data["email"]
+            user.set_password(form.cleaned_data["password1"])
+            user.is_active = True
+            user.must_change_password = False
+            user.save()
+
+            # Create allauth EmailAddress if allauth is installed
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.get_or_create(
+                    user=user,
+                    email=form.cleaned_data["email"],
+                    defaults={"verified": True, "primary": True},
+                )
+            except ImportError:
+                pass
+
+            # Clean session
+            for key in [
+                "activation_student_id", "activation_code",
+                "activation_attempts", "activation_verified",
+                "activation_timestamp",
+            ]:
+                request.session.pop(key, None)
+
+            messages.success(
+                request,
+                "Your account has been activated successfully! You can now sign in.",
+            )
+            return redirect("account_login")
+    else:
+        form = StudentSetPasswordForm(user_pk=user.pk)
+
+    return render(request, "account/student_set_password.html", {
+        "form": form,
+        "title": "Set Your Password",
+        "student": student,
+        "student_user": user,
+    })
+
+
+def parent_invitation_step1(request):
+    """Step 1: Parent enters invitation code."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = InvitationCodeForm(request.POST)
+        if form.is_valid():
+            invitation = form.invitation
+            if invitation.role != "parent":
+                messages.error(request, "This is not a parent invitation code.")
+                return render(request, "account/parent_invitation_step1.html", {
+                    "form": form, "title": "Parent Registration",
+                })
+            request.session["invitation_code"] = invitation.code
+            return redirect("frontend:accounts:parent_invitation_step2")
+    else:
+        form = InvitationCodeForm()
+
+    return render(request, "account/parent_invitation_step1.html", {
+        "form": form, "title": "Parent Registration",
+    })
+
+
+def parent_invitation_step2(request):
+    """Step 2: Parent fills in details after code validation."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    code = request.session.get("invitation_code")
+    if not code:
+        messages.error(request, "Please enter your invitation code first.")
+        return redirect("frontend:accounts:parent_invitation_step1")
+
+    try:
+        invitation = InvitationCode.objects.get(code=code)
+        if not invitation.is_valid:
+            raise InvitationCode.DoesNotExist
+    except InvitationCode.DoesNotExist:
+        request.session.pop("invitation_code", None)
+        messages.error(request, "Invalid or expired invitation code. Please try again.")
+        return redirect("frontend:accounts:parent_invitation_step1")
+
+    if request.method == "POST":
+        form = ParentInvitationSignupForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                username = f"parent_{form.cleaned_data['first_name'].lower()}_{User.objects.count()}"
+                user = User.objects.create_user(
+                    username=username,
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password1"],
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    is_parent=True,
+                    role="parent",
+                )
+
+                Parent.objects.create(
+                    user=user,
+                    student=invitation.linked_student,
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    email=form.cleaned_data["email"],
+                    relation_ship=form.cleaned_data["relation_ship"],
+                )
+
+                invitation.redeem(user)
+
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=user,
+                        email=form.cleaned_data["email"],
+                        defaults={"verified": True, "primary": True},
+                    )
+                except ImportError:
+                    pass
+
+            request.session.pop("invitation_code", None)
+            messages.success(
+                request,
+                "Your parent account has been created! You can now sign in.",
+            )
+            return redirect("account_login")
+    else:
+        form = ParentInvitationSignupForm()
+
+    context = {
+        "form": form,
+        "title": "Complete Your Registration",
+        "invitation": invitation,
+    }
+    if invitation.linked_student:
+        context["linked_student"] = invitation.linked_student
+
+    return render(request, "account/parent_invitation_step2.html", context)
+
+
+@ratelimit(key="ip", rate="5/h", method="POST")
+def parent_self_signup(request):
+    """Parent self-registration (no invitation code needed)."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = ParentSelfSignupForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                base_username = f"parent_{form.cleaned_data['first_name'].lower()}"
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
+
+                user = User.objects.create_user(
+                    username=username,
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password1"],
+                    first_name=form.cleaned_data["first_name"],
+                    middle_name=form.cleaned_data.get("middle_name", ""),
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    street_address=form.cleaned_data.get("street_address", ""),
+                    city=form.cleaned_data.get("city", ""),
+                    province=form.cleaned_data.get("province", ""),
+                    postal_code=form.cleaned_data.get("postal_code", ""),
+                    is_parent=True,
+                    role="parent",
+                )
+
+                # Set country if provided
+                country = form.cleaned_data.get("country", "")
+                if country:
+                    user.country = country
+                    user.save(update_fields=["country"])
+
+                # Create Parent profile (placeholder with student=None)
+                Parent.objects.create(
+                    user=user,
+                    student=None,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    phone=user.phone,
+                    email=user.email,
+                )
+
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=user,
+                        email=form.cleaned_data["email"],
+                        defaults={"verified": True, "primary": True},
+                    )
+                except ImportError:
+                    pass
+
+            messages.success(
+                request,
+                "Your parent account has been created! You can now sign in and enroll your children.",
+            )
+            return redirect("account_login")
+    else:
+        form = ParentSelfSignupForm()
+
+    return render(request, "account/parent_self_signup.html", {
+        "form": form,
+        "title": "Create Parent Account",
+    })
+
+
+def staff_invitation_step1(request):
+    """Step 1: Staff enters invitation code."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = InvitationCodeForm(request.POST)
+        if form.is_valid():
+            invitation = form.invitation
+            if invitation.role not in ("professor", "direction", "prefet", "accountant", "secretary", "librarian", "registrar"):
+                messages.error(request, "This is not a staff invitation code.")
+                return render(request, "account/staff_invitation_step1.html", {
+                    "form": form, "title": "Staff Registration",
+                })
+            request.session["invitation_code"] = invitation.code
+            return redirect("frontend:accounts:staff_invitation_step2")
+    else:
+        form = InvitationCodeForm()
+
+    return render(request, "account/staff_invitation_step1.html", {
+        "form": form, "title": "Staff Registration",
+    })
+
+
+def staff_invitation_step2(request):
+    """Step 2: Staff fills in details after code validation."""
+    if request.user.is_authenticated:
+        return redirect("frontend:accounts:profile")
+
+    code = request.session.get("invitation_code")
+    if not code:
+        messages.error(request, "Please enter your invitation code first.")
+        return redirect("frontend:accounts:staff_invitation_step1")
+
+    try:
+        invitation = InvitationCode.objects.get(code=code)
+        if not invitation.is_valid:
+            raise InvitationCode.DoesNotExist
+    except InvitationCode.DoesNotExist:
+        request.session.pop("invitation_code", None)
+        messages.error(request, "Invalid or expired invitation code. Please try again.")
+        return redirect("frontend:accounts:staff_invitation_step1")
+
+    if request.method == "POST":
+        form = StaffInvitationSignupForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                username = f"staff_{form.cleaned_data['first_name'].lower()}_{User.objects.count()}"
+                user = User.objects.create_user(
+                    username=username,
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password1"],
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    phone=form.cleaned_data.get("phone", ""),
+                    role=invitation.role,
+                    is_lecturer=(invitation.role == "professor"),
+                )
+
+                invitation.redeem(user)
+
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=user,
+                        email=form.cleaned_data["email"],
+                        defaults={"verified": True, "primary": True},
+                    )
+                except ImportError:
+                    pass
+
+            request.session.pop("invitation_code", None)
+            role_displays = {"professor": "Professor", "prefet": "Discipline Officer", "accountant": "Accountant", "secretary": "Secretary", "librarian": "Librarian", "registrar": "Registrar", "direction": "Direction Staff"}
+            role_display = role_displays.get(invitation.role, "Staff")
+            messages.success(
+                request,
+                f"Your {role_display} account has been created! You can now sign in.",
+            )
+            return redirect("account_login")
+    else:
+        form = StaffInvitationSignupForm()
+
+    return render(request, "account/staff_invitation_step2.html", {
+        "form": form,
+        "title": "Complete Your Registration",
+        "invitation": invitation,
+    })
+
+
+def force_password_reset(request):
+    """Force password reset for users with temporary passwords."""
+    if not request.user.is_authenticated:
+        return redirect("account_login")
+
+    if not request.user.must_change_password:
+        return redirect("frontend:accounts:profile")
+
+    if request.method == "POST":
+        form = ForcePasswordResetForm(request.POST)
+        if form.is_valid():
+            request.user.set_password(form.cleaned_data["password1"])
+            request.user.must_change_password = False
+            request.user.save()
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "Your password has been updated successfully!")
+            return redirect("frontend:accounts:profile")
+    else:
+        form = ForcePasswordResetForm()
+
+    return render(request, "account/force_password_reset.html", {
+        "form": form, "title": "Change Your Password",
+    })
 
 
 # ########################################################

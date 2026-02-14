@@ -47,20 +47,25 @@ class EnrollmentViewsCovTest(TestDataMixin, TestCase):
     # ------------------------------------------------------------------
     def _step1_data(self, **overrides):
         data = {
-            'student_name': 'Alice Test',
+            'student_first_name': 'Alice',
+            'student_last_name': 'Test',
             'date_of_birth': '2005-01-15',
             'gender': 'F',
             'nationality': 'French',
             'email': 'alice_enroll@test.com',
             'phone': '+1234567890',
-            'address': '123 Enrollment St',
+            'street_address': '123 Enrollment St',
+            'city': 'Paris',
+            'province': 'Ile-de-France',
+            'country': 'France',
         }
         data.update(overrides)
         return data
 
     def _step2_data(self, **overrides):
         data = {
-            'parent_name': 'Bob Parent',
+            'parent_first_name': 'Bob',
+            'parent_last_name': 'Parent',
             'parent_email': 'bob_parent@test.com',
             'parent_phone': '+0987654321',
             'parent_relationship': 'father',
@@ -138,7 +143,7 @@ class EnrollmentViewsCovTest(TestDataMixin, TestCase):
         session['registration_id'] = reg.id
         session.save()
         # Missing required parent_name
-        r = self.client.post('/enrollment/register/step2/', {'parent_name': ''})
+        r = self.client.post('/enrollment/register/step2/', {'parent_first_name': ''})
         self.assertIn(r.status_code, OK)
 
     # ------------------------------------------------------------------
@@ -260,7 +265,7 @@ class EnrollmentViewsCovTest(TestDataMixin, TestCase):
     def test_enrollment_list_with_filters(self):
         """Enrollment list with search filters (lines 213-233)."""
         self.create_registration(
-            tenant=self.school, student_name='Specific Name',
+            tenant=self.school, student_first_name='Specific Name',
             email='specific@test.com', status='pending',
             enrollment_type='new', academic_year='2024-2025',
             filiere=self.filiere,
@@ -404,7 +409,7 @@ class EnrollmentViewsCovTest(TestDataMixin, TestCase):
     def test_export_csv_with_filters(self):
         """Export CSV with search filters applied (lines 368-375)."""
         self.create_registration(
-            tenant=self.school, student_name='Export Test', status='approved'
+            tenant=self.school, student_first_name='Export Test', status='approved'
         )
         self.client.force_login(self.admin)
         r = self.client.get('/enrollment/export/csv/', {
@@ -1020,13 +1025,18 @@ class FilieresViewsCovTest(TestDataMixin, TestCase):
         from enrollment.models import RegistrationForm
         RegistrationForm.objects.create(
             tenant=self.school,
-            student_name='Enrolled Student',
+            student_first_name='Enrolled',
+            student_last_name='Student',
             date_of_birth=date(2005, 1, 1),
             gender='M',
             email='enrolled@test.com',
             phone='+1234567890',
-            address='123 Test St',
-            parent_name='Parent',
+            street_address='123 Test St',
+            city='Test City',
+            province='Test Province',
+            country='Test Country',
+            parent_first_name='Parent',
+            parent_last_name='Doe',
             parent_email='parent@test.com',
             parent_phone='+0987654321',
             academic_year='2024-2025',

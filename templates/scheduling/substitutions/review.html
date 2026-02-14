@@ -1,0 +1,101 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+
+{% block title %}Review Substitution - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Review Substitution</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:scheduling:substitution_list' %}">Substitutions</a></li>
+        <li class="breadcrumb-item active">Review</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Substitution Request Details</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr><td><strong>Course</strong></td><td>{{ sub.schedule_entry.course.title }}</td></tr>
+                        <tr><td><strong>Date</strong></td><td>{{ sub.date|date:"l, d F Y" }}</td></tr>
+                        <tr>
+                            <td><strong>Time</strong></td>
+                            <td>{{ sub.schedule_entry.time_slot.get_day_of_week_display }} {{ sub.schedule_entry.time_slot.start_time|time:"H:i" }}-{{ sub.schedule_entry.time_slot.end_time|time:"H:i" }}</td>
+                        </tr>
+                        <tr><td><strong>Room</strong></td><td>{{ sub.schedule_entry.room.name|default:"TBD" }}</td></tr>
+                        <tr><td><strong>Requesting Professor</strong></td><td>{{ sub.requesting_professor.get_full_name }}</td></tr>
+                        <tr><td><strong>Reason</strong></td><td>{{ sub.reason }}</td></tr>
+                        {% if sub.suggested_substitute %}
+                        <tr><td><strong>Suggested Substitute</strong></td><td>{{ sub.suggested_substitute.get_full_name }}</td></tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>Status</strong></td>
+                            <td>
+                                {% if sub.status == 'pending' %}<span class="badge bg-warning text-dark">Pending</span>
+                                {% elif sub.status == 'approved' %}<span class="badge bg-success">Approved</span>
+                                {% elif sub.status == 'rejected' %}<span class="badge bg-danger">Rejected</span>
+                                {% else %}<span class="badge bg-secondary">{{ sub.get_status_display }}</span>{% endif %}
+                            </td>
+                        </tr>
+                    </table>
+
+                    {% if sub.status == 'pending' %}
+                    <hr>
+                    <h5>Assign Substitute</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="substitute_id" class="form-label">Select Substitute Professor</label>
+                            <select name="substitute_id" id="substitute_id" class="form-select">
+                                {% if sub.suggested_substitute %}
+                                <option value="{{ sub.suggested_substitute.id }}" selected>{{ sub.suggested_substitute.get_full_name }} (Suggested)</option>
+                                {% endif %}
+                                {% for prof in available_professors %}
+                                {% if prof != sub.suggested_substitute %}
+                                <option value="{{ prof.id }}">{{ prof.get_full_name }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Only professors who are free during this time slot are shown.</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Approve
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                <i class="bi bi-x-circle"></i> Reject
+                            </button>
+                            <a href="{% url 'frontend:scheduling:substitution_list' %}" class="btn btn-secondary ms-auto">Cancel</a>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5>Available Professors</h5>
+                    <p class="text-muted">Professors who are free during this time slot:</p>
+                    <ul class="list-group">
+                        {% for prof in available_professors %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ prof.get_full_name }}
+                            {% if prof == sub.suggested_substitute %}
+                            <span class="badge bg-info">Suggested</span>
+                            {% endif %}
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">No professors available at this time.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

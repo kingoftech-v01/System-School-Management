@@ -1,0 +1,95 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">{{ page_title }}</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:accounts:parent_dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Attendance</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    {% include 'parent/_child_selector.html' %}
+
+    <div class="row mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">{{ attendance_rate }}%</h3>
+                    <span>Attendance Rate</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="text-success">{{ present }}</h3>
+                    <span>Present</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="text-danger">{{ absent }}</h3>
+                    <span>Absent</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="text-warning">{{ late }}</h3>
+                    <span>Late</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title mb-0">Attendance Records</h4>
+        </div>
+        <div class="card-body">
+            {% if reports %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>Date</th><th>Subject</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reports %}
+                        <tr>
+                            <td>{{ r.attendance.date|date:"M d, Y" }}</td>
+                            <td>{{ r.attendance.subject|default:"N/A" }}</td>
+                            <td>
+                                <span class="badge {% if r.status == 'PRESENT' %}bg-success{% elif r.status == 'LATE' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ r.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if reports.has_other_pages %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if reports.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ reports.previous_page_number }}">Previous</a></li>{% endif %}
+                    {% for num in reports.paginator.page_range %}
+                    <li class="page-item {% if reports.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endfor %}
+                    {% if reports.has_next %}<li class="page-item"><a class="page-link" href="?page={{ reports.next_page_number }}">Next</a></li>{% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <p class="text-muted text-center py-4">No attendance records found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -25,11 +25,11 @@ class AlumniTest(TestDataMixin, TestCase):
         self.assertIsNotNone(alumni.pk)
         self.assertEqual(alumni.graduation_year, 2023)
 
-    def test_str_raises_type_error(self):
-        """Bug: Alumni.__str__ calls get_full_name() but it's a @property."""
+    def test_str(self):
+        """Alumni.__str__ returns student name and graduation year."""
         alumni = self._create_alumni()
-        with self.assertRaises(TypeError):
-            str(alumni)
+        result = str(alumni)
+        self.assertIn('Class of 2023', result)
 
     def test_defaults(self):
         alumni = self._create_alumni()
@@ -116,11 +116,11 @@ class AlumniDonationTest(TestDataMixin, TestCase):
         self.assertIsNotNone(donation.pk)
         self.assertEqual(donation.amount, Decimal('1000.00'))
 
-    def test_str_raises_type_error(self):
-        """Bug: AlumniDonation.__str__ triggers Alumni.__str__ which calls get_full_name()."""
+    def test_str(self):
+        """AlumniDonation.__str__ returns a readable string."""
         donation = self._create_donation()
-        with self.assertRaises(TypeError):
-            str(donation)
+        result = str(donation)
+        self.assertIsInstance(result, str)
 
     def test_defaults(self):
         donation = self._create_donation()
@@ -161,8 +161,8 @@ class AlumniAchievementTest(TestDataMixin, TestCase):
         self.assertIsNotNone(achievement.pk)
         self.assertEqual(achievement.title, 'Best Researcher')
 
-    def test_str_raises_type_error(self):
-        """Bug: AlumniAchievement.__str__ triggers Alumni.__str__ bug."""
+    def test_str(self):
+        """AlumniAchievement.__str__ returns a readable string."""
         student_user = self.create_student_user()
         student = self.create_student_profile(student_user)
         alumni = Alumni.objects.create(student=student, graduation_year=2022)
@@ -171,8 +171,8 @@ class AlumniAchievementTest(TestDataMixin, TestCase):
             title='Test', description='Desc',
             achievement_date=date.today(),
         )
-        with self.assertRaises(TypeError):
-            str(achievement)
+        result = str(achievement)
+        self.assertIsInstance(result, str)
 
     def test_defaults(self):
         student_user = self.create_student_user()

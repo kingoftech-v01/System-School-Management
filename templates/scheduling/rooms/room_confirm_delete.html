@@ -1,0 +1,33 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+
+{% block title %}Delete Room - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Delete Room</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:scheduling:room_list' %}">Rooms</a></li>
+        <li class="breadcrumb-item active">Delete</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5>Are you sure you want to delete this room?</h5>
+                        <p class="mb-0"><strong>{{ room.name }}</strong> ({{ room.code }}) - {{ room.building }}, Floor {{ room.floor }}</p>
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <a href="{% url 'frontend:scheduling:room_list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Delete Room</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

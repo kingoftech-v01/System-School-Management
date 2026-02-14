@@ -14,6 +14,7 @@ Frontend URL namespace: frontend:analytics:view_name
 """
 
 import csv
+import json
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -75,6 +76,7 @@ def analytics_dashboard(request):
             'recent_engagement': recent_engagement,
             'completions': completions,
             'avg_engagement': avg_engagement,
+            'total_courses': completions.count(),
         })
 
     elif request.user.role == 'lecturer':
@@ -129,12 +131,38 @@ def analytics_dashboard(request):
             is_completed=True
         ).count() / max(CourseCompletion.objects.count(), 1) * 100
 
+        # Chart data: engagement trend (30 days)
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        engagement_trend = (
+            StudentEngagement.objects
+            .filter(date__gte=thirty_days_ago)
+            .values('date')
+            .annotate(avg_score=Avg('engagement_score'))
+            .order_by('date')
+        )
+        engagement_dates = json.dumps([e['date'].strftime('%b %d') for e in engagement_trend])
+        engagement_scores = json.dumps([round(float(e['avg_score'] or 0), 1) for e in engagement_trend])
+
+        # Chart data: risk distribution
+        risk_labels = json.dumps(['Low', 'Medium', 'High', 'Critical'])
+        risk_qs = AtRiskStudent.objects.filter(is_active=True)
+        risk_counts = json.dumps([
+            risk_qs.filter(risk_level='low').count(),
+            risk_qs.filter(risk_level='medium').count(),
+            risk_qs.filter(risk_level='high').count(),
+            risk_qs.filter(risk_level='critical').count(),
+        ])
+
         context.update({
             'total_students': total_students,
             'total_courses': total_courses,
             'avg_engagement': avg_engagement,
             'at_risk_count': at_risk_count,
             'completion_rate': completion_rate,
+            'engagement_dates': engagement_dates,
+            'engagement_scores': engagement_scores,
+            'risk_labels': risk_labels,
+            'risk_counts': risk_counts,
         })
 
     return render(request, 'analytics/dashboard.html', context)

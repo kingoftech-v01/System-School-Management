@@ -50,7 +50,7 @@ class Alumni(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.student.student.get_full_name()} - Class of {self.graduation_year}"
+        return f"{self.student.student.get_full_name} - Class of {self.graduation_year}"
 
 
 class AlumniEvent(models.Model):

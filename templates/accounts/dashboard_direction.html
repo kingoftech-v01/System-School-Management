@@ -3,6 +3,10 @@
 
 {% block title %}{{ title|default:"Direction Dashboard" }} - School Management{% endblock %}
 
+{% block additional_js %}
+<script src="{% static 'w3crm/vendor/apexchart/apexchart.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="page-titles">
     <ol class="breadcrumb">
@@ -103,6 +107,31 @@
                     <i class="bi bi-calendar-range me-1"></i> Semesters
                 </a>
             </div>
+        </div>
+    </div>
+
+    <!-- Insights Panel -->
+    <div class="row mb-3">
+        <div class="col-12">
+            {% include 'includes/insights_panel.html' %}
+        </div>
+    </div>
+
+    <!-- Analytics Charts -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            {% include 'includes/charts/engagement_trend.html' %}
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            {% include 'includes/charts/risk_distribution.html' %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xl-6">
+            {% include 'includes/charts/attendance_heatmap.html' %}
+        </div>
+        <div class="col-xl-6">
+            {% include 'includes/charts/grade_distribution.html' %}
         </div>
     </div>
 

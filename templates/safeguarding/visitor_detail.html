@@ -1,0 +1,133 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Visitor Detail - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Visitor Detail</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:safeguarding:visitor_list' %}">Visitors</a></li>
+        <li class="breadcrumb-item active">Detail</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h4 class="card-title mb-0">{{ visitor.visitor_name }}</h4>
+                    {% if visitor.is_currently_on_site %}
+                    <form method="post" action="{% url 'frontend:safeguarding:visitor_sign_out' pk=visitor.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-warning">
+                            <i class="bi bi-box-arrow-right"></i> Sign Out
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted" style="width: 40%;">Visitor Name</th>
+                                    <td>{{ visitor.visitor_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Visitor Type</th>
+                                    <td>{{ visitor.get_visitor_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Organization</th>
+                                    <td>{{ visitor.organization|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Phone</th>
+                                    <td>{{ visitor.phone|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Badge #</th>
+                                    <td>{{ visitor.badge_number|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">ID Verified</th>
+                                    <td>
+                                        {% if visitor.id_verified %}
+                                        <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted" style="width: 40%;">Time In</th>
+                                    <td>{{ visitor.time_in|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Time Out</th>
+                                    <td>{{ visitor.time_out|date:"M d, Y H:i"|default:"Still on site" }}</td>
+                                </tr>
+                                {% if visitor.time_out %}
+                                <tr>
+                                    <th class="text-muted">Duration</th>
+                                    <td>{{ visitor.visit_duration }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <th class="text-muted">Host Staff</th>
+                                    <td>{{ visitor.host_staff.get_full_name|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Approved By</th>
+                                    <td>{{ visitor.approved_by.get_full_name|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Status</th>
+                                    <td>
+                                        {% if visitor.is_currently_on_site %}
+                                        <span class="badge bg-success">On Site</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Left</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h5 class="mb-2">Purpose of Visit</h5>
+                    <p>{{ visitor.purpose|linebreaksbr }}</p>
+
+                    {% if visitor.students_involved.all %}
+                    <h5 class="mb-2 mt-4">Students Involved</h5>
+                    <ul>
+                        {% for s in visitor.students_involved.all %}
+                        <li>{{ s.student.get_full_name|default:s.student.username }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if visitor.notes %}
+                    <h5 class="mb-2 mt-4">Notes</h5>
+                    <p>{{ visitor.notes|linebreaksbr }}</p>
+                    {% endif %}
+
+                    {% if visitor.related_incident %}
+                    <h5 class="mb-2 mt-4">Related Incident</h5>
+                    <a href="{% url 'frontend:safeguarding:incident_detail' pk=visitor.related_incident.pk %}">
+                        {{ visitor.related_incident.title }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

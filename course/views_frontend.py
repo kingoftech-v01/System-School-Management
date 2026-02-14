@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django_filters.views import FilterView
 
-from accounts.decorators import lecturer_required, student_required
+from accounts.decorators import direction_only, lecturer_required, student_required
 from accounts.models import Student
 from core.models import Semester
 from course.filters import CourseAllocationFilter, ProgramFilter
@@ -35,7 +35,7 @@ from result.models import TakenCourse
 # ########################################################
 
 
-@method_decorator([login_required, lecturer_required], name="dispatch")
+@method_decorator([login_required, direction_only], name="dispatch")
 class ProgramFilterView(FilterView):
     filterset_class = ProgramFilter
     template_name = "course/program_list.html"
@@ -47,7 +47,7 @@ class ProgramFilterView(FilterView):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def program_add(request):
     if request.method == "POST":
         form = ProgramForm(request.POST)
@@ -84,7 +84,7 @@ def program_detail(request, pk):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def program_edit(request, pk):
     program = get_object_or_404(Program, pk=pk)
     if request.method == "POST":
@@ -102,7 +102,7 @@ def program_edit(request, pk):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def program_delete(request, pk):
     program = get_object_or_404(Program, pk=pk)
     title = program.title
@@ -137,7 +137,7 @@ def course_single(request, slug):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def course_add(request, pk):
     program = get_object_or_404(Program, pk=pk)
     if request.method == "POST":
@@ -159,7 +159,7 @@ def course_add(request, pk):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def course_edit(request, slug):
     course = get_object_or_404(Course, slug=slug)
     if request.method == "POST":
@@ -179,7 +179,7 @@ def course_edit(request, slug):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def course_delete(request, slug):
     course = get_object_or_404(Course, slug=slug)
     title = course.title
@@ -194,7 +194,7 @@ def course_delete(request, slug):
 # ########################################################
 
 
-@method_decorator([login_required, lecturer_required], name="dispatch")
+@method_decorator([login_required, direction_only], name="dispatch")
 class CourseAllocationFormView(CreateView):
     form_class = CourseAllocationForm
     template_name = "course/course_allocation_form.html"
@@ -215,7 +215,7 @@ class CourseAllocationFormView(CreateView):
         return context
 
 
-@method_decorator([login_required, lecturer_required], name="dispatch")
+@method_decorator([login_required, direction_only], name="dispatch")
 class CourseAllocationFilterView(FilterView):
     filterset_class = CourseAllocationFilter
     template_name = "course/course_allocation_view.html"
@@ -227,7 +227,7 @@ class CourseAllocationFilterView(FilterView):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def edit_allocated_course(request, pk):
     allocation = get_object_or_404(CourseAllocation, pk=pk)
     if request.method == "POST":
@@ -247,7 +247,7 @@ def edit_allocated_course(request, pk):
 
 
 @login_required
-@lecturer_required
+@direction_only
 def deallocate_course(request, pk):
     allocation = get_object_or_404(CourseAllocation, pk=pk)
     allocation.delete()
@@ -264,6 +264,10 @@ def deallocate_course(request, pk):
 @lecturer_required
 def handle_file_upload(request, slug):
     course = get_object_or_404(Course, slug=slug)
+    # Verify the lecturer is allocated to this course
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to upload files to this course.")
+        return redirect("frontend:course:course_detail", slug=slug)
     if request.method == "POST":
         form = UploadFormFile(request.POST, request.FILES)
         if form.is_valid():
@@ -286,6 +290,9 @@ def handle_file_upload(request, slug):
 @lecturer_required
 def handle_file_edit(request, slug, file_id):
     course = get_object_or_404(Course, slug=slug)
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to edit files for this course.")
+        return redirect("frontend:course:course_detail", slug=slug)
     upload = get_object_or_404(Upload, pk=file_id)
     if request.method == "POST":
         form = UploadFormFile(request.POST, request.FILES, instance=upload)
@@ -306,6 +313,10 @@ def handle_file_edit(request, slug, file_id):
 @login_required
 @lecturer_required
 def handle_file_delete(request, slug, file_id):
+    course = get_object_or_404(Course, slug=slug)
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to delete files for this course.")
+        return redirect("frontend:course:course_detail", slug=slug)
     upload = get_object_or_404(Upload, pk=file_id)
     title = upload.title
     upload.delete()
@@ -322,6 +333,9 @@ def handle_file_delete(request, slug, file_id):
 @lecturer_required
 def handle_video_upload(request, slug):
     course = get_object_or_404(Course, slug=slug)
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to upload videos to this course.")
+        return redirect("frontend:course:course_detail", slug=slug)
     if request.method == "POST":
         form = UploadFormVideo(request.POST, request.FILES)
         if form.is_valid():
@@ -355,6 +369,9 @@ def handle_video_single(request, slug, video_slug):
 @lecturer_required
 def handle_video_edit(request, slug, video_slug):
     course = get_object_or_404(Course, slug=slug)
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to edit videos for this course.")
+        return redirect("frontend:course:course_detail", slug=slug)
     video = get_object_or_404(UploadVideo, slug=video_slug)
     if request.method == "POST":
         form = UploadFormVideo(request.POST, request.FILES, instance=video)
@@ -375,6 +392,10 @@ def handle_video_edit(request, slug, video_slug):
 @login_required
 @lecturer_required
 def handle_video_delete(request, slug, video_slug):
+    course = get_object_or_404(Course, slug=slug)
+    if not course.allocated_course.filter(lecturer=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to delete videos for this course.")
+        return redirect("frontend:course:course_detail", slug=slug)
     video = get_object_or_404(UploadVideo, slug=video_slug)
     title = video.title
     video.delete()

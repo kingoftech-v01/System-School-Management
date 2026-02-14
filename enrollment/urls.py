@@ -42,8 +42,13 @@ frontend_urlpatterns = [
     path('register/step2/', views_frontend.register_step2, name='register_step2'),
     path('register/step3/', views_frontend.register_step3, name='register_step3'),
     path('register/step4/', views_frontend.register_step4, name='register_step4'),
-    path('register/complete/<int:registration_id>/', views_frontend.register_complete, name='register_complete'),
+    path('register/complete/<str:signed_id>/', views_frontend.register_complete, name='register_complete'),
     path('register/<int:registration_id>/upload/', views_frontend.upload_document, name='upload_document'),
+
+    # Parent-authenticated enrollment (3-step wizard)
+    path('parent/enroll/step1/', views_frontend.parent_enroll_step1, name='parent_enroll_step1'),
+    path('parent/enroll/step2/', views_frontend.parent_enroll_step2, name='parent_enroll_step2'),
+    path('parent/enroll/step3/', views_frontend.parent_enroll_step3, name='parent_enroll_step3'),
 
     # Direction/Admin URLs
     path('list/', views_frontend.enrollment_list, name='enrollment_list'),

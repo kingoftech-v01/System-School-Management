@@ -60,10 +60,16 @@ def forum_home(request):
         is_published=True
     ).select_related('author', 'category').order_by('-last_activity_at')[:10]
 
+    # Community stats
+    total_threads = Thread.objects.filter(is_published=True).count()
+    total_posts = Post.objects.filter(is_deleted=False).count()
+
     context = {
         'categories': categories,
         'featured_threads': featured_threads,
         'recent_threads': recent_threads,
+        'total_threads': total_threads,
+        'total_posts': total_posts,
         'title': _('Forum'),
         'meta_description': _('Discussion forums for students and faculty'),
     }

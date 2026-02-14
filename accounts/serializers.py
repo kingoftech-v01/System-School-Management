@@ -22,10 +22,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'first_name', 'last_name', 'full_name',
+            'id', 'username', 'email', 'first_name', 'middle_name', 'last_name', 'full_name',
             'is_student', 'is_lecturer', 'is_parent', 'is_dep_head',
-            'role', 'role_display', 'phone', 'address', 'picture',
-            'date_joined', 'last_login', 'is_active', 'is_staff'
+            'role', 'role_display', 'phone',
+            'street_address', 'city', 'province', 'postal_code', 'country',
+            'picture', 'date_joined', 'last_login', 'is_active', 'is_staff'
         ]
         read_only_fields = ['date_joined', 'last_login']
         extra_kwargs = {'password': {'write_only': True}}
@@ -40,7 +41,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'username', 'email', 'password', 'password_confirm',
-            'first_name', 'last_name', 'phone', 'address',
+            'first_name', 'middle_name', 'last_name', 'phone',
+            'street_address', 'city', 'province', 'country', 'postal_code',
             'is_student', 'is_lecturer', 'is_parent', 'role'
         ]
 
@@ -93,7 +95,7 @@ class ParentSerializer(serializers.ModelSerializer):
     relation_display = serializers.CharField(source='get_relation_display', read_only=True)
 
     class Meta:
-        model = User._meta.get_field('parent').related_model  # Get Parent model if exists
+        model = User._meta.get_field('parent_profiles').related_model
         fields = [
             'id', 'user', 'user_details', 'student', 'student_name',
             'first_name', 'last_name', 'phone', 'email',

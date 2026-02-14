@@ -45,16 +45,25 @@ class AdmissionStudent(models.Model):
 
     # Personal Information
     first_name = models.CharField(max_length=100)
+    middle_name = models.CharField(max_length=100, blank=True, default='')
     last_name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
     date_of_birth = models.DateField()
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
     nationality = models.CharField(max_length=100, blank=True)
-    address = models.TextField(blank=True)
+
+    # Address
+    street_address = models.CharField(max_length=255, blank=True, default='')
+    city = models.CharField(max_length=100, blank=True, default='')
+    province = models.CharField(max_length=100, blank=True, default='')
+    country = models.CharField(max_length=100, blank=True, default='')
+    postal_code = models.CharField(max_length=20, blank=True, default='')
 
     # Guardian Information
-    guardian_name = models.CharField(max_length=200)
+    guardian_first_name = models.CharField(max_length=100, default='')
+    guardian_middle_name = models.CharField(max_length=100, blank=True, default='')
+    guardian_last_name = models.CharField(max_length=100, default='')
     guardian_phone = models.CharField(max_length=20)
     guardian_email = models.EmailField(blank=True)
 
@@ -111,10 +120,21 @@ class AdmissionStudent(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} - {self.get_status_display()}"
+        return f"{self.get_full_name()} - {self.get_status_display()}"
 
     def get_full_name(self):
-        return f"{self.first_name} {self.last_name}"
+        parts = [self.first_name, self.middle_name, self.last_name]
+        return ' '.join(p for p in parts if p)
+
+    @property
+    def guardian_full_name(self):
+        parts = [self.guardian_first_name, self.guardian_middle_name, self.guardian_last_name]
+        return ' '.join(p for p in parts if p)
+
+    @property
+    def full_address(self):
+        parts = [self.street_address, self.city, self.province, self.country, self.postal_code]
+        return ', '.join(p for p in parts if p)
 
 
 class CounselingComment(models.Model):

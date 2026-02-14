@@ -10,8 +10,9 @@ from django.db.models import Q, Count
 from django.http import HttpResponse, JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.core.signing import Signer, BadSignature
 from django_ratelimit.decorators import ratelimit
-from accounts.decorators import direction_only, tenant_required, role_required
+from accounts.decorators import registrar_only, tenant_required, role_required, parent_only
 from .models import RegistrationForm, EnrollmentDocument, EnrollmentStatusHistory
 from .forms import (
     RegistrationFormStep1, RegistrationFormStep2, RegistrationFormStep3,
@@ -20,7 +21,175 @@ from .forms import (
 )
 from .tasks import send_enrollment_status_email
 import csv
+import logging
+import string
+import random
 from datetime import datetime
+from django.db import transaction
+
+logger = logging.getLogger(__name__)
+
+
+def _generate_temp_password(length=10):
+    """Generate a random temporary password."""
+    chars = string.ascii_letters + string.digits + "!@#$%"
+    return ''.join(random.choices(chars, k=length))
+
+
+def _create_accounts_for_enrollment(registration, tenant):
+    """
+    Auto-create Student + Parent User accounts when an enrollment is approved.
+    Both accounts get temporary passwords with must_change_password=True.
+    """
+    from accounts.models import User, Student, Parent
+    from course.models import Program
+
+    with transaction.atomic():
+        # Use structured name fields directly
+        first_name = registration.student_first_name
+        last_name = registration.student_last_name
+
+        # Generate student username
+        base_username = f"student_{first_name.lower()}"
+        username = base_username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}_{counter}"
+            counter += 1
+
+        temp_password = _generate_temp_password()
+
+        # Create student user
+        student_user = User.objects.create_user(
+            username=username,
+            email=registration.email or None,
+            password=temp_password,
+            first_name=first_name,
+            last_name=last_name,
+            phone=registration.phone,
+            gender=registration.gender,
+            date_of_birth=registration.date_of_birth,
+            is_student=True,
+            role='student',
+            tenant=tenant,
+            must_change_password=True,
+        )
+
+        # Try to find a matching Program from the filiere
+        program = None
+        if registration.filiere:
+            program = Program.objects.filter(
+                title__icontains=registration.filiere.name
+            ).first()
+
+        # Create Student profile
+        student = Student.objects.create(
+            student=student_user,
+            level=registration.level,
+            program=program,
+        )
+
+        # Link enrollment to created user
+        registration.enrolled_user = student_user
+        registration.save(update_fields=['enrolled_user'])
+
+        # Create allauth EmailAddress if email provided
+        if registration.email:
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.get_or_create(
+                    user=student_user,
+                    email=registration.email,
+                    defaults={'verified': True, 'primary': True},
+                )
+            except ImportError:
+                pass
+
+        # Create or reuse parent account
+        if registration.parent_user:
+            # Parent already has an account (dashboard enrollment)
+            parent_user = registration.parent_user
+        else:
+            # Public flow — create parent account
+            parent_first = registration.parent_first_name
+            parent_last = registration.parent_last_name
+
+            parent_base_username = f"parent_{parent_first.lower()}"
+            parent_username = parent_base_username
+            counter = 1
+            while User.objects.filter(username=parent_username).exists():
+                parent_username = f"{parent_base_username}_{counter}"
+                counter += 1
+
+            parent_temp_password = _generate_temp_password()
+
+            parent_user = User.objects.create_user(
+                username=parent_username,
+                email=registration.parent_email or None,
+                password=parent_temp_password,
+                first_name=parent_first,
+                last_name=parent_last,
+                phone=registration.parent_phone,
+                is_parent=True,
+                role='parent',
+                tenant=tenant,
+                must_change_password=True,
+            )
+
+            if registration.parent_email:
+                try:
+                    from allauth.account.models import EmailAddress
+                    EmailAddress.objects.get_or_create(
+                        user=parent_user,
+                        email=registration.parent_email,
+                        defaults={'verified': True, 'primary': True},
+                    )
+                except ImportError:
+                    pass
+
+        # Create or update Parent profile (per-child link)
+        if registration.parent_user:
+            # Reuse placeholder profile (student=None) if one exists
+            placeholder = Parent.objects.filter(
+                user=parent_user, student__isnull=True
+            ).first()
+            if placeholder:
+                placeholder.student = student
+                placeholder.first_name = registration.parent_first_name or parent_user.first_name
+                placeholder.last_name = registration.parent_last_name or parent_user.last_name
+                placeholder.phone = registration.parent_phone or parent_user.phone
+                placeholder.email = registration.parent_email or parent_user.email
+                placeholder.relation_ship = registration.parent_relationship or 'Other'
+                placeholder.save()
+            else:
+                # Additional child — create new Parent profile
+                Parent.objects.create(
+                    user=parent_user,
+                    student=student,
+                    first_name=registration.parent_first_name or parent_user.first_name,
+                    last_name=registration.parent_last_name or parent_user.last_name,
+                    phone=registration.parent_phone or parent_user.phone,
+                    email=registration.parent_email or parent_user.email,
+                    relation_ship=registration.parent_relationship or 'Other',
+                )
+        else:
+            # Public flow — always create new Parent profile
+            Parent.objects.create(
+                user=parent_user,
+                student=student,
+                first_name=registration.parent_first_name or parent_user.first_name,
+                last_name=registration.parent_last_name or parent_user.last_name,
+                phone=registration.parent_phone or parent_user.phone,
+                email=registration.parent_email or parent_user.email,
+                relation_ship=registration.parent_relationship or 'Other',
+            )
+
+        logger.info(
+            f"Created accounts for enrollment {registration.id}: "
+            f"student={student_user.username}, parent={parent_user.username}"
+        )
+
+    return student_user, parent_user
 
 
 # ########################################################
@@ -143,7 +312,9 @@ def register_step4(request):
                 'You will receive an email confirmation shortly. '
                 'Our admissions team will review your application.'
             ))
-            return redirect('frontend:enrollment:register_complete', registration_id=registration.id)
+            signer = Signer()
+            signed_id = signer.sign(str(registration.id))
+            return redirect('frontend:enrollment:register_complete', signed_id=signed_id)
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
@@ -157,8 +328,15 @@ def register_step4(request):
     })
 
 
-def register_complete(request, registration_id):
-    """Registration completion page."""
+def register_complete(request, signed_id):
+    """Registration completion page - verified via signed token."""
+    signer = Signer()
+    try:
+        registration_id = signer.unsign(signed_id)
+    except BadSignature:
+        messages.error(request, _('Invalid or expired registration link.'))
+        return redirect('frontend:enrollment:register_step1')
+
     registration = get_object_or_404(RegistrationForm, id=registration_id)
 
     return render(request, 'enrollment/register_complete.html', {
@@ -166,6 +344,142 @@ def register_complete(request, registration_id):
         'title': _('Registration Complete')
     })
 
+
+# ########################################################
+# Parent-Authenticated Enrollment (3-step wizard)
+# ########################################################
+
+RELATIONSHIP_CHOICES = [
+    ('father', _('Father')),
+    ('mother', _('Mother')),
+    ('guardian', _('Legal Guardian')),
+    ('other', _('Other')),
+]
+
+
+@login_required
+@parent_only
+@ratelimit(key='user', rate='10/h', method='POST')
+def parent_enroll_step1(request):
+    """Step 1 of parent enrollment: Child personal information."""
+    if request.method == 'POST':
+        form = RegistrationFormStep1(request.POST)
+        if form.is_valid():
+            registration = form.save(commit=False)
+
+            # Set tenant
+            if hasattr(request, 'tenant'):
+                registration.tenant = request.tenant
+
+            # Auto-populate parent fields from logged-in user
+            user = request.user
+            registration.parent_first_name = user.first_name
+            registration.parent_middle_name = getattr(user, 'middle_name', '') or ''
+            registration.parent_last_name = user.last_name
+            registration.parent_email = user.email
+            registration.parent_phone = user.phone or ''
+            registration.parent_user = user
+
+            registration.save()
+
+            request.session['parent_enrollment_id'] = registration.id
+            messages.success(request, _('Child information saved. Please provide academic details.'))
+            return redirect('frontend:enrollment:parent_enroll_step2')
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = RegistrationFormStep1()
+
+    return render(request, 'enrollment/parent_enroll_step1.html', {
+        'form': form,
+        'step': 1,
+        'title': _('Enroll Child - Step 1'),
+    })
+
+
+@login_required
+@parent_only
+@ratelimit(key='user', rate='10/h', method='POST')
+def parent_enroll_step2(request):
+    """Step 2 of parent enrollment: Academic information."""
+    registration_id = request.session.get('parent_enrollment_id')
+    if not registration_id:
+        messages.error(request, _('Please start from step 1.'))
+        return redirect('frontend:enrollment:parent_enroll_step1')
+
+    registration = get_object_or_404(RegistrationForm, id=registration_id, parent_user=request.user)
+    tenant = registration.tenant if registration.tenant else getattr(request, 'tenant', None)
+
+    if request.method == 'POST':
+        form = RegistrationFormStep3(request.POST, instance=registration, tenant=tenant)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Academic information saved. Please complete the final step.'))
+            return redirect('frontend:enrollment:parent_enroll_step3')
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = RegistrationFormStep3(instance=registration, tenant=tenant)
+
+    return render(request, 'enrollment/parent_enroll_step2.html', {
+        'form': form,
+        'step': 2,
+        'registration': registration,
+        'title': _('Enroll Child - Step 2'),
+    })
+
+
+@login_required
+@parent_only
+@ratelimit(key='user', rate='10/h', method='POST')
+def parent_enroll_step3(request):
+    """Step 3 of parent enrollment: Additional info + relationship + submit."""
+    registration_id = request.session.get('parent_enrollment_id')
+    if not registration_id:
+        messages.error(request, _('Please start from step 1.'))
+        return redirect('frontend:enrollment:parent_enroll_step1')
+
+    registration = get_object_or_404(RegistrationForm, id=registration_id, parent_user=request.user)
+
+    if request.method == 'POST':
+        form = RegistrationFormStep4(request.POST, instance=registration)
+        relationship = request.POST.get('parent_relationship', 'father')
+        if form.is_valid():
+            reg = form.save(commit=False)
+            reg.parent_relationship = relationship
+            reg.save()
+
+            # Clear session
+            del request.session['parent_enrollment_id']
+
+            # Send notification email
+            send_enrollment_status_email.delay(registration.id, 'submitted')
+
+            messages.success(request, _(
+                'Enrollment submitted successfully! '
+                'You will receive an email confirmation shortly. '
+                'Our admissions team will review your application.'
+            ))
+            signer = Signer()
+            signed_id = signer.sign(str(registration.id))
+            return redirect('frontend:enrollment:register_complete', signed_id=signed_id)
+        else:
+            messages.error(request, _('Please correct the errors below.'))
+    else:
+        form = RegistrationFormStep4(instance=registration)
+
+    return render(request, 'enrollment/parent_enroll_step3.html', {
+        'form': form,
+        'step': 3,
+        'registration': registration,
+        'title': _('Enroll Child - Step 3'),
+        'relationship_choices': RELATIONSHIP_CHOICES,
+    })
+
+
+# ########################################################
+# Document Upload
+# ########################################################
 
 @ratelimit(key='ip', rate='20/h', method='POST')
 def upload_document(request, registration_id):
@@ -200,7 +514,7 @@ def upload_document(request, registration_id):
 # ########################################################
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def enrollment_list(request):
@@ -211,8 +525,11 @@ def enrollment_list(request):
     # Apply filters
     if form.is_valid():
         if form.cleaned_data.get('student_name'):
+            name_q = form.cleaned_data['student_name']
             registrations = registrations.filter(
-                student_name__icontains=form.cleaned_data['student_name']
+                Q(student_first_name__icontains=name_q) |
+                Q(student_middle_name__icontains=name_q) |
+                Q(student_last_name__icontains=name_q)
             )
         if form.cleaned_data.get('email'):
             registrations = registrations.filter(
@@ -260,7 +577,7 @@ def enrollment_list(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='100/h')
 def enrollment_detail(request, registration_id):
@@ -278,12 +595,12 @@ def enrollment_detail(request, registration_id):
         'registration': registration,
         'documents': documents,
         'history': history,
-        'title': f'{registration.student_name} - Registration Detail'
+        'title': f'{registration.student_full_name} - Registration Detail'
     })
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def enrollment_review(request, registration_id):
@@ -312,6 +629,38 @@ def enrollment_review(request, registration_id):
                 notes=registration.review_notes
             )
 
+            # Check enrollment capacity before approving
+            if registration.status == 'approved' and old_status != 'approved':
+                if registration.filiere and registration.filiere.capacity:
+                    current_count = RegistrationForm.objects.filter(
+                        filiere=registration.filiere,
+                        academic_year=registration.academic_year,
+                        status__in=['approved', 'enrolled'],
+                    ).exclude(pk=registration.pk).count()
+                    if current_count >= registration.filiere.capacity:
+                        registration.status = old_status
+                        registration.save()
+                        messages.error(request, _(
+                            'Cannot approve: program capacity reached '
+                            f'({registration.filiere.capacity} students).'
+                        ))
+                        return redirect('frontend:enrollment:enrollment_review',
+                                       registration_id=registration.id)
+
+            # Auto-create accounts when approved
+            if registration.status == 'approved' and old_status != 'approved':
+                try:
+                    _create_accounts_for_enrollment(registration, request.tenant)
+                    messages.info(request, _(
+                        'Student and parent accounts have been created with temporary passwords.'
+                    ))
+                except Exception as e:
+                    logger.error(f"Failed to create accounts for registration {registration.id}: {e}")
+                    messages.warning(request, _(
+                        'Registration approved, but account creation failed. '
+                        'Please create accounts manually.'
+                    ))
+
             # Send notification email
             send_enrollment_status_email.delay(
                 registration.id,
@@ -333,7 +682,7 @@ def enrollment_review(request, registration_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def verify_document(request, document_id):
@@ -357,7 +706,7 @@ def verify_document(request, document_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='20/h')
 def export_enrollments_csv(request):
@@ -369,7 +718,12 @@ def export_enrollments_csv(request):
     if form.is_valid():
         # Apply same filters as enrollment_list
         if form.cleaned_data.get('student_name'):
-            registrations = registrations.filter(student_name__icontains=form.cleaned_data['student_name'])
+            name_q = form.cleaned_data['student_name']
+            registrations = registrations.filter(
+                Q(student_first_name__icontains=name_q) |
+                Q(student_middle_name__icontains=name_q) |
+                Q(student_last_name__icontains=name_q)
+            )
         if form.cleaned_data.get('status'):
             registrations = registrations.filter(status=form.cleaned_data['status'])
         # ... (apply other filters)
@@ -379,20 +733,32 @@ def export_enrollments_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        'Student Name', 'Email', 'Phone', 'Gender', 'Date of Birth',
-        'Parent Name', 'Parent Email', 'Parent Phone',
+        'First Name', 'Middle Name', 'Last Name',
+        'Email', 'Phone', 'Gender', 'Date of Birth',
+        'Street Address', 'City', 'Province', 'Country', 'Postal Code',
+        'Parent First Name', 'Parent Middle Name', 'Parent Last Name',
+        'Parent Email', 'Parent Phone',
         'Filiere', 'Academic Year', 'Level', 'Enrollment Type',
         'Status', 'Submitted At', 'Reviewed By', 'Reviewed At'
     ])
 
     for reg in registrations:
         writer.writerow([
-            reg.student_name,
+            reg.student_first_name,
+            reg.student_middle_name,
+            reg.student_last_name,
             reg.email,
             reg.phone,
             reg.get_gender_display(),
             reg.date_of_birth,
-            reg.parent_name,
+            reg.street_address,
+            reg.city,
+            reg.province,
+            reg.country,
+            reg.postal_code,
+            reg.parent_first_name,
+            reg.parent_middle_name,
+            reg.parent_last_name,
             reg.parent_email,
             reg.parent_phone,
             reg.filiere.name if reg.filiere else '',
@@ -405,11 +771,26 @@ def export_enrollments_csv(request):
             reg.reviewed_at.strftime('%Y-%m-%d %H:%M') if reg.reviewed_at else ''
         ])
 
+    # Audit log the export
+    try:
+        from core.models import ActivityLog
+        tenant_name = request.tenant.name if hasattr(request, 'tenant') else 'Unknown'
+        ActivityLog.objects.create(
+            message=(
+                f"CSV EXPORT: User {request.user.username} ({getattr(request.user, 'role', 'unknown')}) "
+                f"exported {registrations.count()} enrollment records "
+                f"from tenant {tenant_name} | IP: {request.META.get('REMOTE_ADDR')}"
+            )
+        )
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to log CSV export: {e}")
+
     return response
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h')
 def enrollment_statistics(request):
@@ -449,7 +830,7 @@ def enrollment_statistics(request):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 @ratelimit(key='user', rate='50/h', method='POST')
 def registration_edit(request, registration_id):
@@ -484,7 +865,7 @@ def registration_edit(request, registration_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 def registration_delete(request, registration_id):
     """Delete a registration. GET shows confirm page, POST deletes."""
@@ -495,7 +876,7 @@ def registration_delete(request, registration_id):
     )
 
     if request.method == 'POST':
-        student_name = registration.student_name
+        student_name = registration.student_full_name
         registration.delete()
         messages.success(
             request,
@@ -510,7 +891,7 @@ def registration_delete(request, registration_id):
 
 
 @login_required
-@direction_only
+@registrar_only
 @tenant_required
 def document_delete(request, document_id):
     """Delete an enrollment document (POST-only, direction only)."""

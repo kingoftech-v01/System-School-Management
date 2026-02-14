@@ -17,8 +17,8 @@
         <div class="col-xl-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h4 class="card-title mb-0">{{ registration.student_name }}</h4>
-                    {% if is_direction or is_admin %}
+                    <h4 class="card-title mb-0">{{ registration.student_full_name }}</h4>
+                    {% if is_registrar or is_direction or is_secretary or is_admin %}
                     <div class="d-flex gap-2 flex-wrap">
                         <a href="{% url 'frontend:enrollment:registration_edit' registration_id=registration.id %}" class="btn btn-sm btn-primary">
                             <i class="bi bi-pencil"></i> Edit
@@ -53,7 +53,7 @@
                         <div class="col-md-6">
                             <h6 class="text-muted mb-3">Student Information</h6>
                             <table class="table table-sm table-borderless">
-                                <tr><th class="text-muted">Full Name</th><td>{{ registration.student_name }}</td></tr>
+                                <tr><th class="text-muted">Full Name</th><td>{{ registration.student_full_name }}</td></tr>
                                 <tr><th class="text-muted">Date of Birth</th><td>{{ registration.date_of_birth|date:"M d, Y" }}</td></tr>
                                 <tr><th class="text-muted">Gender</th><td>{{ registration.get_gender_display }}</td></tr>
                                 <tr><th class="text-muted">Email</th><td>{{ registration.email }}</td></tr>
@@ -64,7 +64,7 @@
                         <div class="col-md-6">
                             <h6 class="text-muted mb-3">Parent/Guardian Information</h6>
                             <table class="table table-sm table-borderless">
-                                <tr><th class="text-muted">Name</th><td>{{ registration.parent_name }}</td></tr>
+                                <tr><th class="text-muted">Name</th><td>{{ registration.parent_full_name }}</td></tr>
                                 <tr><th class="text-muted">Email</th><td>{{ registration.parent_email }}</td></tr>
                                 <tr><th class="text-muted">Phone</th><td>{{ registration.parent_phone }}</td></tr>
                                 <tr><th class="text-muted">Relationship</th><td>{{ registration.parent_relationship }}</td></tr>
@@ -117,7 +117,7 @@
                                     <th>Description</th>
                                     <th>Uploaded</th>
                                     <th>Verification</th>
-                                    {% if is_direction or is_admin %}
+                                    {% if is_registrar or is_direction or is_secretary or is_admin %}
                                     <th>Actions</th>
                                     {% endif %}
                                 </tr>
@@ -138,7 +138,7 @@
                                         <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>
                                         {% endif %}
                                     </td>
-                                    {% if is_direction or is_admin %}
+                                    {% if is_registrar or is_direction or is_secretary or is_admin %}
                                     <td>
                                         {% if doc.file %}
                                         <a href="{{ doc.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Download">
@@ -198,7 +198,7 @@
     </div>
 </div>
 
-{% if is_direction or is_admin %}
+{% if is_registrar or is_direction or is_secretary or is_admin %}
 <!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -208,7 +208,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to delete the registration for <strong>{{ registration.student_name }}</strong>?
+                Are you sure you want to delete the registration for <strong>{{ registration.student_full_name }}</strong>?
                 This action cannot be undone and will remove all associated documents.
             </div>
             <div class="modal-footer">

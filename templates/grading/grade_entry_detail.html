@@ -17,7 +17,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title">Grade Entry Detail</h4>
-                    {% if is_professor or is_direction %}
+                    {% if is_professor or is_direction or is_secretary %}
                     <div>
                         <a href="{% url 'frontend:grading:grade_entry_edit' grade.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i> Edit</a>
                         <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="bi bi-trash"></i> Delete</button>
@@ -79,7 +79,7 @@
     </div>
 </div>
 
-{% if is_professor or is_direction %}
+{% if is_professor or is_direction or is_secretary %}
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">

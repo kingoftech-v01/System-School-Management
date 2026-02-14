@@ -13,7 +13,7 @@ def notify_note_status_change(note_id, status):
         # Notify professor
         send_mail(
             subject=f'[{note.tenant.name}] Note {status.title()}',
-            message=f'Your note for {note.student.get_full_name()} has been {status}.',
+            message=f'Your note for {note.student.get_full_name} has been {status}.',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[note.professor.email],
             fail_silently=True

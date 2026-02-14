@@ -40,7 +40,7 @@ class RegistrationFormAdmin(admin.ModelAdmin):
     """Admin interface for registration forms."""
 
     list_display = (
-        'student_name',
+        'student_full_name',
         'colored_status',
         'enrollment_type',
         'filiere',
@@ -61,10 +61,12 @@ class RegistrationFormAdmin(admin.ModelAdmin):
         'tenant'
     )
     search_fields = (
-        'student_name',
+        'student_first_name',
+        'student_last_name',
         'email',
         'phone',
-        'parent_name',
+        'parent_first_name',
+        'parent_last_name',
         'parent_email'
     )
     readonly_fields = (
@@ -80,18 +82,26 @@ class RegistrationFormAdmin(admin.ModelAdmin):
         }),
         (_('Student Information'), {
             'fields': (
-                'student_name',
+                'student_first_name',
+                'student_middle_name',
+                'student_last_name',
                 'date_of_birth',
                 'gender',
                 'nationality',
                 'email',
                 'phone',
-                'address'
+                'street_address',
+                'city',
+                'province',
+                'country',
+                'postal_code'
             )
         }),
         (_('Parent/Guardian Information'), {
             'fields': (
-                'parent_name',
+                'parent_first_name',
+                'parent_middle_name',
+                'parent_last_name',
                 'parent_email',
                 'parent_phone',
                 'parent_relationship'
@@ -240,7 +250,8 @@ class EnrollmentDocumentAdmin(admin.ModelAdmin):
         'registration__tenant'
     )
     search_fields = (
-        'registration__student_name',
+        'registration__student_first_name',
+        'registration__student_last_name',
         'description'
     )
     readonly_fields = ('uploaded_at', 'file_size_display')
@@ -277,7 +288,8 @@ class EnrollmentStatusHistoryAdmin(admin.ModelAdmin):
         'registration__tenant'
     )
     search_fields = (
-        'registration__student_name',
+        'registration__student_first_name',
+        'registration__student_last_name',
         'notes'
     )
     readonly_fields = (

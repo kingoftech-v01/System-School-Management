@@ -136,13 +136,14 @@ A comprehensive, multi-tenant school management system built with Django, Postgr
    - Main application: http://stmary.localhost:8000
    - Admin panel: http://stmary.localhost:8000/admin
 
-8. **(Optional) Create demo data**
+8. **(Optional) Seed reference data and generate demo data**
    ```bash
+   # Seed lookup/reference data (categories, rooms, grading scales, etc.)
+   docker-compose exec web python manage.py seed_initial_data
+
+   # Generate 11,000+ realistic demo records across all apps
    docker-compose exec web python manage.py create_demo_data \
-     --tenant "St. Mary High School" \
-     --professors 5 \
-     --students 10 \
-     --parents 5
+     --tenant "St. Mary High School"
    ```
 
 ## Architecture Overview
@@ -216,92 +217,65 @@ PostgreSQL Database
 
 ## Applications
 
-The system consists of 10 core Django applications:
+The system consists of 26 Django applications organized by function:
 
-### 1. **core** - Core Functionality
-- Tenant (School) model and domain routing
-- Session (Academic Year) management
-- Semester management
-- News and events publishing
-- Activity logging
-- Shared utilities and helpers
+### Core & Identity
 
-### 2. **accounts** - User Management
-- Custom User model with multiple roles
-- Student profiles with program/level
-- Parent profiles linked to students
-- Department Head (Direction) management
-- User authentication and authorization
-- Profile picture management
-- User search functionality
+| App | Purpose |
+| --- | --- |
+| **core** | Tenant (School) model, sessions, semesters, activity logging |
+| **accounts** | Custom User model (10 roles), Student/Parent profiles, invitations, parent-teacher messaging |
+| **filieres** | Academic tracks (filieres) with subjects and coefficients |
 
-### 3. **authentication** - Advanced Authentication
-- Two-Factor Authentication (2FA)
-- OAuth social login (Google, GitHub, Facebook, LinkedIn)
-- Password reset and email verification
-- Session management
-- Login attempt tracking and throttling
-- Security middleware
+### Academics
 
-### 4. **course** - Academic Courses
-- Program (Filiere) management
-- Course creation and management
-- Course allocation to professors
-- File uploads (PDFs, documents)
-- Video uploads for courses
-- Course offering by department heads
-- Elective course support
+| App | Purpose |
+| --- | --- |
+| **course** | Programs, courses, allocations, file/video uploads |
+| **enrollment** | Student registration wizard, document uploads, status workflow |
+| **admissions** | Multi-stage admission pipeline, counseling, admission payments |
+| **attendance** | Daily/subject attendance, reports, parent notifications, statistics |
+| **result** | Grade recording, GPA/CGPA, transcripts, grade appeals, PDF report cards |
+| **grading** | Rubrics, criterion grading, peer reviews, grade curves |
+| **notes** | Professor notes with approval workflow, history, comments |
+| **quiz** | Online quizzes (MC, T/F, essay), sittings, progress tracking |
+| **scheduling** | Timetable generation, professor availability, substitutions |
 
-### 5. **attendance** - Attendance Tracking
-- Daily attendance recording by professors
-- Subject-specific attendance
-- Student attendance reports
-- Automatic email notifications to parents
-- Attendance statistics and analytics
-- Export attendance data
+### Community & Communication
 
-### 6. **result** - Grades & Results
-- Grade recording (A+, A, A-, B+, etc.)
-- GPA and CGPA calculation
-- Semester-wise results
-- PDF report card generation
-- Grade point mapping
-- Pass/Fail determination
-- Academic transcript generation
+| App | Purpose |
+| --- | --- |
+| **forums** | Threaded discussions, votes, subscriptions, moderation |
+| **articles** | News/blog with categories, comments, likes, newsletters |
+| **notices** | Notice board with targeting groups and acknowledgments |
+| **events** | School calendar, event types, audience targeting, reminders |
 
-### 7. **payments** - Fee Management
-- Invoice creation and management
-- Payment tracking
-- Payment completion status
-- Invoice code generation
-- Payment history
-- Automated payment reminders
-- Integration with payment gateways (Stripe)
+### Administration
 
-### 8. **quiz** - Assessments & Quizzes
-- Online quiz creation
-- Question bank management
-- Student quiz attempts
-- Automatic grading
-- Quiz analytics
-- Time-limited assessments
+| App | Purpose |
+| --- | --- |
+| **payments** | Fee structures, invoices, payment plans, installments, receipts |
+| **library** | Book inventory (ISBN, categories), borrowing, overdue tracking |
+| **certificates** | Certificate generation, verification, batch operations |
+| **discipline** | Disciplinary actions with audit trail |
+| **safeguarding** | Incident reporting, visitor logs, student case notes |
 
-### 9. **search** - Global Search
-- Search students by name, email, ID
-- Search parents and their children
-- Search courses and programs
-- Full academic record retrieval
-- Direction-only access
-- Advanced filtering
+### Analytics & Monitoring
 
-### 10. **dailystat** - Analytics & Statistics
-- Student enrollment statistics
-- Attendance trends
-- Performance analytics
-- Gender distribution reports
-- Program-wise statistics
-- Payment collection reports
-- Custom date range reports
+| App | Purpose |
+| --- | --- |
+| **analytics** | Student engagement, course completion, learning outcomes, at-risk alerts |
+| **anomaly_detection** | Automated anomaly alerts (login, grade, payment patterns) |
+| **monitoring** | Direction dashboards, enrollment/gender/payment stats |
+| **dailystat** | Daily statistics aggregation |
+| **search** | Global search across all records with advanced filtering |
+
+### Auditing
+
+| App | Purpose |
+| --- | --- |
+| **audit** | Field-level change tracking via mixins |
+| **reports** | Report export logging |
 
 ## User Roles & Permissions
 
@@ -505,7 +479,50 @@ See `.env.example` for complete configuration options.
 
 ## Management Commands
 
+### Seed Reference Data
+
+Populates lookup/reference data (categories, rooms, time slots, grading scales, etc.) for all apps. Safe to run multiple times (idempotent).
+
+```bash
+python manage.py seed_initial_data
+```
+
+### Create Demo Data
+
+Generates 11,000+ realistic fake records across all 26 apps for end-to-end testing. Uses Faker for realistic names, emails, and content. Runs in 5 dependency-ordered phases.
+
+```bash
+# Default: 150 students, 20 professors, 20 parents
+python manage.py create_demo_data
+
+# Specify tenant
+python manage.py create_demo_data --tenant "St. Mary High School"
+
+# Customize counts
+python manage.py create_demo_data --students 200 --professors 25 --parents 30
+
+# Generate for specific apps only
+python manage.py create_demo_data --apps accounts,course,library
+
+# Reproducible data with seed
+python manage.py create_demo_data --seed 42
+```
+
+**Demo Credentials:**
+| Role | Username | Email | Password |
+|------|----------|-------|----------|
+| Professors | `prof1`..`prof20` | `professor1@school.edu`..`professor20@school.edu` | `password123` |
+| Students | `student1`..`student150` | `student1@school.edu`..`student150@school.edu` | `password123` |
+| Parents | `parent1`..`parent20` | `parent1@email.com`..`parent20@email.com` | `password123` |
+| Direction | `direction1`..`direction3` | `direction1@school.edu`..`direction3@school.edu` | `password123` |
+| Accountant | `accountant1`..`accountant2` | `accountant1@school.edu`..`accountant2@school.edu` | `password123` |
+| Secretary | `secretary1`..`secretary2` | `secretary1@school.edu`..`secretary2@school.edu` | `password123` |
+| Librarian | `librarian1` | `librarian1@school.edu` | `password123` |
+| Registrar | `registrar1` | `registrar1@school.edu` | `password123` |
+| Prefet | `prefet1` | `prefet1@school.edu` | `password123` |
+
 ### Create Tenant
+
 ```bash
 python manage.py create_tenant \
   --name "School Name" \
@@ -521,17 +538,8 @@ python manage.py create_tenant \
   --max-students 1000
 ```
 
-### Create Demo Data
-```bash
-python manage.py create_demo_data \
-  --tenant "School Name" \
-  --professors 10 \
-  --students 50 \
-  --parents 25 \
-  --direction-members 5
-```
-
 ### Setup 2FA
+
 ```bash
 # Enable 2FA for all staff
 python manage.py setup_2fa --role staff
@@ -547,6 +555,7 @@ python manage.py setup_2fa --disable --role all
 ```
 
 ### Standard Django Commands
+
 ```bash
 # Run migrations for all tenants
 python manage.py migrate_schemas
@@ -1040,5 +1049,5 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** December 24, 2025
+**Version:** 1.1.0
+**Last Updated:** February 13, 2026

@@ -6,7 +6,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     serializer_class = ArticleSerializer
     def get_queryset(self):
-        return Article.objects.filter(is_published=True)
+        return Article.objects.filter(status='published')
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]

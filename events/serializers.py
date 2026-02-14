@@ -32,7 +32,7 @@ class UserMinimalSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         """Get user's full name."""
-        return obj.get_full_name() if hasattr(obj, 'get_full_name') else obj.username
+        return obj.get_full_name if hasattr(obj, 'get_full_name') else obj.username
 
 
 # ============================================================================
@@ -121,12 +121,7 @@ class EventCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate_end_date(self, value):
-        """Ensure end date is after start date."""
-        start_date = self.initial_data.get('start_date')
-
-        if value and start_date and value < start_date:
-            raise serializers.ValidationError('End date must be after start date.')
-
+        """Ensure end date is after start date (cross-field check in validate())."""
         return value
 
     def validate(self, attrs):

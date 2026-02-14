@@ -1,0 +1,143 @@
+{% extends 'reports/pdf/base_report.html' %}
+
+{% block report_title %}Incident Report{% endblock %}
+{% block report_type_label %}INCIDENT REPORT{% endblock %}
+
+{% block content %}
+<h1>Incident Report</h1>
+
+<div class="section">
+    <h2>Incident Details</h2>
+    <table class="info-table">
+        <tr>
+            <th>Title</th>
+            <td>{{ incident.title }}</td>
+        </tr>
+        <tr>
+            <th>Type</th>
+            <td>{{ incident.get_incident_type_display }}</td>
+        </tr>
+        <tr>
+            <th>Severity</th>
+            <td>
+                {% if incident.severity == 'critical' %}<span class="badge badge-danger">Critical</span>
+                {% elif incident.severity == 'high' %}<span class="badge badge-warning">High</span>
+                {% elif incident.severity == 'medium' %}<span class="badge badge-info">Medium</span>
+                {% else %}<span class="badge badge-secondary">Low</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>{{ incident.get_status_display }}</td>
+        </tr>
+        <tr>
+            <th>Date</th>
+            <td>{{ incident.incident_date|date:"M d, Y" }}{% if incident.incident_time %} at {{ incident.incident_time|time:"H:i" }}{% endif %}</td>
+        </tr>
+        <tr>
+            <th>Location</th>
+            <td>{{ incident.location|default:"-" }}</td>
+        </tr>
+        <tr>
+            <th>Reported By</th>
+            <td>{{ incident.reported_by.get_full_name|default:incident.reported_by.username }}</td>
+        </tr>
+        <tr>
+            <th>Created</th>
+            <td>{{ incident.created_at|date:"M d, Y H:i" }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Description</h2>
+    <p>{{ incident.description|linebreaksbr }}</p>
+</div>
+
+{% if incident.students_involved.all %}
+<div class="section">
+    <h2>Students Involved</h2>
+    <table>
+        <thead>
+            <tr><th>Name</th><th>Program</th></tr>
+        </thead>
+        <tbody>
+            {% for s in incident.students_involved.all %}
+            <tr>
+                <td>{{ s.student.get_full_name|default:s.student.username }}</td>
+                <td>{{ s.program|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if incident.staff_involved.all %}
+<div class="section">
+    <h2>Staff Involved</h2>
+    <table>
+        <thead>
+            <tr><th>Name</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+            {% for u in incident.staff_involved.all %}
+            <tr>
+                <td>{{ u.get_full_name|default:u.username }}</td>
+                <td>{{ u.role|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if incident.external_parties %}
+<div class="section">
+    <h2>External Parties</h2>
+    <p>{{ incident.external_parties|linebreaksbr }}</p>
+</div>
+{% endif %}
+
+{% if incident.witnesses %}
+<div class="section">
+    <h2>Witnesses</h2>
+    <p>{{ incident.witnesses|linebreaksbr }}</p>
+</div>
+{% endif %}
+
+{% if incident.actions_taken %}
+<div class="section">
+    <h2>Actions Taken</h2>
+    <p>{{ incident.actions_taken|linebreaksbr }}</p>
+</div>
+{% endif %}
+
+{% if incident.follow_up_notes %}
+<div class="section">
+    <h2>Follow-up</h2>
+    <table class="info-table">
+        <tr>
+            <th>Follow-up Needed</th>
+            <td>{% if incident.follow_up_needed %}Yes{% else %}No{% endif %}</td>
+        </tr>
+        {% if incident.follow_up_date %}
+        <tr>
+            <th>Follow-up Date</th>
+            <td>{{ incident.follow_up_date|date:"M d, Y" }}</td>
+        </tr>
+        {% endif %}
+    </table>
+    <p>{{ incident.follow_up_notes|linebreaksbr }}</p>
+</div>
+{% endif %}
+
+{% if incident.resolution %}
+<div class="section">
+    <h2>Resolution</h2>
+    <p>{{ incident.resolution|linebreaksbr }}</p>
+</div>
+{% endif %}
+
+{% endblock %}

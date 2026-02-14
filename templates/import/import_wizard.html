@@ -1,0 +1,200 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Data Import - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Data Import</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item active">Import</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        <i class="bi bi-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Progress Steps -->
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <div class="d-flex justify-content-center gap-4">
+                <div class="text-center {% if step == 'select' %}text-primary fw-bold{% else %}text-muted{% endif %}">
+                    <span class="badge {% if step == 'select' %}bg-primary{% else %}bg-secondary{% endif %} rounded-circle me-1">1</span>
+                    Select Type
+                </div>
+                <div class="text-center {% if step == 'upload' %}text-primary fw-bold{% else %}text-muted{% endif %}">
+                    <span class="badge {% if step == 'upload' %}bg-primary{% else %}bg-secondary{% endif %} rounded-circle me-1">2</span>
+                    Upload File
+                </div>
+                <div class="text-center {% if step == 'preview' %}text-primary fw-bold{% else %}text-muted{% endif %}">
+                    <span class="badge {% if step == 'preview' %}bg-primary{% else %}bg-secondary{% endif %} rounded-circle me-1">3</span>
+                    Preview & Confirm
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if step == 'select' %}
+    <!-- Step 1: Select Import Type -->
+    <div class="row">
+        {% for key, config in import_types.items %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-file-earmark-spreadsheet fs-1 text-primary mb-3 d-block"></i>
+                    <h4 class="card-title">{{ config.label }}</h4>
+                    <p class="text-muted small">Import {{ config.label }} from CSV or Excel files.</p>
+                    <a href="{% url 'frontend:core:import_upload' import_type=key %}" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i> Import {{ config.label }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if step == 'upload' %}
+    <!-- Step 2: Upload File -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-upload me-2"></i>Upload {{ config.label }} File
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="import_file" class="form-label">Choose CSV or Excel file</label>
+                            <input type="file" class="form-control" id="import_file" name="import_file"
+                                   accept=".csv,.xlsx,.xls" required>
+                            <div class="form-text">
+                                Accepted formats: CSV (.csv) or Excel (.xlsx)
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-info-circle me-1"></i> Expected columns:</h6>
+                            <code>{{ config.sample_headers }}</code>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'frontend:core:import_select' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-eye me-1"></i> Preview Import
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if step == 'preview' %}
+    <!-- Step 3: Preview & Confirm -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Summary -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">{{ total_rows }}</h3>
+                            <small class="text-muted">Total Rows</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ new_count }}</h3>
+                            <small class="text-muted">New Records</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-info">{{ update_count }}</h3>
+                            <small class="text-muted">Updates</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="{% if error_count > 0 %}text-danger{% else %}text-success{% endif %}">{{ error_count }}</h3>
+                            <small class="text-muted">Errors</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Preview -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Data Preview</h4>
+                    {% if has_errors %}
+                    <span class="badge bg-danger">Has Errors - Fix and re-upload</span>
+                    {% else %}
+                    <span class="badge bg-success">Ready to Import</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    {% for header in headers %}
+                                    <th>{{ header }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in dataset %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    {% for cell in row %}
+                                    <td>{{ cell|default:"-" }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'frontend:core:import_upload' import_type=import_type %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Re-upload
+                </a>
+                {% if not has_errors %}
+                <form method="post" action="{% url 'frontend:core:import_confirm' import_type=import_type %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle me-1"></i> Confirm Import ({{ new_count }} new, {{ update_count }} updates)
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

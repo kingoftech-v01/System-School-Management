@@ -18,7 +18,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h4 class="card-title mb-0">{{ title }}</h4>
                     <div class="d-flex gap-2 flex-wrap">
-                        {% if is_direction or is_admin %}
+                        {% if is_direction or is_secretary or is_admin %}
                         <a href="{% url 'frontend:alumni:alumni_create' %}" class="btn btn-sm btn-primary">
                             <i class="bi bi-plus-lg"></i> Add Alumni
                         </a>
@@ -78,7 +78,7 @@
                                         <a href="{% url 'frontend:alumni:profile' pk=alumni.pk %}" class="btn btn-sm btn-outline-primary" title="View profile">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        {% if is_direction or is_admin %}
+                                        {% if is_direction or is_secretary or is_admin %}
                                         <a href="{% url 'frontend:alumni:alumni_edit' pk=alumni.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>

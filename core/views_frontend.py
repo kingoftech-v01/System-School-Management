@@ -52,6 +52,16 @@ def unified_dashboard(request):
         return render_parent_dashboard(request, base_context)
     elif user_role == 'professor':
         return render_professor_dashboard(request, base_context)
+    elif user_role == 'prefet':
+        return render_prefet_dashboard(request, base_context)
+    elif user_role == 'accountant':
+        return render_accountant_dashboard(request, base_context)
+    elif user_role == 'secretary':
+        return render_secretary_dashboard(request, base_context)
+    elif user_role == 'librarian':
+        return render_librarian_dashboard(request, base_context)
+    elif user_role == 'registrar':
+        return render_registrar_dashboard(request, base_context)
     elif user_role == 'direction':
         return render_direction_dashboard(request, base_context)
     elif user_role == 'admin':
@@ -137,22 +147,31 @@ def render_student_dashboard(request, base_context):
 
 def render_parent_dashboard(request, base_context):
     """Render parent-specific dashboard with child monitoring data."""
-    try:
-        parent = Parent.objects.select_related('student').get(user=request.user)
-        student = parent.student
-    except Parent.DoesNotExist:
-        context = {
-            **base_context,
-            'title': 'Parent Dashboard',
-            'error': 'Parent profile not found. Please contact administration.'
-        }
-        return render(request, 'dashboards/parent_dashboard.html', context)
+    parent_profiles = Parent.objects.select_related('student').filter(user=request.user)
+    linked_profiles = parent_profiles.filter(student__isnull=False)
+
+    # If no profiles or no linked children, redirect to parent portal (has empty state)
+    if not linked_profiles.exists():
+        return redirect('frontend:accounts:parent_dashboard')
+
+    # Support multi-child: use session-selected child or default to first
+    active_child_id = request.session.get('active_child_id')
+    parent = None
+    if active_child_id:
+        parent = linked_profiles.filter(student_id=active_child_id).first()
+    if not parent:
+        parent = linked_profiles.first()
+
+    student = parent.student
+    children = [p.student for p in linked_profiles]
 
     context = {
         **base_context,
         'title': 'Parent Dashboard',
         'parent': parent,
         'student': student,
+        'children': children,
+        'active_child_id': parent.student_id if parent.student else None,
     }
 
     return render(request, 'dashboards/parent_dashboard.html', context)
@@ -188,6 +207,64 @@ def render_professor_dashboard(request, base_context):
     return render(request, 'dashboards/professor_dashboard.html', context)
 
 
+def render_secretary_dashboard(request, base_context):
+    """Render secretary dashboard with academic management focus (no financial data)."""
+    total_students = Student.objects.filter(student__tenant=request.tenant).count()
+    total_professors = User.objects.filter(
+        tenant=request.tenant,
+        role='professor'
+    ).count()
+
+    # Enrollment stats
+    pending_enrollments = 0
+    try:
+        from enrollment.models import EnrollmentApplication
+        pending_enrollments = EnrollmentApplication.objects.filter(
+            status='pending'
+        ).count()
+    except Exception:
+        pass
+
+    # Upcoming events
+    upcoming_events = []
+    try:
+        from events.models import Event
+        upcoming_events = Event.objects.filter(
+            start_date__gte=timezone.now()
+        ).order_by('start_date')[:5]
+    except Exception:
+        pass
+
+    # Recent notices
+    recent_notices = []
+    try:
+        from notices.models import Notice
+        recent_notices = Notice.objects.order_by('-created_at')[:5]
+    except Exception:
+        pass
+
+    # Certificate stats
+    certificate_count = 0
+    try:
+        from certificates.models import Certificate
+        certificate_count = Certificate.objects.count()
+    except Exception:
+        pass
+
+    context = {
+        **base_context,
+        'title': 'Secretary Dashboard',
+        'total_students': total_students,
+        'total_professors': total_professors,
+        'pending_enrollments': pending_enrollments,
+        'upcoming_events': upcoming_events,
+        'recent_notices': recent_notices,
+        'certificate_count': certificate_count,
+    }
+
+    return render(request, 'dashboards/secretary_dashboard.html', context)
+
+
 def render_direction_dashboard(request, base_context):
     """Render direction-specific dashboard with school-wide analytics."""
     total_students = Student.objects.filter(student__tenant=request.tenant).count()
@@ -220,6 +297,211 @@ def render_direction_dashboard(request, base_context):
     }
 
     return render(request, 'dashboards/direction_dashboard.html', context)
+
+
+def render_prefet_dashboard(request, base_context):
+    """Render discipline officer dashboard with discipline and attendance focus."""
+    from discipline.models import DisciplinaryAction
+    from django.db.models import Count
+
+    # Discipline stats
+    all_actions = DisciplinaryAction.objects.filter(tenant=request.tenant)
+    total_actions = all_actions.count()
+    pending_actions = all_actions.filter(is_resolved=False).count()
+    resolved_actions = all_actions.filter(is_resolved=True).count()
+
+    # Severity breakdown
+    severity_breakdown = list(
+        all_actions.values('severity').annotate(count=Count('id')).order_by('severity')
+    )
+
+    # Recent incidents (last 10)
+    recent_incidents = all_actions.select_related(
+        'student', 'reported_by'
+    ).order_by('-incident_date')[:10]
+
+    # Attendance overview
+    attendance_stats = {}
+    try:
+        from attendance.models import Attendance, AttendanceReport, Satus
+        today = timezone.now().date()
+        today_sessions = Attendance.objects.filter(date=today).count()
+        today_reports = AttendanceReport.objects.filter(attendance__date=today)
+        attendance_stats = {
+            'today_sessions': today_sessions,
+            'today_present': today_reports.filter(status=Satus.PRESENT).count() if hasattr(Satus, 'PRESENT') else 0,
+            'today_absent': today_reports.filter(status=Satus.ABSENT).count() if hasattr(Satus, 'ABSENT') else 0,
+        }
+    except Exception:
+        pass
+
+    # Student count
+    total_students = Student.objects.filter(student__tenant=request.tenant).count()
+
+    context = {
+        **base_context,
+        'title': 'Discipline Officer Dashboard',
+        'total_actions': total_actions,
+        'pending_actions': pending_actions,
+        'resolved_actions': resolved_actions,
+        'severity_breakdown': severity_breakdown,
+        'recent_incidents': recent_incidents,
+        'attendance_stats': attendance_stats,
+        'total_students': total_students,
+    }
+
+    return render(request, 'dashboards/prefet_dashboard.html', context)
+
+
+def render_accountant_dashboard(request, base_context):
+    """Render accountant dashboard with financial data focus."""
+    from payments.models import Invoice, Payment, FeeStructure
+    from django.db.models import Sum, Q
+
+    # Invoice stats
+    all_invoices = Invoice.objects.all()
+    total_invoices = all_invoices.count()
+    paid_invoices = all_invoices.filter(payment_complete=True).count()
+    unpaid_invoices = all_invoices.filter(payment_complete=False).count()
+
+    # Overdue invoices
+    today = timezone.now().date()
+    overdue_invoices = all_invoices.filter(
+        payment_complete=False,
+        due_date__lt=today
+    ).count()
+
+    # Collection rate
+    collection_rate = round((paid_invoices / total_invoices * 100), 2) if total_invoices > 0 else 0
+
+    # Financial totals
+    amount_stats = all_invoices.aggregate(
+        total_billed=Sum('amount'),
+        total_collected=Sum('amount', filter=Q(payment_complete=True)),
+    )
+    total_billed = amount_stats['total_billed'] or 0
+    total_collected = amount_stats['total_collected'] or 0
+    total_outstanding = total_billed - total_collected
+
+    # Recent payments (last 10)
+    recent_payments = Payment.objects.select_related(
+        'invoice', 'invoice__user'
+    ).order_by('-payment_date')[:10]
+
+    # Overdue invoices list (last 10)
+    overdue_invoice_list = all_invoices.filter(
+        payment_complete=False,
+        due_date__lt=today
+    ).select_related('user', 'student').order_by('due_date')[:10]
+
+    # Active fee structures count
+    active_fee_structures = FeeStructure.objects.filter(is_active=True).count()
+
+    # Student count
+    total_students = Student.objects.count()
+
+    context = {
+        **base_context,
+        'title': 'Accountant Dashboard',
+        'total_invoices': total_invoices,
+        'paid_invoices': paid_invoices,
+        'unpaid_invoices': unpaid_invoices,
+        'overdue_invoices': overdue_invoices,
+        'collection_rate': collection_rate,
+        'total_billed': total_billed,
+        'total_collected': total_collected,
+        'total_outstanding': total_outstanding,
+        'recent_payments': recent_payments,
+        'overdue_invoice_list': overdue_invoice_list,
+        'active_fee_structures': active_fee_structures,
+        'total_students': total_students,
+    }
+
+    return render(request, 'dashboards/accountant_dashboard.html', context)
+
+
+def render_librarian_dashboard(request, base_context):
+    """Render librarian dashboard with library management data."""
+    from library.models import Book, BorrowRecord
+
+    total_books = Book.objects.count()
+    total_available = Book.objects.filter(available__gt=0).count()
+    currently_borrowed = BorrowRecord.objects.filter(status='borrowed').count()
+    overdue_count = BorrowRecord.objects.filter(status='overdue').count()
+
+    # Recent borrow activity
+    recent_borrows = BorrowRecord.objects.select_related(
+        'book', 'student'
+    ).order_by('-borrowed_at')[:10]
+
+    # Books with low stock (fewer than 3 available)
+    low_stock_books = Book.objects.filter(
+        available__lt=3, available__gt=0
+    ).order_by('available')[:5]
+
+    # Out of stock
+    out_of_stock = Book.objects.filter(available=0).count()
+
+    context = {
+        **base_context,
+        'title': 'Librarian Dashboard',
+        'total_books': total_books,
+        'total_available': total_available,
+        'currently_borrowed': currently_borrowed,
+        'overdue_count': overdue_count,
+        'out_of_stock': out_of_stock,
+        'recent_borrows': recent_borrows,
+        'low_stock_books': low_stock_books,
+    }
+
+    return render(request, 'dashboards/librarian_dashboard.html', context)
+
+
+def render_registrar_dashboard(request, base_context):
+    """Render registrar dashboard with enrollment and certificate data."""
+    from enrollment.models import RegistrationForm, EnrollmentDocument
+    from certificates.models import Certificate
+
+    # Enrollment stats
+    pending_applications = RegistrationForm.objects.filter(status='pending').count()
+    under_review = RegistrationForm.objects.filter(status='under_review').count()
+    approved = RegistrationForm.objects.filter(
+        status='approved', enrolled_user__isnull=True
+    ).count()
+    total_enrolled = RegistrationForm.objects.filter(status='enrolled').count()
+
+    # Documents pending verification
+    documents_pending = EnrollmentDocument.objects.filter(is_verified=False).count()
+
+    # Certificate stats
+    certificates_issued = Certificate.objects.filter(status='issued').count()
+    certificates_pending = Certificate.objects.filter(status='pending').count()
+
+    # Recent applications
+    recent_applications = RegistrationForm.objects.order_by(
+        '-submitted_at'
+    )[:10]
+
+    # Recent certificates
+    recent_certificates = Certificate.objects.select_related(
+        'student', 'template'
+    ).order_by('-issue_date')[:10]
+
+    context = {
+        **base_context,
+        'title': 'Registrar Dashboard',
+        'pending_applications': pending_applications,
+        'under_review': under_review,
+        'approved': approved,
+        'total_enrolled': total_enrolled,
+        'documents_pending': documents_pending,
+        'certificates_issued': certificates_issued,
+        'certificates_pending': certificates_pending,
+        'recent_applications': recent_applications,
+        'recent_certificates': recent_certificates,
+    }
+
+    return render(request, 'dashboards/registrar_dashboard.html', context)
 
 
 def render_admin_dashboard(request, base_context):

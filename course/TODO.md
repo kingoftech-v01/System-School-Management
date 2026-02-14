@@ -2,9 +2,10 @@
 
 ## Backend
 
-- [ ] Add course list view (all courses) -- currently courses are only visible within a program detail
-- [ ] Add search across all programs on program list -- ProgramFilterView uses filters but no text search
+- [x] Add course list view (all courses) (Completed as of 2026-02 -- `course_list_all` in views_frontend.py)
+- [x] Add search across all programs (Completed as of 2026-02 -- `program_search` in views_frontend.py)
 - [ ] Add batch course allocation -- currently must allocate one lecturer at a time
+- [ ] Add course prerequisite system (prerequisite FK on Course model)
 
 ## Frontend
 
@@ -21,9 +22,22 @@
 
 - [ ] No critical security issues found
 
+## API
+
+- [ ] Add pagination to CourseRegistrationViewSet responses
+- [ ] Add filtering by level/semester to course list endpoint
+- [ ] Add course search endpoint
+
+## Testing
+
+- [ ] Add tests for course registration/drop workflow
+- [ ] Add tests for file upload extension validation
+- [ ] Add tests for slug auto-generation on Course and UploadVideo
+
 ## Unnecessary Files
 
 - [ ] `tests.py` -- empty placeholder file (already scheduled for deletion in git)
+- [ ] `decorators.py` -- contains mostly commented-out code and module-level query execution
 
 ## Documentation
 

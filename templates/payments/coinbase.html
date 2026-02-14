@@ -12,11 +12,51 @@
     </ol>
 </div>
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-xl-12">
+    <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8">
             <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Coinbase Payment</h4>
+                </div>
                 <div class="card-body">
-                    <h4>Coinbase Payment</h4>
+                    {% if invoice %}
+                    <div class="table-responsive mb-4">
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted fw-semibold" style="width:40%;">Student</td>
+                                    <td>{{ student_name|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-semibold">Invoice Code</td>
+                                    <td>{{ invoice.invoice_code }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted fw-semibold">Description</td>
+                                    <td>{{ description|default:"Tuition Fee" }}</td>
+                                </tr>
+                                {% if due_date %}
+                                <tr>
+                                    <td class="text-muted fw-semibold">Due Date</td>
+                                    <td>{{ due_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted fw-semibold">Amount</td>
+                                    <td><strong class="text-primary fs-4">{{ amount|floatformat:2 }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Coinbase payment integration is coming soon.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>No invoice found. Please select an invoice to pay.
+                    </div>
+                    <a href="{% url 'frontend:payments:student_invoices' %}" class="btn btn-primary">View My Invoices</a>
+                    {% endif %}
                 </div>
             </div>
         </div>

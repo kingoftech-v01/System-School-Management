@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -112,8 +112,14 @@ class Invoice(models.Model):
         help_text=_('Associated fee structure')
     )
 
-    total = models.FloatField(null=True, blank=True)
-    amount = models.FloatField(null=True, blank=True)
+    total = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+    amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
     payment_complete = models.BooleanField(default=False)
     invoice_code = models.CharField(max_length=200, blank=True, null=True)
 
@@ -349,28 +355,30 @@ class PaymentVerification(models.Model):
         return f"Verification for {self.payment.transaction_id} ({self.verification_status})"
 
     def verify(self, user, notes=''):
-        """Verify the payment."""
-        self.verification_status = 'verified'
-        self.verified_by = user
-        self.verification_notes = notes
-        self.verified_at = timezone.now()
-        self.save()
+        """Verify the payment atomically."""
+        with transaction.atomic():
+            self.verification_status = 'verified'
+            self.verified_by = user
+            self.verification_notes = notes
+            self.verified_at = timezone.now()
+            self.save()
 
-        # Update payment status
-        self.payment.status = 'completed'
-        self.payment.save()
+            # Update payment status
+            self.payment.status = 'completed'
+            self.payment.save()
 
     def reject(self, user, notes=''):
-        """Reject the payment."""
-        self.verification_status = 'rejected'
-        self.verified_by = user
-        self.verification_notes = notes
-        self.verified_at = timezone.now()
-        self.save()
+        """Reject the payment atomically."""
+        with transaction.atomic():
+            self.verification_status = 'rejected'
+            self.verified_by = user
+            self.verification_notes = notes
+            self.verified_at = timezone.now()
+            self.save()
 
-        # Update payment status
-        self.payment.status = 'failed'
-        self.payment.save()
+            # Update payment status
+            self.payment.status = 'failed'
+            self.payment.save()
 
 
 class Receipt(models.Model):

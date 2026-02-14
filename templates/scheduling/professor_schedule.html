@@ -1,0 +1,67 @@
+{% extends 'w3crm/elements/layouts/admin.html' %}
+
+{% block title %}Teaching Schedule - School Management{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li><h5 class="bc-title">Teaching Schedule</h5></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:core:home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'frontend:scheduling:schedule_calendar' %}">Calendar</a></li>
+        <li class="breadcrumb-item active">Teaching Schedule</li>
+    </ol>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">My Teaching Schedule</h4>
+                    <a href="{% url 'frontend:scheduling:schedule_calendar' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-calendar3"></i> Calendar View
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if entries %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Day</th><th>Time</th><th>Course</th><th>Room</th>
+                                    <th>Filiere</th><th>Group</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in entries %}
+                                <tr>
+                                    <td>{{ entry.time_slot.get_day_of_week_display }}</td>
+                                    <td>{{ entry.time_slot.start_time|time:"H:i" }}-{{ entry.time_slot.end_time|time:"H:i" }}</td>
+                                    <td>
+                                        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{{ entry.color }};margin-right:4px;"></span>
+                                        {{ entry.course.title }}
+                                    </td>
+                                    <td>{{ entry.room.name|default:"TBD" }}</td>
+                                    <td>{{ entry.filiere.name|default:"-" }}</td>
+                                    <td>{{ entry.group_name|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'frontend:scheduling:mark_cancellation' entry_id=entry.pk %}" class="btn btn-sm btn-outline-danger" title="Cancel">
+                                            <i class="bi bi-x-circle"></i>
+                                        </a>
+                                        <a href="{% url 'frontend:scheduling:request_substitution' entry_id=entry.pk %}" class="btn btn-sm btn-outline-warning" title="Request Substitution">
+                                            <i class="bi bi-person-plus"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No teaching assignments found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

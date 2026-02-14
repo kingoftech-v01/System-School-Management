@@ -21,7 +21,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h4 class="card-title mb-0">Disciplinary Actions</h4>
-                    {% if is_direction or is_admin %}
+                    {% if is_direction or is_secretary or is_admin or is_prefet %}
                     <a href="{% url 'frontend:discipline:action_create' %}" class="btn btn-sm btn-primary">
                         <i class="bi bi-plus-lg"></i> New Action
                     </a>

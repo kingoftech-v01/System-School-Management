@@ -82,7 +82,7 @@ def send_verification_email(user, verification_url, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': user.email,
-        'user_name': user.get_full_name() or user.username,
+        'user_name': user.get_full_name or user.username,
     }
 
     return send_templated_email(
@@ -117,7 +117,7 @@ def send_welcome_email(user, tenant, request=None):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': user.email,
-        'user_name': user.get_full_name() or user.username,
+        'user_name': user.get_full_name or user.username,
         'dashboard_url': base_url + '/dashboard/',
         'profile_url': base_url + '/accounts/profile/',
         'help_url': base_url + '/help/',
@@ -150,7 +150,7 @@ def send_password_reset_email(user, reset_url, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': user.email,
-        'user_name': user.get_full_name() or user.username,
+        'user_name': user.get_full_name or user.username,
     }
 
     return send_templated_email(
@@ -178,7 +178,7 @@ def send_2fa_enabled_email(user, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': user.email,
-        'user_name': user.get_full_name() or user.username,
+        'user_name': user.get_full_name or user.username,
     }
 
     return send_templated_email(
@@ -206,7 +206,7 @@ def send_2fa_disabled_email(user, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': user.email,
-        'user_name': user.get_full_name() or user.username,
+        'user_name': user.get_full_name or user.username,
     }
 
     return send_templated_email(
@@ -236,7 +236,7 @@ def send_enrollment_confirmation_email(student, course, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': student.student.email,
-        'user_name': student.student.get_full_name(),
+        'user_name': student.student.get_full_name,
     }
 
     return send_templated_email(
@@ -268,7 +268,7 @@ def send_grade_notification_email(student, course, grade, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': student.student.email,
-        'user_name': student.student.get_full_name(),
+        'user_name': student.student.get_full_name,
     }
 
     return send_templated_email(
@@ -298,7 +298,7 @@ def send_payment_receipt_email(student, payment, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': student.student.email,
-        'user_name': student.student.get_full_name(),
+        'user_name': student.student.get_full_name,
     }
 
     recipients = [student.student.email]
@@ -380,7 +380,7 @@ def send_account_activation_email(user, activation_url, tenant):
         'tenant_name': tenant.name,
         'tenant_logo': tenant.logo.url if tenant.logo else None,
         'recipient_email': user.email,
-        'user_name': user.get_full_name() or user.username,
+        'user_name': user.get_full_name or user.username,
     }
 
     return send_templated_email(
