@@ -21,6 +21,12 @@ DEBUG = False
 # Strict allowed hosts from environment
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://sms.jhpetitfrere.com',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
 # Security settings
 # Allow SSL redirect to be disabled for Docker behind host reverse proxy
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
@@ -194,22 +200,20 @@ SESSION_SAVE_EVERY_REQUEST = True
 # CORS - whitelist only
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Content Security Policy - strict (django-csp 4.0+ format)
+# Content Security Policy - relaxed for CDN assets (django-csp 4.0+ format)
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
-        'script-src': ("'self'",),
-        'style-src': ("'self'",),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'", "cdn.jsdelivr.net", "cdn.datatables.net", "cdnjs.cloudflare.com"),
+        'style-src': ("'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "cdn.datatables.net", "cdnjs.cloudflare.com", "fonts.googleapis.com"),
         'img-src': ("'self'", "data:", "https:"),
-        'font-src': ("'self'",),
+        'font-src': ("'self'", "fonts.googleapis.com", "fonts.gstatic.com", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"),
         'connect-src': ("'self'",),
         'frame-ancestors': ("'none'",),
-        'report-uri': (config('CSP_REPORT_URI', default=''),) if config('CSP_REPORT_URI', default='') else None,
     }
 }
-# Remove None values
-if CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri'] is None:
-    del CONTENT_SECURITY_POLICY['DIRECTIVES']['report-uri']
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Trust X-Forwarded-* headers from nginx
 USE_X_FORWARDED_HOST = True

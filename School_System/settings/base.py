@@ -62,9 +62,6 @@ SHARED_APPS = [
     # File Storage
     'storages',
 
-    # Admin enhancements
-    'import_export',
-
     # New third-party packages
     'mptt',
     'taggit',
@@ -93,6 +90,7 @@ TENANT_APPS = [
     'django_otp.plugins.otp_totp',
     'django_otp.plugins.otp_static',
     'axes',  # Login security - depends on User
+    'import_export',  # Admin enhancements - depends on tenant data
     'rest_framework.authtoken',  # Token models depend on User
     'rest_framework_simplejwt',  # JWT token blacklist depends on User
     'rest_framework_simplejwt.token_blacklist',  # Token blacklist models
