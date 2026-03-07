@@ -1,15 +1,13 @@
 """
-Analytics URLs - Frontend and API routing.
+Analytics URLs - API-only routing.
 
 URL Namespaces:
-- Frontend: frontend:analytics:view_name
 - API: api:v1:analytics:resource-name
 """
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from . import views_frontend
 from . import views_api
 
 
@@ -37,51 +35,9 @@ api_urlpatterns = [
 
 
 # ============================================================================
-# FRONTEND URLPATTERNS
-# ============================================================================
-
-frontend_urlpatterns = [
-    # Dashboard
-    path('', views_frontend.analytics_dashboard, name='analytics_dashboard'),
-
-    # Student engagement
-    path('engagement/', views_frontend.engagement_list, name='engagement_list'),
-    path('engagement/<int:student_id>/', views_frontend.engagement_detail, name='engagement_detail'),
-
-    # Course completion
-    path('completions/', views_frontend.completion_list, name='completion_list'),
-    path('completions/<int:pk>/', views_frontend.completion_detail, name='completion_detail'),
-
-    # Learning outcomes
-    path('outcomes/', views_frontend.learning_outcome_list, name='learning_outcome_list'),
-    path('outcomes/create/', views_frontend.learning_outcome_create, name='learning_outcome_create'),
-    path('outcomes/<int:pk>/', views_frontend.learning_outcome_detail, name='learning_outcome_detail'),
-    path('outcomes/<int:pk>/edit/', views_frontend.learning_outcome_edit, name='learning_outcome_edit'),
-    path('outcomes/<int:pk>/delete/', views_frontend.learning_outcome_delete, name='learning_outcome_delete'),
-
-    # At-risk students
-    path('at-risk/', views_frontend.at_risk_list, name='at_risk_list'),
-    path('at-risk/<int:pk>/', views_frontend.at_risk_detail, name='at_risk_detail'),
-    path('at-risk/<int:pk>/intervene/', views_frontend.at_risk_intervene, name='at_risk_intervene'),
-    path('at-risk/<int:pk>/resolve/', views_frontend.at_risk_resolve, name='at_risk_resolve'),
-
-    # Activity logs
-    path('activity-logs/', views_frontend.activity_log_list, name='activity_log_list'),
-
-    # Reports
-    path('reports/', views_frontend.analytics_reports, name='analytics_reports'),
-
-    # Exports
-    path('export/engagement/', views_frontend.export_engagement_csv, name='export_engagement_csv'),
-]
-
-
-# ============================================================================
 # APP URL CONFIGURATION
 # ============================================================================
 
-
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),
-    path('', include((frontend_urlpatterns, 'frontend'))),
 ]

@@ -1,15 +1,13 @@
 """
-Certificates URLs - Frontend and API routing.
+Certificates URLs - API-only routing.
 
 URL Namespaces:
-- Frontend: frontend:certificates:view_name
 - API: api:v1:certificates:resource-name
 """
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from . import views_frontend
 from . import views_api
 
 
@@ -34,46 +32,9 @@ api_urlpatterns = [
 
 
 # ============================================================================
-# FRONTEND URLPATTERNS
-# ============================================================================
-
-frontend_urlpatterns = [
-    # Dashboard
-    path('', views_frontend.certificates_dashboard, name='dashboard'),
-
-    # Certificate templates
-    path('templates/', views_frontend.template_list, name='template_list'),
-    path('templates/create/', views_frontend.template_create, name='template_create'),
-    path('templates/<int:pk>/', views_frontend.template_detail, name='template_detail'),
-    path('templates/<int:pk>/edit/', views_frontend.template_update, name='template_update'),
-    path('templates/<int:pk>/delete/', views_frontend.template_delete, name='template_delete'),
-
-    # Certificates
-    path('certificates/', views_frontend.certificate_list, name='certificate_list'),
-    path('certificates/create/', views_frontend.certificate_create, name='certificate_create'),
-    path('certificates/<int:pk>/', views_frontend.certificate_detail, name='certificate_detail'),
-    path('certificates/<int:pk>/edit/', views_frontend.certificate_edit, name='certificate_edit'),
-    path('certificates/<int:pk>/download/', views_frontend.certificate_download, name='certificate_download'),
-    path('certificates/<int:pk>/revoke/', views_frontend.certificate_revoke, name='certificate_revoke'),
-    path('certificates/<int:pk>/reissue/', views_frontend.certificate_reissue, name='certificate_reissue'),
-
-    # Public verification (no login required)
-    path('verify/', views_frontend.certificate_verify, name='certificate_verify'),
-
-    # Batch generation
-    path('batch/', views_frontend.batch_generation_list, name='batch_generation_list'),
-    path('batch/create/', views_frontend.batch_generation_create, name='batch_generation_create'),
-    path('batch/<int:pk>/', views_frontend.batch_generation_detail, name='batch_generation_detail'),
-    path('batch/<int:pk>/start/', views_frontend.batch_generation_start, name='batch_generation_start'),
-]
-
-
-# ============================================================================
 # APP URL CONFIGURATION
 # ============================================================================
 
-
 urlpatterns = [
     path('api/', include((api_urlpatterns, 'api'))),
-    path('', include((frontend_urlpatterns, 'frontend'))),
 ]

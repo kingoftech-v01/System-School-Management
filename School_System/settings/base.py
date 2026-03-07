@@ -54,10 +54,11 @@ SHARED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 
     'corsheaders',
-    'crispy_forms',
-    'crispy_bootstrap5',
+    # 'crispy_forms',       # Removed: template-only (React frontend)
+    # 'crispy_bootstrap5',  # Removed: template-only (React frontend)
     'django_filters',
 
     # Security & Monitoring
@@ -201,10 +202,7 @@ ROOT_URLCONF = 'School_System.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / 'templates',
-            BASE_DIR / 'templates' / 'emails',
-        ],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -212,17 +210,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'accounts.context_processors.tenant_context',
-                'accounts.context_processors.user_role_context',
-                'accounts.context_processors.app_settings_context',
-                'accounts.context_processors.navigation_context',
-                'accounts.context_processors.permissions_context',
-                'anomaly_detection.context_processors.anomaly_alert_count',
-                'custom_context_processor.dz_static',
             ],
         },
     },
@@ -331,7 +318,7 @@ MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'fr')
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = []
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
