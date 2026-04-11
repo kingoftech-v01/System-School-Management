@@ -1,0 +1,4 @@
+# Default owner for the whole repository.
+# Pull requests touching any file will auto-request a review from this owner.
+
+* @kingoftech-v01
