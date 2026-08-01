@@ -29,7 +29,7 @@ def collect_student_complete_record(student_pk):
     results = Result.objects.filter(student=student).order_by('semester')
 
     # Attendance summary
-    from attendance.models import AttendanceReport, Satus
+    from attendance.models import AttendanceReport, Status
     try:
         from attendance.models import Student as AttStudent
         att_student = AttStudent.objects.get(email=user.email)
@@ -37,9 +37,9 @@ def collect_student_complete_record(student_pk):
             student=att_student
         )
         total_att = attendance_reports.count()
-        present = attendance_reports.filter(status=Satus.PRESENT).count()
-        absent = attendance_reports.filter(status=Satus.ABSENT).count()
-        late = attendance_reports.filter(status=Satus.LATE).count()
+        present = attendance_reports.filter(status=Status.PRESENT).count()
+        absent = attendance_reports.filter(status=Status.ABSENT).count()
+        late = attendance_reports.filter(status=Status.LATE).count()
     except Exception:
         total_att = present = absent = late = 0
 

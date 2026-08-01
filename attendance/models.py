@@ -75,7 +75,7 @@ class Student(models.Model):
             return 0
 
         attended = reports.filter(
-            Q(status=Satus.PRESENT) | Q(status=Satus.LATE)
+            Q(status=Status.PRESENT) | Q(status=Status.LATE)
         ).count()
 
         return round((attended / total) * 100, 2)
@@ -103,7 +103,7 @@ class Subject(models.Model):
         return self.name
 
 
-class Satus(models.TextChoices):
+class Status(models.TextChoices):
     PRESENT = 'present', 'Present'
     ABSENT = 'absent', 'Absent'
     LATE = 'late', 'Late'
@@ -125,7 +125,7 @@ class Attendance(models.Model):
 class AttendanceReport(models.Model):
     attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE, related_name='reports')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_reports')
-    status = models.CharField(choices=Satus.choices, max_length=10, default=Satus.ABSENT)
+    status = models.CharField(choices=Status.choices, max_length=10, default=Status.ABSENT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -213,9 +213,9 @@ class DailyAttendanceStat(models.Model):
         reports = attendance.reports.filter(student__group=self.group)
         stats = reports.aggregate(
             total=Count('id'),
-            present=Count('id', filter=Q(status=Satus.PRESENT)),
-            absent=Count('id', filter=Q(status=Satus.ABSENT)),
-            late=Count('id', filter=Q(status=Satus.LATE))
+            present=Count('id', filter=Q(status=Status.PRESENT)),
+            absent=Count('id', filter=Q(status=Status.ABSENT)),
+            late=Count('id', filter=Q(status=Status.LATE))
         )
 
         self.total_students = stats['total'] or 0

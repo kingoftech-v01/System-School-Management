@@ -1,14 +1,14 @@
 from School_System.celery import app
 from dailystat.models import DailyAttendanceStat
 from attendance.models import Subject, Student
-from attendance.models import AttendanceReport, Satus, Subject
+from attendance.models import AttendanceReport, Status, Subject
 from datetime import datetime
 
 
 @app.task
 def send_daily_stats():
     query = AttendanceReport.objects.filter(
-        attendance__date=datetime.today().date(), status=Satus.ABSENT
+        attendance__date=datetime.today().date(), status=Status.ABSENT
     )
     for i in query:
         if DailyAttendanceStat.objects.filter(

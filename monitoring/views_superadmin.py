@@ -73,10 +73,10 @@ def _collect_tenant_data_multi(school):
 
             # Attendance rate (last 30 days)
             try:
-                from attendance.models import AttendanceRecord
+                from attendance.models import AttendanceReport
                 thirty_days_ago = timezone.now().date() - timedelta(days=30)
-                total_records = AttendanceRecord.objects.filter(date__gte=thirty_days_ago).count()
-                present_records = AttendanceRecord.objects.filter(
+                total_records = AttendanceReport.objects.filter(date__gte=thirty_days_ago).count()
+                present_records = AttendanceReport.objects.filter(
                     date__gte=thirty_days_ago, status='present'
                 ).count()
                 data['attendance_rate'] = round((present_records / total_records) * 100, 1) if total_records else 0
@@ -148,10 +148,10 @@ def _collect_single_tenant_data():
         pass
 
     try:
-        from attendance.models import AttendanceRecord
+        from attendance.models import AttendanceReport
         thirty_days_ago = timezone.now().date() - timedelta(days=30)
-        total = AttendanceRecord.objects.filter(date__gte=thirty_days_ago).count()
-        present = AttendanceRecord.objects.filter(
+        total = AttendanceReport.objects.filter(date__gte=thirty_days_ago).count()
+        present = AttendanceReport.objects.filter(
             date__gte=thirty_days_ago, status='present'
         ).count()
         data['attendance_rate'] = round((present / total) * 100, 1) if total else 0

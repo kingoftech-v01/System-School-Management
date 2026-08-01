@@ -21,7 +21,7 @@ from django.utils import timezone
 from django_ratelimit.decorators import ratelimit
 from accounts.decorators import lecturer_required, prefet_allowed, role_required, tenant_required
 
-from .models import Student, Group, Subject, Attendance, AttendanceReport, Satus
+from .models import Student, Group, Subject, Attendance, AttendanceReport, Status
 from .forms import AttendanceForm, AttendanceReportForm, StudentForm, GroupForm, SubjectForm
 
 
@@ -53,9 +53,9 @@ def attendance_dashboard(request):
         attendance__date=today,
         attendance__subject__teacher=request.user
     )
-    present_count = today_reports.filter(status=Satus.PRESENT).count() if hasattr(Satus, 'PRESENT') else 0
-    absent_count = today_reports.filter(status=Satus.ABSENT).count() if hasattr(Satus, 'ABSENT') else 0
-    late_count = today_reports.filter(status=Satus.LATE).count() if hasattr(Satus, 'LATE') else 0
+    present_count = today_reports.filter(status=Status.PRESENT).count() if hasattr(Status, 'PRESENT') else 0
+    absent_count = today_reports.filter(status=Status.ABSENT).count() if hasattr(Status, 'ABSENT') else 0
+    late_count = today_reports.filter(status=Status.LATE).count() if hasattr(Status, 'LATE') else 0
     total_count = today_reports.count()
 
     context = {
@@ -135,7 +135,7 @@ def mark_attendance(request, pk):
         'attendance': attendance,
         'students': students,
         'existing_reports': existing_reports,
-        'status_choices': Satus.choices if hasattr(Satus, 'choices') else [],
+        'status_choices': Status.choices if hasattr(Status, 'choices') else [],
         'title': _('Mark Attendance'),
     }
 
@@ -159,9 +159,9 @@ def attendance_detail(request, pk):
 
     # Statistics
     total_students = reports.count()
-    present_count = reports.filter(status=Satus.PRESENT).count() if hasattr(Satus, 'PRESENT') else 0
-    absent_count = reports.filter(status=Satus.ABSENT).count() if hasattr(Satus, 'ABSENT') else 0
-    late_count = reports.filter(status=Satus.LATE).count() if hasattr(Satus, 'LATE') else 0
+    present_count = reports.filter(status=Status.PRESENT).count() if hasattr(Status, 'PRESENT') else 0
+    absent_count = reports.filter(status=Status.ABSENT).count() if hasattr(Status, 'ABSENT') else 0
+    late_count = reports.filter(status=Status.LATE).count() if hasattr(Status, 'LATE') else 0
 
     context = {
         'attendance': attendance,

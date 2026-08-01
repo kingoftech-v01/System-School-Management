@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
-from .models import AttendanceRecord
+from .models import AttendanceReport
 from accounts.models import User
 
 
@@ -30,7 +30,7 @@ def send_attendance_reminders():
     ).values_list('course_id', flat=True).distinct()
 
     # Find which have NOT been marked
-    marked = AttendanceRecord.objects.filter(
+    marked = AttendanceReport.objects.filter(
         date=today_date,
         course_id__in=todays_courses
     ).values_list('course_id', flat=True).distinct()
@@ -74,7 +74,7 @@ def generate_daily_attendance_stats():
     yesterday = timezone.now().date() - timedelta(days=1)
 
     # Get attendance counts per course for yesterday
-    course_stats = AttendanceRecord.objects.filter(
+    course_stats = AttendanceReport.objects.filter(
         date=yesterday
     ).values('course').annotate(
         total=Count('id'),
@@ -115,13 +115,13 @@ def send_low_attendance_alerts():
 
     alert_count = 0
     for student in students:
-        total = AttendanceRecord.objects.filter(
+        total = AttendanceReport.objects.filter(
             student=student.student, session=current_session
         ).count()
         if total == 0:
             continue
 
-        present = AttendanceRecord.objects.filter(
+        present = AttendanceReport.objects.filter(
             student=student.student, session=current_session, status='present'
         ).count()
         rate = (present / total) * 100

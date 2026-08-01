@@ -491,12 +491,12 @@ def dashboard_student(request):
     # Get attendance summary
     attendance_summary = {}
     try:
-        from attendance.models import AttendanceRecord
-        total_classes = AttendanceRecord.objects.filter(
+        from attendance.models import AttendanceReport
+        total_classes = AttendanceReport.objects.filter(
             student=request.user,
             session=current_session
         ).count()
-        present_classes = AttendanceRecord.objects.filter(
+        present_classes = AttendanceReport.objects.filter(
             student=request.user,
             session=current_session,
             status='present'
@@ -576,12 +576,12 @@ def dashboard_professor(request):
     # Get attendance summary for today
     today_attendance = {}
     try:
-        from attendance.models import AttendanceRecord
+        from attendance.models import AttendanceReport
         today_date = timezone.now().date()
         total_students = Student.objects.filter(
             takencourse__course__in=my_courses
         ).distinct().count()
-        marked_attendance = AttendanceRecord.objects.filter(
+        marked_attendance = AttendanceReport.objects.filter(
             course__in=my_courses,
             date=today_date
         ).count()

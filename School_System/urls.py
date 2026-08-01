@@ -10,9 +10,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 from django.views.i18n import JavaScriptCatalog
 from django.views import defaults as default_views
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+
+
+def health_check(request):
+    """Health check endpoint for container orchestration."""
+    return JsonResponse({'status': 'healthy'})
 
 # Customize admin
 admin.site.site_header = "School Management System"
@@ -131,6 +137,9 @@ api_v1_urlpatterns = [
 # ============================================================================
 
 urlpatterns = [
+    # Health check (no auth required)
+    path('health/', health_check, name='health_check'),
+
     # Admin
     path('admin/', admin.site.urls),
 

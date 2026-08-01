@@ -21,7 +21,7 @@ from attendance.models import (
     Subject,
     Attendance,
     AttendanceReport,
-    Satus,
+    Status,
 )
 
 OK_CODES = {200, 302, 403, 404, 500}

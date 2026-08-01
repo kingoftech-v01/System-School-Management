@@ -323,14 +323,14 @@ def render_prefet_dashboard(request, base_context):
     # Attendance overview
     attendance_stats = {}
     try:
-        from attendance.models import Attendance, AttendanceReport, Satus
+        from attendance.models import Attendance, AttendanceReport, Status
         today = timezone.now().date()
         today_sessions = Attendance.objects.filter(date=today).count()
         today_reports = AttendanceReport.objects.filter(attendance__date=today)
         attendance_stats = {
             'today_sessions': today_sessions,
-            'today_present': today_reports.filter(status=Satus.PRESENT).count() if hasattr(Satus, 'PRESENT') else 0,
-            'today_absent': today_reports.filter(status=Satus.ABSENT).count() if hasattr(Satus, 'ABSENT') else 0,
+            'today_present': today_reports.filter(status=Status.PRESENT).count() if hasattr(Status, 'PRESENT') else 0,
+            'today_absent': today_reports.filter(status=Status.ABSENT).count() if hasattr(Status, 'ABSENT') else 0,
         }
     except Exception:
         pass

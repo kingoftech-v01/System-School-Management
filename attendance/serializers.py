@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from attendance.models import Group, Subject, Student, Attendance, AttendanceReport, Satus
+from attendance.models import Group, Subject, Student, Attendance, AttendanceReport, Status
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -33,7 +33,7 @@ class StudentSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         group = validated_data.pop('group')
-        group = Group.objects.get(id=group['name'])
+        group = Group.objects.get(name=group['name'])
         student = Student.objects.create(group=group, **validated_data)
         return student
 

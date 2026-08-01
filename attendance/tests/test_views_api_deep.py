@@ -18,7 +18,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from attendance.models import (
-    Attendance, AttendanceReport, Group, Satus, Student, Subject,
+    Attendance, AttendanceReport, Group, Status, Student, Subject,
 )
 from tests.helpers import TestDataMixin
 
@@ -62,7 +62,7 @@ class StudentViewSetTests(TestDataMixin, TestCase):
         )
         AttendanceReport.objects.create(
             attendance=attendance, student=self.att_student,
-            status=Satus.PRESENT,
+            status=Status.PRESENT,
         )
         self._auth(self.admin)
         url = reverse(
@@ -81,7 +81,7 @@ class StudentViewSetTests(TestDataMixin, TestCase):
         )
         AttendanceReport.objects.create(
             attendance=attendance, student=self.att_student,
-            status=Satus.ABSENT,
+            status=Status.ABSENT,
         )
         self._auth(self.admin)
         url = reverse(
@@ -212,7 +212,7 @@ class AttendanceViewSetTests(TestDataMixin, TestCase):
         AttendanceReport.objects.create(
             attendance=self.attendance,
             student=att_student,
-            status=Satus.PRESENT,
+            status=Status.PRESENT,
         )
         self._auth(self.admin)
         url = reverse(
@@ -227,7 +227,7 @@ class AttendanceViewSetTests(TestDataMixin, TestCase):
         AttendanceReport.objects.create(
             attendance=self.attendance,
             student=att_student,
-            status=Satus.PRESENT,
+            status=Status.PRESENT,
         )
         self._auth(self.admin)
         url = reverse(
@@ -276,7 +276,7 @@ class AttendanceReportViewSetTests(TestDataMixin, TestCase):
         self.report = AttendanceReport.objects.create(
             attendance=self.attendance,
             student=self.att_student,
-            status=Satus.PRESENT,
+            status=Status.PRESENT,
         )
 
     def _auth(self, user):

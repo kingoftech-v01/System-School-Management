@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 from attendance.models import (
-    Group, Student, Subject, Satus,
+    Group, Student, Subject, Status,
     Attendance, AttendanceReport, DailyAttendanceStat,
 )
 from tests.helpers import TestDataMixin
@@ -91,7 +91,7 @@ class StudentModelTest(TestDataMixin, TestCase):
 
         attendance = Attendance.objects.create(subject=subject, date=date.today())
         AttendanceReport.objects.create(
-            attendance=attendance, student=student, status=Satus.PRESENT,
+            attendance=attendance, student=student, status=Status.PRESENT,
         )
         self.assertEqual(student.get_attendance_percentage(), 100.0)
 
@@ -106,8 +106,8 @@ class StudentModelTest(TestDataMixin, TestCase):
 
         a1 = Attendance.objects.create(subject=subject, date=date.today())
         a2 = Attendance.objects.create(subject=subject, date=date.today() - timedelta(days=1))
-        AttendanceReport.objects.create(attendance=a1, student=student, status=Satus.PRESENT)
-        AttendanceReport.objects.create(attendance=a2, student=student, status=Satus.ABSENT)
+        AttendanceReport.objects.create(attendance=a1, student=student, status=Status.PRESENT)
+        AttendanceReport.objects.create(attendance=a2, student=student, status=Status.ABSENT)
         self.assertEqual(student.get_attendance_percentage(), 50.0)
 
     def test_has_low_attendance_no_records(self):
@@ -125,7 +125,7 @@ class StudentModelTest(TestDataMixin, TestCase):
 
         attendance = Attendance.objects.create(subject=subject, date=date.today())
         AttendanceReport.objects.create(
-            attendance=attendance, student=student, status=Satus.PRESENT,
+            attendance=attendance, student=student, status=Status.PRESENT,
         )
         self.assertFalse(student.has_low_attendance())
 
@@ -140,7 +140,7 @@ class StudentModelTest(TestDataMixin, TestCase):
 
         attendance = Attendance.objects.create(subject=subject, date=date.today())
         AttendanceReport.objects.create(
-            attendance=attendance, student=student, status=Satus.LATE,
+            attendance=attendance, student=student, status=Status.LATE,
         )
         self.assertEqual(student.get_attendance_percentage(), 100.0)
 
@@ -192,7 +192,7 @@ class AttendanceReportModelTest(TestDataMixin, TestCase):
         )
         att = Attendance.objects.create(subject=subject, date=date.today())
         report = AttendanceReport.objects.create(
-            attendance=att, student=student, status=Satus.PRESENT,
+            attendance=att, student=student, status=Status.PRESENT,
         )
         self.assertIsNotNone(report.pk)
 
@@ -210,7 +210,7 @@ class AttendanceReportModelTest(TestDataMixin, TestCase):
         report = AttendanceReport.objects.create(
             attendance=att, student=student,
         )
-        self.assertEqual(report.status, Satus.ABSENT)
+        self.assertEqual(report.status, Status.ABSENT)
 
     def test_unique_together(self):
         group = Group.objects.create(name=f'GP-{_ac()}')
@@ -224,11 +224,11 @@ class AttendanceReportModelTest(TestDataMixin, TestCase):
         )
         att = Attendance.objects.create(subject=subject, date=date.today())
         AttendanceReport.objects.create(
-            attendance=att, student=student, status=Satus.PRESENT,
+            attendance=att, student=student, status=Status.PRESENT,
         )
         with self.assertRaises(Exception):
             AttendanceReport.objects.create(
-                attendance=att, student=student, status=Satus.ABSENT,
+                attendance=att, student=student, status=Status.ABSENT,
             )
 
 
@@ -252,8 +252,8 @@ class DailyAttendanceStatModelTest(TestDataMixin, TestCase):
         )
 
         att = Attendance.objects.create(subject=subject, date=date.today())
-        AttendanceReport.objects.create(attendance=att, student=s1, status=Satus.PRESENT)
-        AttendanceReport.objects.create(attendance=att, student=s2, status=Satus.ABSENT)
+        AttendanceReport.objects.create(attendance=att, student=s1, status=Status.PRESENT)
+        AttendanceReport.objects.create(attendance=att, student=s2, status=Status.ABSENT)
 
         return subject, group
 

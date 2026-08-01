@@ -16,7 +16,7 @@ from django.test import TestCase, RequestFactory
 from rest_framework.test import APIRequestFactory
 
 from attendance.models import (
-    Attendance, AttendanceReport, Group, Satus, Student, Subject,
+    Attendance, AttendanceReport, Group, Status, Student, Subject,
 )
 from attendance.serializers import (
     AttendanceReportSerializer,
@@ -204,7 +204,7 @@ class AttendanceReportSerializerTests(TestDataMixin, TestCase):
         self.report = AttendanceReport.objects.create(
             attendance=self.attendance,
             student=self.att_student,
-            status=Satus.PRESENT,
+            status=Status.PRESENT,
         )
         self.factory = APIRequestFactory()
 
@@ -280,7 +280,7 @@ class AttendanceReportViewSerializerTests(TestDataMixin, TestCase):
         self.report = AttendanceReport.objects.create(
             attendance=self.attendance,
             student=self.att_student,
-            status=Satus.LATE,
+            status=Status.LATE,
         )
 
     def test_serializes_with_nested_student(self):

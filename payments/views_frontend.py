@@ -202,12 +202,13 @@ def gopay_charge(request):
     if request.method == "POST":
         user = request.user
 
+        from django.conf import settings
         payments = gopay.payments(
             {
-                "goid": "[PAYMENT_ID]",
-                "clientId": "[GOPAY_CLIENT_ID]",
-                "clientSecret": "[GOPAY_CLIENT_SECRET]",
-                "isProductionMode": False,
+                "goid": getattr(settings, 'GOPAY_ID', ''),
+                "clientId": getattr(settings, 'GOPAY_CLIENT_ID', ''),
+                "clientSecret": getattr(settings, 'GOPAY_CLIENT_SECRET', ''),
+                "isProductionMode": getattr(settings, 'GOPAY_PRODUCTION', False),
                 "scope": gopay.TokenScope.ALL,
                 "language": gopay.Language.ENGLISH,
                 "timeout": 30,

@@ -4,7 +4,7 @@ from datetime import date
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from attendance.models import Group, Student, Subject, Attendance, AttendanceReport, Satus
+from attendance.models import Group, Student, Subject, Attendance, AttendanceReport, Status
 from dailystat.models import DailyAttendanceStat
 
 User = get_user_model()

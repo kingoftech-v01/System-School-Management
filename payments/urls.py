@@ -12,6 +12,8 @@ from rest_framework.routers import DefaultRouter
 from . import views_frontend
 from . import views_api
 
+app_name = 'payments'
+
 
 # ============================================================================
 # API ROUTER (DRF ViewSets)
@@ -52,7 +54,7 @@ frontend_urlpatterns = [
     path("complete/", views_frontend.paymentComplete, name="complete"),
     path("completed/", views_frontend.payment_succeed, name="completed"),  # Alias for completed
     path("create-invoice/", views_frontend.create_invoice, name="create_invoice"),
-    path("invoice-detail/<int:id>/", views_frontend.invoice_detail, name="invoice_detail"),
+    path("invoice-detail/<slug:slug>/", views_frontend.invoice_detail, name="invoice_detail"),
 
     # Fee Structure CRUD
     path("fee-structures/", views_frontend.fee_structure_list, name="fee_structure_list"),

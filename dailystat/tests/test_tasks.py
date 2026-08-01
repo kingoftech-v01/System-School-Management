@@ -13,7 +13,7 @@ from attendance.models import (
     Attendance,
     AttendanceReport,
     Group,
-    Satus,
+    Status,
     Student,
     Subject,
 )
@@ -45,7 +45,7 @@ class TestSendDailyStats(TestDataMixin, TestCase):
         )
         AttendanceReport.objects.create(
             attendance=attendance, student=self.student,
-            status=Satus.ABSENT
+            status=Status.ABSENT
         )
 
         send_daily_stats()
@@ -69,7 +69,7 @@ class TestSendDailyStats(TestDataMixin, TestCase):
         )
         AttendanceReport.objects.create(
             attendance=attendance, student=self.student,
-            status=Satus.ABSENT
+            status=Status.ABSENT
         )
 
         send_daily_stats()
@@ -85,7 +85,7 @@ class TestSendDailyStats(TestDataMixin, TestCase):
         )
         AttendanceReport.objects.create(
             attendance=attendance, student=self.student,
-            status=Satus.PRESENT
+            status=Status.PRESENT
         )
 
         send_daily_stats()

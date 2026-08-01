@@ -1,6 +1,6 @@
 from django.db import models
 from attendance.models import Subject, Student
-from attendance.models import AttendanceReport, Satus, Subject
+from attendance.models import AttendanceReport, Status, Subject
 
 
 class DailyAttendanceStat(models.Model):
@@ -14,7 +14,7 @@ class DailyAttendanceStat(models.Model):
         ordering = ['-day']
     
     def run_report_and_save(self):
-        query = AttendanceReport.objects.filter(attendance__date__day=18, attendance__date__month=11, attendance__date__year=2022, status=Satus.ABSENT)
+        query = AttendanceReport.objects.filter(attendance__date__day=18, attendance__date__month=11, attendance__date__year=2022, status=Status.ABSENT)
         for i in query:
             if self.objects.filter(day=i.attendance.date, student=i.student).exists():
                 a = self.objects.get(student=i.student, day=i.attendance.date)
